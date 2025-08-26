@@ -1,3 +1,10 @@
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PrismaClient as SQLServerClient } from '../prisma-clients/sqlserver';
 
-export const sqlserver = new SQLServerClient();
+@Injectable()
+export class SQLServerPrismaService extends SQLServerClient implements OnModuleInit {
+  async onModuleInit() {
+    await this.$connect();
+    console.log('✅ SQL Server connected');
+  }
+}
