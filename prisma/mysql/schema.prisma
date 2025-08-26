@@ -1,0 +1,800 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../src/prisma-clients/mysql"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("MYSQL_DATABASE_URL")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model cbcajachica {
+  unidad    String    @default("CYBERLUX") @db.VarChar(10)
+  numcaja   Int
+  descaja   String    @db.VarChar(100)
+  fecregis  DateTime  @default(now()) @db.Date
+  fecinicio DateTime  @db.Date
+  fecfinal  DateTime  @db.Date
+  feccierre DateTime? @db.Date
+  montoini  Decimal   @default(0.00) @db.Decimal(15, 2)
+  montoing  Decimal   @default(0.00) @db.Decimal(15, 2)
+  montoegr  Decimal   @default(0.00) @db.Decimal(15, 2)
+  montofin  Decimal   @default(0.00) @db.Decimal(15, 2)
+  montocie  Decimal   @default(0.00) @db.Decimal(15, 2)
+  moneda    String    @db.VarChar(4)
+  montolim  Decimal   @default(0.00) @db.Decimal(15, 2)
+  cerrada   Boolean   @default(false)
+  anulada   Boolean   @default(false)
+  proceso   Boolean   @default(false)
+  cajamayor Boolean   @default(false)
+  owneruser Int       @default(1)
+
+  @@ignore
+}
+
+model cbdevoluciones {
+  devonum Int      @id @default(autoincrement())
+  fecha   DateTime @db.DateTime(0)
+  estatus Int      @db.TinyInt
+  codcli  String   @db.VarChar(6)
+  motivo  String   @db.VarChar(255)
+  tipo    Int      @db.TinyInt
+  chofer  String   @db.VarChar(255)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model cbefectivo {
+  unidad  String  @default("CYBERLUX") @db.VarChar(10)
+  numcaja Int
+  numitem Int
+  moneda  String  @db.VarChar(4)
+  tipo    String  @db.VarChar(10)
+  valor   Decimal @db.Decimal(11, 2)
+  cantini Int     @default(0)
+  canting Int     @default(0)
+  cantegr Int     @default(0)
+  cantfin Int     @default(0)
+  monto   Decimal @default(0.00) @db.Decimal(15, 2)
+
+  @@ignore
+}
+
+model cbplanpagos {
+  planpagonumero      Int       @id @default(0) @db.SmallInt
+  unidad              String    @db.VarChar(10)
+  empresa             String    @db.VarChar(40)
+  fechapagoautorizada DateTime  @db.Date
+  descripcionplan     String    @db.VarChar(255)
+  fechaautorizadopor  DateTime? @default(now()) @db.Date
+  autorizadopor       String?   @db.Char(30)
+  totalnetobsd        Decimal   @default(0.00) @db.Decimal(18, 2)
+  totalnetousd        Decimal   @default(0.00) @db.Decimal(18, 2)
+  totalsaldobsd       Decimal   @default(0.00) @db.Decimal(18, 2)
+  totalsaldousd       Decimal   @default(0.00) @db.Decimal(18, 2)
+  totalautorizadobsd  Decimal   @default(0.00) @db.Decimal(18, 2)
+  totalautorizadousd  Decimal   @default(0.00) @db.Decimal(18, 2)
+  totalpagadobsd      Decimal   @default(0.00) @db.Decimal(18, 2)
+  totalpagadousd      Decimal   @default(0.00) @db.Decimal(18, 2)
+  totalxpagarbsd      Decimal   @default(0.00) @db.Decimal(18, 2)
+  totalxpagarusd      Decimal   @default(0.00) @db.Decimal(18, 2)
+  generadotxt         Boolean   @default(false)
+  conciliadopago      Boolean   @default(false)
+  owneruser           Int       @default(1)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model cbpredes {
+  prednum   Int       @default(0)
+  pednum    Int       @default(0)
+  profite   Boolean   @default(false)
+  estatus   Boolean   @default(false)
+  fecemis   DateTime  @db.DateTime(0)
+  fecdesp   DateTime  @db.DateTime(0)
+  fecfinal  DateTime? @db.DateTime(0)
+  codcli    String    @db.VarChar(10)
+  codzon    String    @db.VarChar(6)
+  codven    String    @db.VarChar(6)
+  cantped   Int       @default(1)
+  cantreng  Int       @default(0)
+  cantdesp  Int       @default(0)
+  cantcarga Int       @default(0)
+  totneto   Decimal   @default(0.00) @db.Decimal(18, 2)
+  parcial   Boolean   @default(false)
+  compuesto Boolean   @default(false)
+  codtrans  String?   @db.VarChar(6)
+  codchofer Int       @default(0) @db.SmallInt
+  placa     String    @db.VarChar(10)
+  cerrado   Boolean   @default(false)
+  anulado   Boolean   @default(false)
+  proceso   Boolean   @default(false)
+  owneruser Int       @default(1)
+
+  @@ignore
+}
+
+model cbsolicimat {
+  solicitudnumero   Int       @id @db.SmallInt
+  empresa           String    @db.VarChar(40)
+  codigoobra        String    @db.VarChar(4)
+  descripcionobra   String    @db.VarChar(60)
+  numerocontrol     Int       @default(0) @db.MediumInt
+  solicitanteuser   String?   @db.Char(30)
+  solicitantecodigo String?   @db.Char(16)
+  fechasolicitud    DateTime  @db.Date
+  fechautilizacion  DateTime  @db.Date
+  observacion       String    @db.VarChar(255)
+  actividad         String    @db.VarChar(255)
+  direccionentrega  String    @db.VarChar(255)
+  fecharevisado     DateTime? @db.Date
+  revisadopor       String?   @db.Char(30)
+  registradopor     String    @db.Char(30)
+  revisado          Boolean   @default(false)
+  procesado         Boolean   @default(false)
+  anulado           Boolean   @default(false)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model clbancopago {
+  codigobanco       String  @default("0") @db.VarChar(4)
+  bancopago         String? @db.VarChar(40)
+  empresapagadora   String  @db.VarChar(40)
+  rifpagadora       String? @db.VarChar(20)
+  titularcuenta     String  @db.VarChar(40)
+  numerocuenta      String? @db.VarChar(20)
+  numeronegociacion String? @db.VarChar(8)
+  ultimonumerolote  String? @db.VarChar(8)
+  orden             Int     @db.SmallInt
+  pagoporbanco      Boolean @default(false)
+  esavanti          Boolean @default(false)
+  monedapago        String? @default("VED") @db.VarChar(4)
+
+  @@ignore
+}
+
+model clbancoprov {
+  numerocuenta  Int     @id @default(autoincrement()) @db.SmallInt
+  beneficiario  String  @db.VarChar(100)
+  titularcuenta String? @db.VarChar(100)
+  cuentabanco   String? @db.VarChar(60)
+  banco         String? @db.Char(18)
+  codigobanco   String? @db.VarChar(4)
+  codigoswift   String? @db.VarChar(8)
+  tipocuenta    String? @db.Char(2)
+  rifproveedor  String  @db.Char(18)
+}
+
+model clbancoswift {
+  codigobanco String @id @db.VarChar(4)
+  codigoswift String @db.VarChar(8)
+  nombrecorto String @db.VarChar(20)
+  tipocuenta  String @default("00") @db.Char(2)
+}
+
+model clcategoria {
+  codcat String @id @db.VarChar(6)
+  catdes String @db.VarChar(60)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model clccosto {
+  codceco Int     @default(0) @db.SmallInt
+  desceco String  @db.VarChar(40)
+  visible Boolean @default(true)
+  esadmon Boolean
+  unidad  String  @default("CYBERLUX") @db.VarChar(11)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model clchoferes {
+  codchofer Int    @default(0) @db.SmallInt
+  deschofer String @db.VarChar(40)
+  rifoced   String @db.VarChar(20)
+  placaveh  String @db.VarChar(10)
+  telefono  String @default("+58412") @db.VarChar(15)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model clcliente {
+  codcli  Int    @db.SmallInt
+  descli  String @db.VarChar(40)
+  rifoced String @db.VarChar(20)
+  unidad  String @default("CYBERLUX") @db.VarChar(10)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model clefectivo {
+  codmone String  @db.VarChar(4)
+  tipo    String  @db.VarChar(10)
+  valor   Decimal @db.Decimal(11, 2)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model clempleado {
+  codempl Int    @db.SmallInt
+  desempl String @db.VarChar(40)
+  rifoced String @db.VarChar(20)
+  unidad  String @default("CYBERLUX") @db.VarChar(10)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model clfactorpago {
+  codigofactor     Int       @default(0) @db.SmallInt
+  factorpago       String    @db.VarChar(40)
+  monedaautorizada String    @db.VarChar(4)
+  monedadocum      String    @db.VarChar(4)
+  factorconversion Decimal   @default(0.000000000) @db.Decimal(18, 9)
+  metodocalculo    String    @db.VarChar(6)
+  ultimatasacambio Decimal   @db.Decimal(11, 2)
+  fechaultimatasa  DateTime? @db.Date
+  permitircambio   Boolean   @default(false)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model clformapago {
+  codigoforma      Int     @default(0) @db.SmallInt
+  formapago        String  @db.VarChar(40)
+  monedaautorizada String  @db.VarChar(4)
+  pordefecto       Boolean @default(false)
+  pagoporbanco     Boolean @default(true)
+  esavanti         Boolean @default(false)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model clmoneda {
+  codmone   String  @db.VarChar(4)
+  desmone   String  @db.VarChar(40)
+  factorusd Decimal @db.Decimal(11, 2)
+  factoreur Decimal @db.Decimal(11, 2)
+  factorbss Decimal @db.Decimal(11, 2)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model clproveedor {
+  codprov Int    @default(0) @db.SmallInt
+  desprov String @db.VarChar(40)
+  rifoced String @db.VarChar(20)
+  unidad  String @default("CYBERLUX") @db.VarChar(11)
+
+  @@ignore
+}
+
+model cltransporte {
+  codtran String  @id @db.VarChar(6)
+  trandes String  @db.VarChar(60)
+  chofer  String? @db.VarChar(60)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model clvendedores {
+  codven    String  @db.VarChar(6)
+  vendes    String  @db.VarChar(60)
+  cedula    String? @db.VarChar(15)
+  telefono1 String? @db.VarChar(15)
+  telefono2 String? @db.VarChar(15)
+  codzon    String? @db.VarChar(6)
+  vende     Boolean @default(true)
+  cobra     Boolean @default(true)
+  activo    Boolean @default(true)
+
+  @@ignore
+}
+
+model clzonas {
+  codzon String @id @db.VarChar(6)
+  zondes String @db.VarChar(60)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model cpccosto {
+  desceco String @db.VarChar(40)
+  unidad  String @default("CYBERLUX") @db.VarChar(11)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model cpproveedor {
+  codprov Int    @default(0) @db.SmallInt
+  desprov String @db.VarChar(40)
+  rifoced String @db.VarChar(20)
+  unidad  String @default("CYBERLUX") @db.VarChar(11)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model ctdocumento {
+  unidad     String  @default("CYBERLUX") @db.VarChar(10)
+  modulo     String  @db.VarChar(20)
+  tipodocu   String  @db.VarChar(10)
+  desdocu    String  @db.VarChar(40)
+  tipomov    String  @db.VarChar(10)
+  orden      Int     @db.SmallInt
+  clase      Boolean @default(false)
+  tipoclase  String? @db.VarChar(10)
+  visualiza  Boolean
+  imprime    Boolean
+  balance    Boolean
+  naturaleza Int     @db.SmallInt
+  ctatranfe  Boolean
+  doblecta   Boolean
+  netocero   Boolean @default(false)
+  editable   Boolean @default(true)
+  anulable   Boolean @default(true)
+  tipodocu2  String? @db.VarChar(10)
+  tipomov2   String? @db.VarChar(10)
+  codceco    Int     @default(0) @db.SmallInt
+
+  @@ignore
+}
+
+model dtdevolucion {
+  devnum     Int      @id @default(0) @db.MediumInt
+  estatus    String   @default("0") @db.Char(1)
+  comentario String?  @db.VarChar(255)
+  descrip    String   @db.VarChar(255)
+  saldo      Decimal  @db.Decimal(18, 2)
+  fecemis    DateTime @db.DateTime(0)
+  fecvenc    DateTime @db.DateTime(0)
+  codcli     String   @db.VarChar(6)
+  codven     String   @db.VarChar(6)
+  codtran    String   @db.VarChar(6)
+}
+
+model dtdevoluciones {
+  itemnum     Int    @default(autoincrement())
+  devonum     Int
+  codart      String @db.VarChar(30)
+  serial      String @db.VarChar(40)
+  descripcion String @db.VarChar(255)
+  cantidad    Int    @db.TinyInt
+
+  @@id([itemnum, devonum])
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model dtplanpagos {
+  planpagonumero     Int       @default(0) @db.SmallInt
+  autorizadonumero   Int       @default(0)
+  unidad             String    @db.VarChar(10)
+  empresa            String    @db.VarChar(40)
+  tipodocumento      String    @db.VarChar(10)
+  numerodocumento    Int       @default(0)
+  codigobeneficiario String?   @db.VarChar(10)
+  beneficiario       String    @db.VarChar(100)
+  titularcuenta      String?   @db.VarChar(100)
+  cuentabanco        String?   @db.VarChar(60)
+  banco              String?   @db.Char(18)
+  codigobanco        String?   @db.VarChar(4)
+  codigoswift        String?   @db.VarChar(8)
+  tipocuenta         String?   @db.Char(2)
+  tipoproveedor      String    @db.VarChar(60)
+  rifproveedor       String    @db.Char(18)
+  monedaproveedor    String?   @db.VarChar(60)
+  autorizadopagar    Boolean   @default(true)
+  registradopor      String    @db.Char(30)
+  fechaemision       DateTime  @db.Date
+  fechavencimiento   DateTime  @db.Date
+  fecharegistro      DateTime  @db.Date
+  numerofactura      Int       @default(0)
+  observacion        String?   @db.VarChar(120)
+  tasacambio         Decimal   @default(1.00) @db.Decimal(18, 2)
+  moneda             String    @db.VarChar(6)
+  montoneto          Decimal   @default(0.00) @db.Decimal(18, 2)
+  montosaldo         Decimal   @default(0.00) @db.Decimal(18, 2)
+  metodopago         String?   @db.VarChar(40)
+  fechaautorizadopor DateTime? @default(now()) @db.Date
+  autorizadopor      String?   @db.Char(30)
+  tasaautorizada     Decimal?  @db.Decimal(18, 2)
+  montoautorizado    Decimal?  @db.Decimal(18, 2)
+  monedaautorizada   String?   @db.VarChar(6)
+  fechaautorizada    DateTime? @db.Date
+  empresapagadora    String?   @db.VarChar(40)
+  pagado             Boolean   @default(false)
+  fechapagado        DateTime? @db.Date
+  clasegasto         String?   @db.VarChar(60)
+  bancopagador       String    @db.VarChar(40)
+  codigounico        Int       @default(0) @db.SmallInt
+  origenhes          Boolean   @default(false)
+  generadotxt        Boolean   @default(false)
+  enviadocajachica   Boolean   @default(false)
+  conciliadopago     Boolean   @default(false)
+  cob_num            Int       @default(0)
+  moneda_pago        String?   @db.VarChar(6)
+  mont_cob           Decimal?  @db.Decimal(18, 2)
+  monto_pago         Decimal?  @db.Decimal(18, 2)
+  neto               Decimal?  @db.Decimal(18, 2)
+  owneruser          Int       @default(1)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model dtpredes {
+  prednum   Int     @default(0)
+  itemnum   Int     @db.MediumInt
+  pednum    Int     @default(0)
+  rennum    Int     @default(0)
+  codart    String  @db.VarChar(30)
+  compuesto Boolean @default(false)
+  manjser   Boolean @default(true)
+  codalma   String  @db.VarChar(6)
+  codbarra  String? @db.VarChar(30)
+  serial1   String? @db.VarChar(40)
+  refbarra  String? @db.VarChar(30)
+  recouser  Int     @default(1)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model dtsolicimat {
+  solicitudnumero     Int     @default(0) @db.SmallInt
+  itemnumero          Int     @default(0) @db.SmallInt
+  codigomaterial      String  @db.VarChar(30)
+  descripcionmaterial String  @db.VarChar(120)
+  unidadmedida        String  @db.VarChar(6)
+  cantidadsolicitada  Decimal @default(0.00) @db.Decimal(18, 2)
+  observacion         String? @db.VarChar(120)
+  materialnuevo       Boolean @default(false)
+  autorizado          Boolean @default(false)
+
+  @@ignore
+}
+
+model hsplanpagos {
+  unidad             String   @db.VarChar(10)
+  empresa            String   @db.VarChar(40)
+  tipodocumento      String   @db.VarChar(10)
+  numerodocumento    Int      @id @default(autoincrement())
+  codigobeneficiario String?  @db.VarChar(10)
+  beneficiario       String   @db.VarChar(100)
+  cuentabanco        String?  @db.VarChar(60)
+  banco              String?  @db.Char(18)
+  rifproveedor       String?  @db.Char(18)
+  tipoproveedor      String   @db.VarChar(60)
+  monedaproveedor    String?  @db.VarChar(60)
+  autorizadopagar    Boolean  @default(false)
+  fechaemision       DateTime @db.Date
+  fechavencimiento   DateTime @db.Date
+  fecharegistro      DateTime @db.Date
+  registradopor      String   @db.Char(30)
+  numerofactura      Int      @default(0)
+  observacion        String?  @db.VarChar(120)
+  tasacambio         Decimal  @default(1.00) @db.Decimal(18, 2)
+  moneda             String   @db.VarChar(6)
+  montoneto          Decimal  @default(0.00) @db.Decimal(18, 2)
+  montosaldo         Decimal  @default(0.00) @db.Decimal(18, 2)
+  clasegasto         String?  @db.VarChar(60)
+  owneruser          Int      @default(1)
+}
+
+model metas {
+  anio      String @db.VarChar(4)
+  mes       String @db.VarChar(2)
+  codven    String @db.VarChar(6)
+  codart    String @db.VarChar(30)
+  asignado  Int    @default(0)
+  utilizado Int    @default(0)
+
+  @@id([anio, mes, codven, codart])
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model metas_articulos {
+  anio     String @db.VarChar(4)
+  mes      String @db.VarChar(2)
+  codart   String @db.VarChar(30)
+  stockact Int
+  stockcom Int
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model mtarticulos {
+  codart      String    @db.VarChar(30)
+  artdes      String    @db.VarChar(120)
+  fecrec      DateTime  @db.Date
+  mseriales   Boolean?  @default(false)
+  mlote       Boolean?  @default(false)
+  mgarantia   Boolean?  @default(false)
+  codlin      String    @db.VarChar(6)
+  codcat      String    @db.VarChar(6)
+  codsubl     String    @db.VarChar(6)
+  codcolor    String    @db.VarChar(6)
+  codbarra    String?   @db.VarChar(20)
+  artref      String?   @db.VarChar(30)
+  modelo      String    @db.VarChar(20)
+  coment      String?   @db.VarChar(100)
+  univenta    String    @db.VarChar(6)
+  unicompra   String    @db.VarChar(6)
+  unirelac    Decimal   @default(0.00000) @db.Decimal(18, 5)
+  stockact    Int       @default(0) @db.MediumInt
+  stockcom    Int       @default(0) @db.MediumInt
+  stocklle    Int       @default(0) @db.MediumInt
+  stockdes    Int       @default(0) @db.MediumInt
+  suniventa   String    @db.VarChar(6)
+  sunicompra  String    @db.VarChar(6)
+  sunirelac   Decimal   @default(0.00000) @db.Decimal(18, 5)
+  sstockact   Int       @default(0) @db.MediumInt
+  sstockcom   Int       @default(0) @db.MediumInt
+  sstocklle   Int       @default(0) @db.MediumInt
+  sstockdes   Int       @default(0) @db.MediumInt
+  precioom    Boolean   @default(false)
+  precvta1    Decimal   @default(0.00) @db.Decimal(18, 2)
+  fecprecv1   DateTime? @db.Date
+  precvta2    Decimal   @default(0.00) @db.Decimal(18, 2)
+  fecprecv2   DateTime? @db.Date
+  precvta3    Decimal   @db.Decimal(18, 2)
+  fecprecv3   DateTime? @db.Date
+  precvta4    Decimal   @db.Decimal(18, 2)
+  fecprecv4   DateTime? @db.Date
+  precvta5    Decimal   @db.Decimal(18, 2)
+  fecprecv5   DateTime? @db.Date
+  fecdesp5    DateTime  @db.Date
+  fechasp5    DateTime  @db.Date
+  ultcosun    Decimal   @default(0.00) @db.Decimal(18, 2)
+  fultcosun   DateTime? @db.Date
+  cosproun    Decimal   @default(0.00) @db.Decimal(18, 2)
+  fcosproun   DateTime? @db.Date
+  cosunan     Decimal   @default(0.00) @db.Decimal(18, 2)
+  fcosunan    DateTime? @db.Date
+  ultcosunom  Decimal   @default(0.00) @db.Decimal(18, 2)
+  fultcosunom DateTime? @db.Date
+  cosprounom  Decimal   @default(0.00) @db.Decimal(18, 2)
+  fcosprounom DateTime? @db.Date
+  cosunanom   Decimal   @default(0.00) @db.Decimal(18, 2)
+  fcosunanom  DateTime? @db.Date
+  tipocosto   String    @db.VarChar(4)
+  invfisico   Boolean   @default(false)
+  diasrepo    Int       @default(0) @db.SmallInt
+  tipoart     String    @db.VarChar(1)
+  anulado     Boolean   @default(false)
+  tipoimp     String    @db.VarChar(1)
+  compuesto   Int       @default(0) @db.TinyInt
+  peso        Decimal   @default(0.00000) @db.Decimal(18, 5)
+  volumen     Decimal   @default(0.00000) @db.Decimal(18, 5)
+  medalto     Int       @default(0)
+  medancho    Int       @default(0)
+  medlargo    Int       @default(0)
+
+  @@ignore
+}
+
+model mtclientes {
+  codcli     String    @id @db.VarChar(6)
+  clides     String    @db.VarChar(100)
+  dirfiscal  String    @db.VarChar(255)
+  telefonos  String?   @db.VarChar(60)
+  comentario String?   @db.VarChar(255)
+  contacto   String?   @db.VarChar(60)
+  fecreg     DateTime  @db.DateTime(0)
+  fecultvta  DateTime? @db.DateTime(0)
+  netoultvta Decimal   @default(0.00) @db.Decimal(18, 2)
+  montocred  Decimal   @default(0.00) @db.Decimal(18, 2)
+  diascred   Int       @db.SmallInt
+  descppago  Decimal   @default(0.00) @db.Decimal(11, 2)
+  codzon     String    @db.VarChar(6)
+  codseg     String    @db.VarChar(6)
+  codven     String?   @db.VarChar(6)
+  descglob   Decimal   @default(0.00) @db.Decimal(11, 2)
+  direntrega String?   @db.VarChar(255)
+  numrif     String    @db.VarChar(15)
+  tipocli    String    @db.VarChar(6)
+  tipocon    Boolean
+  email      String?   @db.VarChar(60)
+  ciudad     String    @db.VarChar(50)
+  activo     Boolean   @default(true)
+  autorizado Boolean   @default(false)
+  credito    Decimal   @default(0.00) @db.Decimal(18, 2)
+  saldo      Decimal   @default(0.00) @db.Decimal(18, 2)
+}
+
+model mtprofitart {
+  codart      String    @id @db.VarChar(30)
+  artdes      String    @db.VarChar(120)
+  fecrec      DateTime  @db.Date
+  mseriales   Boolean?  @default(false)
+  mlote       Boolean?  @default(false)
+  mgarantia   Boolean?  @default(false)
+  codlin      String    @db.VarChar(6)
+  codcat      String    @db.VarChar(6)
+  codsubl     String    @db.VarChar(6)
+  codcolor    String    @db.VarChar(6)
+  codbarra    String?   @db.VarChar(20)
+  artref      String?   @db.VarChar(30)
+  modelo      String    @db.VarChar(20)
+  coment      String?   @db.VarChar(100)
+  univenta    String    @db.VarChar(6)
+  unicompra   String    @db.VarChar(6)
+  unirelac    Decimal   @default(0.00000) @db.Decimal(18, 5)
+  stockact    Int       @default(0) @db.MediumInt
+  stockcom    Int       @default(0) @db.MediumInt
+  stocklle    Int       @default(0) @db.MediumInt
+  stockdes    Int       @default(0) @db.MediumInt
+  suniventa   String    @db.VarChar(6)
+  sunicompra  String    @db.VarChar(6)
+  sunirelac   Decimal   @default(0.00000) @db.Decimal(18, 5)
+  sstockact   Int       @default(0) @db.MediumInt
+  sstockcom   Int       @default(0) @db.MediumInt
+  sstocklle   Int       @default(0) @db.MediumInt
+  sstockdes   Int       @default(0) @db.MediumInt
+  precioom    Boolean   @default(false)
+  precvta1    Decimal   @default(0.00) @db.Decimal(18, 2)
+  fecprecv1   DateTime? @db.Date
+  precvta2    Decimal   @default(0.00) @db.Decimal(18, 2)
+  fecprecv2   DateTime? @db.Date
+  precvta3    Decimal   @db.Decimal(18, 2)
+  fecprecv3   DateTime? @db.Date
+  precvta4    Decimal   @db.Decimal(18, 2)
+  fecprecv4   DateTime? @db.Date
+  precvta5    Decimal   @db.Decimal(18, 2)
+  fecprecv5   DateTime? @db.Date
+  fecdesp5    DateTime  @db.Date
+  fechasp5    DateTime  @db.Date
+  ultcosun    Decimal   @default(0.00) @db.Decimal(18, 2)
+  fultcosun   DateTime? @db.Date
+  cosproun    Decimal   @default(0.00) @db.Decimal(18, 2)
+  fcosproun   DateTime? @db.Date
+  cosunan     Decimal   @default(0.00) @db.Decimal(18, 2)
+  fcosunan    DateTime? @db.Date
+  ultcosunom  Decimal   @default(0.00) @db.Decimal(18, 2)
+  fultcosunom DateTime? @db.Date
+  cosprounom  Decimal   @default(0.00) @db.Decimal(18, 2)
+  fcosprounom DateTime? @db.Date
+  cosunanom   Decimal   @default(0.00) @db.Decimal(18, 2)
+  fcosunanom  DateTime? @db.Date
+  tipocosto   String    @db.VarChar(4)
+  invfisico   Boolean   @default(false)
+  diasrepo    Int       @default(0) @db.SmallInt
+  tipoart     String    @db.VarChar(1)
+  anulado     Boolean   @default(false)
+  tipoimp     String    @db.VarChar(1)
+  compuesto   Int       @default(0) @db.TinyInt
+  peso        Decimal   @default(0.00000) @db.Decimal(18, 5)
+  volumen     Decimal   @default(0.00000) @db.Decimal(18, 5)
+  medalto     Int       @default(0)
+  medancho    Int       @default(0)
+  medlargo    Int       @default(0)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model mvcajachica {
+  unidad          String   @default("CYBERLUX") @db.VarChar(10)
+  numcaja         Int
+  numitem         Int
+  tipodocu        String   @db.VarChar(10)
+  numdocu         Int
+  tipomov         String   @db.VarChar(10)
+  codceco         Int      @db.SmallInt
+  fecregis        DateTime @default(now()) @db.Date
+  fecmov          DateTime @default(now()) @db.Date
+  montomov        Decimal  @default(0.00) @db.Decimal(15, 2)
+  montoneto       Decimal  @default(0.00) @db.Decimal(15, 2)
+  moneda          String   @db.VarChar(4)
+  codprov         Int      @default(0) @db.SmallInt
+  clase           Boolean  @default(false)
+  concepmov       String   @db.VarChar(100)
+  anulado         Boolean  @default(false)
+  auditado        Boolean  @default(false)
+  impreso         Boolean  @default(false)
+  orden           Int      @default(0) @db.SmallInt
+  tipodocu2       String?  @db.VarChar(10)
+  tipomov2        String?  @db.VarChar(10)
+  montomov2       Decimal  @default(0.00) @db.Decimal(15, 2)
+  recouser        Int      @default(0)
+  modulo          String   @default("CAJACHICA") @db.VarChar(10)
+  planpagonumero  Int      @default(0) @db.SmallInt
+  tipodocumento   String?  @db.VarChar(10)
+  numerodocumento Int      @default(0)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model mvefectivo {
+  unidad        String  @default("CYBERLUX") @db.VarChar(10)
+  numcaja       Int     @default(0)
+  numitem       Int     @default(0)
+  tipodocu      String  @db.VarChar(10)
+  numdocu       Int     @default(0)
+  tipomov       String  @db.VarChar(10)
+  moneda        String  @db.VarChar(4)
+  tipo          String  @db.VarChar(10)
+  valor         Decimal @default(0.00) @db.Decimal(11, 2)
+  cantidad1     Int
+  montomov1     Decimal @default(0.00) @db.Decimal(15, 2)
+  tipodocu2     String? @db.VarChar(10)
+  tipomov2      String? @db.VarChar(10)
+  cantidad2     Int     @default(0)
+  montomov2     Decimal @default(0.00) @db.Decimal(15, 2)
+  totalcantidad Int     @default(0)
+  totalmonto    Decimal @default(0.00) @db.Decimal(15, 2)
+  anulado       Boolean @default(false)
+  recouser      Int     @default(0)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model mvplanpagos {
+  planpagonumero     Int       @default(0) @db.SmallInt
+  autorizadonumero   Int
+  unidad             String    @db.VarChar(10)
+  empresa            String    @db.VarChar(40)
+  tipodocumento      String    @db.VarChar(10)
+  numerodocumento    Int       @default(0)
+  codigobeneficiario String?   @db.VarChar(10)
+  beneficiario       String    @db.VarChar(100)
+  titularcuenta      String?   @db.VarChar(100)
+  cuentabanco        String?   @db.VarChar(60)
+  banco              String?   @db.Char(18)
+  codigobanco        String?   @db.VarChar(4)
+  codigoswift        String?   @db.VarChar(8)
+  tipocuenta         String?   @db.Char(2)
+  tipoproveedor      String    @db.VarChar(60)
+  rifproveedor       String    @db.Char(18)
+  monedaproveedor    String?   @db.VarChar(60)
+  autorizadopagar    Boolean   @default(true)
+  registradopor      String    @db.Char(30)
+  fechaemision       DateTime  @db.Date
+  fechavencimiento   DateTime  @db.Date
+  fecharegistro      DateTime  @db.Date
+  numerofactura      Int       @default(0)
+  observacion        String?   @db.VarChar(120)
+  tasacambio         Decimal   @default(1.00) @db.Decimal(18, 2)
+  moneda             String    @db.VarChar(6)
+  montoneto          Decimal   @default(0.00) @db.Decimal(18, 2)
+  montosaldo         Decimal   @default(0.00) @db.Decimal(18, 2)
+  metodopago         String?   @db.VarChar(40)
+  fechaautorizadopor DateTime? @default(now()) @db.Date
+  autorizadopor      String?   @db.Char(30)
+  tasaautorizada     Decimal?  @db.Decimal(18, 2)
+  montoautorizado    Decimal?  @db.Decimal(18, 2)
+  monedaautorizada   String?   @db.VarChar(6)
+  fechaautorizada    DateTime? @db.Date
+  empresapagadora    String?   @db.VarChar(40)
+  clasegasto         String?   @db.VarChar(60)
+  bancopagador       String    @db.VarChar(40)
+  codigounico        Int       @default(0) @db.SmallInt
+  origenhes          Boolean   @default(false)
+  owneruser          Int       @default(1)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model mvpredes {
+  prednum   Int     @default(0)
+  itemnum   Int     @db.MediumInt
+  pednum    Int     @default(0)
+  rennum    Int     @default(0)
+  codart    String  @db.VarChar(30)
+  compuesto Boolean @default(false)
+  manjser   Boolean @default(true)
+  codalma   String  @db.VarChar(6)
+  codbarra  String? @db.VarChar(30)
+  serial1   String? @db.VarChar(40)
+  refbarra  String? @db.VarChar(30)
+  recouser  Int     @default(1)
+
+  @@ignore
+}
