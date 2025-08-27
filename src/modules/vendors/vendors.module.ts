@@ -6,6 +6,6 @@ import { MySQLPrismaService } from 'src/services/mysql.service';
 @Module({
   controllers: [VendorsController],
   providers: [VendorsService,MySQLPrismaService],
-  exports: [VendorsService]
+
 })
 export class VendorsModule {}

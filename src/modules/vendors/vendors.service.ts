@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { MySQLPrismaService } from 'src/services/mysql.service';
+import { MySQLPrismaService } from '../../services/mysql.service';
 import { VendorDto } from './dto/vendor.dto';
 
 @Injectable()
@@ -13,7 +13,6 @@ export class VendorsService {
   }
   async getVendorByCodven(codven: string): Promise<VendorDto[]> {
     return this.mysql.$queryRaw<
-      VendorDto[]
-    >`SELECT * FROM clvendedores WHERE codven = ${codven}`;
+      VendorDto[]>`SELECT * FROM clvendedores WHERE codven = ${codven}`;
   }
 }

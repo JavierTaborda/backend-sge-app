@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { PrismaClient as SQLServerClient } from '../prisma-clients/sqlserver';
+import { PrismaClient as SQLServerClient } from '../../prisma-clients/sqlserver';
 
 @Injectable()
 export class SQLServerPrismaService extends SQLServerClient implements OnModuleInit {
