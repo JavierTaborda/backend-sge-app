@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { MySQLPrismaService } from '../../services/mysql.service';
+import { MySQLPrismaService } from '../../database/mysql.service';
 import { VendorDto } from './dto/vendor.dto';
 
 @Injectable()

@@ -55,3 +55,474 @@ model resumenOLD {
 
   @@ignore
 }
+
+model Almacenes {
+  co_sub     String    @id(map: "sub_alma_co_sub") @db.Char(6)
+  des_sub    String?   @db.VarChar(60)
+  co_alma    String?   @db.Char(6)
+  campo1     String?   @db.VarChar(60)
+  campo2     String?   @db.VarChar(60)
+  campo3     String?   @db.VarChar(60)
+  campo4     String?   @db.VarChar(60)
+  co_us_in   String?   @db.Char(6)
+  fe_us_in   DateTime? @db.DateTime
+  co_us_mo   String?   @db.Char(6)
+  fe_us_mo   DateTime? @db.DateTime
+  co_us_el   String?   @db.Char(6)
+  fe_us_el   DateTime? @db.DateTime
+  revisado   String?   @db.Char(1)
+  trasnfe    String?   @db.Char(1)
+  co_sucu    String?   @db.Char(6)
+  rowguid    String?   @db.UniqueIdentifier
+  noventa    Boolean?
+  nocompra   Boolean?
+  materiales Boolean?
+  produccion Boolean?
+}
+
+model art {
+  co_art     String                   @id(map: "art_co_art") @db.Char(30)
+  art_des    String?                  @db.VarChar(120)
+  fecha_reg  DateTime?                @db.SmallDateTime
+  manj_ser   Boolean?
+  co_lin     String?                  @db.Char(6)
+  co_cat     String?                  @db.Char(6)
+  co_subl    String?                  @db.Char(6)
+  co_color   String?                  @db.Char(6)
+  item       String?                  @db.Char(10)
+  ref        String?                  @db.Char(20)
+  modelo     String?                  @db.Char(20)
+  procedenci String?                  @db.Char(6)
+  comentario String?                  @db.Text
+  co_prov    String?                  @db.Char(10)
+  ubicacion  String?                  @db.VarChar(60)
+  uni_venta  String?                  @db.Char(6)
+  uni_compra String?                  @db.Char(6)
+  uni_relac  Decimal?                 @db.Decimal(18, 5)
+  relac_aut  Int?
+  stock_act  Decimal?                 @db.Decimal(18, 5)
+  stock_com  Decimal?                 @db.Decimal(18, 5)
+  sstock_com Decimal?                 @db.Decimal(18, 5)
+  stock_lle  Decimal?                 @db.Decimal(18, 5)
+  sstock_lle Decimal?                 @db.Decimal(18, 5)
+  stock_des  Decimal?                 @db.Decimal(18, 5)
+  sstock_des Decimal?                 @db.Decimal(18, 5)
+  suni_venta String?                  @db.Char(6)
+  suni_compr String?                  @db.Char(6)
+  suni_relac Decimal?                 @db.Decimal(18, 3)
+  sstock_act Decimal?                 @db.Decimal(18, 5)
+  relac_comp Decimal?                 @db.Decimal(18, 5)
+  relac_vent Decimal?                 @db.Decimal(18, 5)
+  pto_pedido Decimal?                 @db.Decimal(18, 5)
+  stock_max  Decimal?                 @db.Decimal(18, 5)
+  stock_min  Decimal?                 @db.Decimal(18, 5)
+  prec_om    Boolean?
+  prec_vta1  Decimal?                 @db.Decimal(18, 5)
+  fec_prec_v DateTime?                @db.SmallDateTime
+  fec_prec_2 DateTime?                @db.SmallDateTime
+  prec_vta2  Decimal?                 @db.Decimal(18, 5)
+  fec_prec_3 DateTime?                @db.SmallDateTime
+  prec_vta3  Decimal?                 @db.Decimal(18, 5)
+  fec_prec_4 DateTime?                @db.SmallDateTime
+  prec_vta4  Decimal?                 @db.Decimal(18, 5)
+  fec_prec_5 DateTime?                @db.SmallDateTime
+  prec_vta5  Decimal?                 @db.Decimal(18, 5)
+  prec_agr1  Decimal?                 @db.Decimal(18, 5)
+  prec_agr2  Decimal?                 @db.Decimal(18, 5)
+  prec_agr3  Decimal?                 @db.Decimal(18, 5)
+  prec_agr4  Decimal?                 @db.Decimal(18, 5)
+  prec_agr5  Decimal?                 @db.Decimal(18, 5)
+  can_agr    Decimal?                 @db.Decimal(18, 5)
+  fec_des_p5 DateTime?                @db.SmallDateTime
+  fec_has_p5 DateTime?                @db.SmallDateTime
+  co_imp     String?                  @db.Char(4)
+  margen_max Decimal?                 @db.Decimal(18, 2)
+  ult_cos_un Decimal?                 @db.Decimal(18, 5)
+  fec_ult_co DateTime?                @db.SmallDateTime
+  cos_pro_un Decimal?                 @db.Decimal(18, 5)
+  fec_cos_pr DateTime?                @db.SmallDateTime
+  cos_merc   Decimal?                 @db.Decimal(18, 5)
+  fec_cos_me DateTime?                @db.SmallDateTime
+  cos_prov   Decimal?                 @db.Decimal(18, 5)
+  fec_cos_p2 DateTime?                @db.SmallDateTime
+  ult_cos_do Decimal?                 @db.Decimal(18, 5)
+  fec_cos_do DateTime?                @db.SmallDateTime
+  cos_un_an  Decimal?                 @db.Decimal(18, 5)
+  fec_cos_an DateTime?                @db.SmallDateTime
+  ult_cos_om Decimal?                 @db.Decimal(18, 5)
+  fec_ult_om DateTime?                @db.SmallDateTime
+  cos_pro_om Decimal?                 @db.Decimal(18, 5)
+  fec_pro_om DateTime?                @db.SmallDateTime
+  tipo_cos   String?                  @db.Char(4)
+  mont_comi  Decimal?                 @db.Decimal(18, 2)
+  porc_cos   Decimal?                 @db.Decimal(18, 2)
+  mont_cos   Decimal?                 @db.Decimal(18, 2)
+  porc_gas   Decimal?                 @db.Decimal(18, 2)
+  mont_gas   Decimal?                 @db.Decimal(18, 2)
+  f_cost     DateTime?                @db.SmallDateTime
+  fisico     Boolean?
+  punt_cli   Decimal?                 @db.Decimal(18, 2)
+  punt_pro   Decimal?                 @db.Decimal(18, 2)
+  dias_repos Int?
+  tipo       String?                  @db.Char(1)
+  alm_prin   String?                  @db.Char(4)
+  anulado    Boolean?
+  tipo_imp   String?                  @db.Char(1)
+  dis_cen    String?                  @db.Text
+  mon_ilc    Decimal?                 @db.Decimal(18, 5)
+  capacidad  Decimal?                 @db.Decimal(18, 3)
+  grado_al   Decimal?                 @db.Decimal(10, 2)
+  tipo_licor String?                  @db.Char(1)
+  compuesto  Boolean?
+  picture    Bytes?                   @db.Image
+  campo1     String?                  @db.VarChar(60)
+  campo2     String?                  @db.VarChar(60)
+  campo3     String?                  @db.VarChar(60)
+  campo4     String?                  @db.VarChar(60)
+  campo5     String?                  @db.VarChar(60)
+  campo6     String?                  @db.VarChar(60)
+  campo7     String?                  @db.VarChar(60)
+  campo8     String?                  @db.VarChar(60)
+  co_us_in   String?                  @db.Char(6)
+  fe_us_in   DateTime?                @db.DateTime
+  co_us_mo   String?                  @db.Char(6)
+  fe_us_mo   DateTime?                @db.DateTime
+  co_us_el   String?                  @db.Char(6)
+  fe_us_el   DateTime?                @db.DateTime
+  revisado   String?                  @db.Char(1)
+  trasnfe    String?                  @db.Char(1)
+  co_sucu    String?                  @db.Char(6)
+  rowguid    String?                  @db.UniqueIdentifier
+  tuni_venta String?                  @db.Char(6)
+  equi_uni1  Decimal?                 @db.Decimal(18, 5)
+  equi_uni2  Decimal?                 @db.Decimal(18, 5)
+  equi_uni3  Decimal?                 @db.Decimal(18, 5)
+  lote       Boolean?
+  serialp    String?                  @db.Char(30)
+  valido     Boolean?
+  atributo1  Boolean?
+  vatributo1 String?                  @db.Char(15)
+  atributo2  Boolean?
+  vatributo2 String?                  @db.Char(15)
+  atributo3  Boolean?
+  vatributo3 String?                  @db.Char(15)
+  atributo4  Boolean?
+  vatributo4 String?                  @db.Char(15)
+  atributo5  Boolean?
+  vatributo5 String?                  @db.Char(15)
+  atributo6  Boolean?
+  vatributo6 String?                  @db.Char(15)
+  garantia   String?                  @db.Char(30)
+  peso       Decimal?                 @db.Decimal(18, 5)
+  pie        Decimal?                 @db.Decimal(18, 5)
+  margen1    Decimal?                 @db.Decimal(18, 2)
+  margen2    Decimal?                 @db.Decimal(18, 2)
+  margen3    Decimal?                 @db.Decimal(18, 2)
+  margen4    Decimal?                 @db.Decimal(18, 2)
+  margen5    Decimal?                 @db.Decimal(18, 2)
+  row_id     Unsupported("timestamp")
+  imagen1    String?                  @db.VarChar(60)
+  imagen2    String?                  @db.VarChar(60)
+  i_art_des  String?                  @db.VarChar(60)
+  uni_emp    String?                  @db.Char(6)
+  rel_emp    Decimal?                 @db.Decimal(18, 5)
+  movil      Boolean?
+}
+
+model clientes {
+  co_cli     String    @id(map: "clientes_co_cli") @db.Char(10)
+  tipo       String?   @db.Char(6)
+  cli_des    String?   @db.VarChar(100)
+  direc1     String?   @db.Text
+  direc2     String?   @db.VarChar(60)
+  telefonos  String?   @db.VarChar(60)
+  fax        String?   @db.VarChar(60)
+  inactivo   Boolean?
+  comentario String?   @db.Text
+  respons    String?   @db.VarChar(60)
+  fecha_reg  DateTime? @db.SmallDateTime
+  puntaje    Int?
+  saldo      Float?
+  saldo_ini  Float?
+  fac_ult_ve Int?
+  fec_ult_ve DateTime? @db.SmallDateTime
+  net_ult_ve Decimal?  @db.Decimal(18, 2)
+  mont_cre   Decimal?  @db.Decimal(18, 2)
+  plaz_pag   Int?
+  desc_ppago Decimal?  @db.Decimal(18, 2)
+  co_zon     String?   @db.Char(6)
+  co_seg     String?   @db.Char(6)
+  co_ven     String?   @db.Char(6)
+  desc_glob  Decimal?  @db.Decimal(18, 2)
+  horar_caja String?   @db.VarChar(60)
+  frecu_vist String?   @db.VarChar(60)
+  lunes      Boolean?
+  martes     Boolean?
+  miercoles  Boolean?
+  jueves     Boolean?
+  viernes    Boolean?
+  sabado     Boolean?
+  domingo    Boolean?
+  dir_ent2   String?   @db.Text
+  tipo_iva   String?   @db.Char(1)
+  iva        Decimal?  @db.Decimal(18, 2)
+  rif        String?   @db.Char(18)
+  contribu   Boolean?
+  dis_cen    String?   @db.Text
+  nit        String?   @db.Char(18)
+  email      String?   @db.VarChar(60)
+  co_ingr    String?   @db.Char(6)
+  campo1     String?   @db.VarChar(60)
+  campo2     String?   @db.VarChar(60)
+  campo3     String?   @db.VarChar(60)
+  campo4     String?   @db.VarChar(60)
+  campo5     String?   @db.VarChar(60)
+  campo6     String?   @db.VarChar(60)
+  campo7     String?   @db.VarChar(60)
+  campo8     String?   @db.VarChar(60)
+  co_us_in   String?   @db.Char(6)
+  fe_us_in   DateTime? @db.DateTime
+  co_us_mo   String?   @db.Char(6)
+  fe_us_mo   DateTime? @db.DateTime
+  co_us_el   String?   @db.Char(6)
+  fe_us_el   DateTime? @db.DateTime
+  revisado   String?   @db.Char(1)
+  trasnfe    String?   @db.Char(1)
+  co_sucu    String?   @db.Char(6)
+  juridico   Boolean?
+  tipo_adi   Decimal?  @db.Decimal(1, 0)
+  matriz     String?   @db.Char(10)
+  co_tab     Int?
+  tipo_per   String?   @db.Char(1)
+  serialp    String?   @db.Char(30)
+  valido     Boolean?
+  estado     String?   @db.Char(1)
+  Id         Int?
+  co_pais    String?   @db.VarChar(6)
+  ciudad     String?   @db.VarChar(50)
+  zip        String?   @db.VarChar(10)
+  login      String?   @db.VarChar(10)
+  password   String?   @db.VarChar(50)
+  website    String?   @db.VarChar(200)
+  salestax   String?   @db.Char(8)
+  sincredito Boolean?
+  porc_esp   Float?
+  contribu_e Boolean?
+}
+
+model condicio {
+  co_cond   String                   @id(map: "condicio_co_cond") @db.Char(6)
+  cond_des  String                   @db.VarChar(60)
+  dias_cred Int
+  dis_cen   String                   @db.Text
+  campo1    String                   @db.VarChar(60)
+  campo2    String                   @db.VarChar(60)
+  campo3    String                   @db.VarChar(60)
+  campo4    String                   @db.VarChar(60)
+  co_us_in  String                   @db.Char(6)
+  fe_us_in  DateTime                 @db.DateTime
+  co_us_mo  String                   @db.Char(6)
+  fe_us_mo  DateTime                 @db.DateTime
+  co_us_el  String                   @db.Char(6)
+  fe_us_el  DateTime                 @db.DateTime
+  revisado  String                   @db.Char(1)
+  trasnfe   String                   @db.Char(1)
+  co_sucu   String                   @db.Char(6)
+  rowguid   String?                  @db.UniqueIdentifier
+  row_id    Unsupported("timestamp")
+}
+
+model pedidos {
+  fact_num   Int        @id(map: "pedidos_ped_num")
+  contrib    Boolean?
+  nombre     String?    @db.VarChar(60)
+  rif        String?    @db.Char(18)
+  nit        String?    @db.Char(18)
+  status     String?    @db.Char(1)
+  comentario String?    @db.Text
+  descrip    String?    @db.VarChar(60)
+  saldo      Decimal?   @db.Decimal(18, 2)
+  fec_emis   DateTime?  @db.SmallDateTime
+  fec_venc   DateTime?  @db.SmallDateTime
+  co_cli     String?    @db.Char(10)
+  co_ven     String?    @db.Char(6)
+  co_tran    String?    @db.Char(6)
+  dir_ent    String?    @db.Text
+  forma_pag  String?    @db.Char(6)
+  tot_bruto  Decimal?   @db.Decimal(18, 2)
+  tot_neto   Decimal?   @db.Decimal(18, 2)
+  glob_desc  Decimal?   @db.Decimal(18, 2)
+  tot_reca   Decimal?   @db.Decimal(18, 2)
+  porc_gdesc String?    @db.Char(15)
+  porc_reca  String?    @db.Char(15)
+  total_uc   Decimal?   @db.Decimal(18, 2)
+  total_cp   Decimal?   @db.Decimal(18, 2)
+  tot_flete  Decimal?   @db.Decimal(18, 2)
+  monto_dev  Decimal?   @db.Decimal(18, 2)
+  totklu     Decimal?   @db.Decimal(18, 2)
+  anulada    Boolean?
+  impresa    Boolean?
+  iva        Decimal?   @db.Decimal(18, 2)
+  iva_dev    Decimal?   @db.Decimal(18, 2)
+  feccom     DateTime?  @db.SmallDateTime
+  numcom     Int?
+  tasa       Decimal?   @db.Decimal(18, 5)
+  moneda     String?    @db.Char(6)
+  cta_contab String?    @db.Char(15)
+  seriales   Int?
+  tasag      Decimal?   @db.Decimal(18, 5)
+  tasag10    Decimal?   @db.Decimal(18, 5)
+  tasag20    Decimal?   @db.Decimal(18, 5)
+  campo1     String?    @db.VarChar(60)
+  campo2     String?    @db.VarChar(60)
+  campo3     String?    @db.VarChar(60)
+  campo4     String?    @db.VarChar(60)
+  campo5     String?    @db.VarChar(60)
+  campo6     String?    @db.VarChar(60)
+  campo7     String?    @db.VarChar(60)
+  campo8     String?    @db.VarChar(60)
+  co_us_in   String?    @db.Char(6)
+  fe_us_in   DateTime?  @db.DateTime
+  co_us_mo   String?    @db.Char(6)
+  fe_us_mo   DateTime?  @db.DateTime
+  co_us_el   String?    @db.Char(6)
+  fe_us_el   DateTime?  @db.DateTime
+  revisado   String?    @db.Char(1)
+  trasnfe    String?    @db.Char(1)
+  co_sucu    String?    @db.Char(6)
+  rowguid    String?    @db.UniqueIdentifier
+  mon_ilc    Decimal?   @db.Decimal(18, 5)
+  otros1     Decimal?   @db.Decimal(18, 5)
+  otros2     Decimal?   @db.Decimal(18, 5)
+  otros3     Decimal?   @db.Decimal(18, 5)
+  serialp    String?    @db.Char(30)
+  valido     Boolean?
+  dis_cen    String?    @db.Text
+  aux01      Decimal?   @db.Decimal(18, 5)
+  aux02      String?    @db.VarChar(30)
+  ID         Int?
+  salestax   String?    @db.Char(8)
+  origen     String?    @db.Char(1)
+  origen_d   String?    @db.Char(20)
+  sta_prod   String?    @db.Char(1)
+  telefono   String?    @db.VarChar(60)
+  //Add raltion manual
+  reng_ped   reng_ped[] 
+}
+
+model reng_ped {
+  fact_num   Int
+  reng_num   Int
+  tipo_doc   String?   @db.Char(1)
+  reng_doc   Int?
+  num_doc    Int?
+  co_art     String?   @db.Char(30)
+  co_alma    String?   @db.Char(6)
+  total_art  Decimal?  @db.Decimal(18, 5)
+  stotal_art Decimal?  @db.Decimal(18, 5)
+  pendiente  Decimal?  @db.Decimal(18, 5)
+  uni_venta  String?   @db.Char(6)
+  prec_vta   Decimal?  @db.Decimal(18, 5)
+  porc_desc  String?   @db.Char(15)
+  tipo_imp   String?   @db.Char(1)
+  reng_neto  Decimal?  @db.Decimal(18, 2)
+  cos_pro_un Decimal?  @db.Decimal(18, 5)
+  ult_cos_un Decimal?  @db.Decimal(18, 5)
+  ult_cos_om Decimal?  @db.Decimal(18, 5)
+  cos_pro_om Decimal?  @db.Decimal(18, 5)
+  total_dev  Decimal?  @db.Decimal(18, 5)
+  monto_dev  Decimal?  @db.Decimal(18, 5)
+  prec_vta2  Decimal?  @db.Decimal(18, 5)
+  anulado    Boolean?
+  des_art    String?   @db.Text
+  seleccion  Boolean?
+  cant_imp   Decimal?  @db.Decimal(18, 5)
+  comentario String?   @db.Text
+  total_uni  Decimal?  @db.Decimal(18, 5)
+  mon_ilc    Decimal?  @db.Decimal(18, 5)
+  otros      Decimal?  @db.Decimal(18, 5)
+  nro_lote   String?   @db.Char(20)
+  fec_lote   DateTime? @db.SmallDateTime
+  pendiente2 Decimal?  @db.Decimal(18, 5)
+  tipo_doc2  String?   @db.Char(1)
+  reng_doc2  Int?
+  num_doc2   Int?
+  serialp    String?   @db.Char(30)
+  valido     Boolean?
+  co_alma2   String?   @db.Char(6)
+  dis_cen    String?   @db.Text
+  aux01      Decimal?  @db.Decimal(18, 5)
+  aux02      String?   @db.VarChar(30)
+  cant_prod  Decimal?  @db.Decimal(18, 5)
+  imp_prod   Decimal?  @db.Decimal(18, 5)
+
+//relation manual
+  pedido pedidos @relation(fields: [fact_num], references: [fact_num])
+
+  @@id([fact_num, reng_num], map: "reng_ped_reng_ped")
+}
+
+model vendedor {
+  co_ven     String    @id(map: "vendedor_co_ven") @db.Char(6)
+  tipo       String?   @db.Char(1)
+  ven_des    String?   @db.VarChar(60)
+  dis_cen    String?   @db.Text
+  cedula     String?   @db.Char(16)
+  direc1     String?   @db.VarChar(60)
+  direc2     String?   @db.VarChar(60)
+  telefonos  String?   @db.VarChar(60)
+  fecha_reg  DateTime? @db.SmallDateTime
+  condic     Boolean?
+  comision   Decimal?  @db.Decimal(18, 2)
+  comen      String?   @db.Text
+  fun_cob    Boolean?
+  fun_ven    Boolean?
+  comisionv  Decimal?  @db.Decimal(18, 2)
+  fac_ult_ve Int?
+  fec_ult_ve DateTime? @db.SmallDateTime
+  net_ult_ve Decimal?  @db.Decimal(18, 2)
+  cli_ult_ve String?   @db.Char(6)
+  cta_contab String?   @db.Char(20)
+  campo1     String?   @db.VarChar(60)
+  campo2     String?   @db.VarChar(60)
+  campo3     String?   @db.VarChar(60)
+  campo4     String?   @db.VarChar(60)
+  campo5     String?   @db.VarChar(60)
+  campo6     String?   @db.VarChar(60)
+  campo7     String?   @db.VarChar(60)
+  campo8     String?   @db.VarChar(60)
+  co_us_in   String?   @db.Char(6)
+  fe_us_in   DateTime? @db.DateTime
+  co_us_mo   String?   @db.Char(6)
+  fe_us_mo   DateTime? @db.DateTime
+  co_us_el   String?   @db.Char(6)
+  fe_us_el   DateTime? @db.DateTime
+  revisado   String?   @db.Char(1)
+  trasnfe    String?   @db.Char(1)
+  co_sucu    String?   @db.Char(6)
+  rowguid    String?   @db.UniqueIdentifier
+  login      String?   @db.Char(10)
+  password   String?   @db.Char(50)
+  email      String?   @db.Char(40)
+  PSW_M      String?   @db.Char(20)
+}
+
+model zona {
+  co_zon   String    @id(map: "zona_co_zon") @db.Char(6)
+  zon_des  String?   @db.VarChar(60)
+  dis_cen  String?   @db.Text
+  campo1   String?   @db.VarChar(60)
+  campo2   String?   @db.VarChar(60)
+  campo3   String?   @db.VarChar(60)
+  campo4   String?   @db.VarChar(60)
+  co_us_in String?   @db.Char(6)
+  fe_us_in DateTime? @db.DateTime
+  co_us_mo String?   @db.Char(6)
+  fe_us_mo DateTime? @db.DateTime
+  co_us_el String?   @db.Char(6)
+  fe_us_el DateTime? @db.DateTime
+  revisado String?   @db.Char(1)
+  trasnfe  String?   @db.Char(1)
+  co_sucu  String?   @db.Char(6)
+  rowguid  String?   @db.UniqueIdentifier
+}

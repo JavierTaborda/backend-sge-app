@@ -1,9 +1,13 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { AllExeptionsFilter } from './filters/all-exeptions.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  //try catch global
+  app.useGlobalFilters(new AllExeptionsFilter());
 
   // Enable global validation by class-validator
   app.useGlobalPipes(
