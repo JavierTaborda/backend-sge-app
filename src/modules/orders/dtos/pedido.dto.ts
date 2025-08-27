@@ -1,4 +1,4 @@
-// src/modules/orders/dto/order.dto.ts
+// src/modules/orders/dto/pedido.dto.ts
 import {
   IsString,
   IsBoolean,
@@ -6,7 +6,8 @@ import {
   IsNumber,
   IsDate,
 } from 'class-validator';
-
+import { Decimal } from '../../../../prisma-clients/sqlserver/runtime/library';
+import { RengPedDto } from './reng_ped.dto';
 
 export class PedidoDto {
   @IsNumber()
@@ -14,255 +15,54 @@ export class PedidoDto {
 
   @IsOptional()
   @IsBoolean()
-  contrib?: boolean;
+  contrib?: boolean | null;
 
   @IsOptional()
   @IsString()
-  nombre?: string;
+  nombre?: string | null;
 
   @IsOptional()
   @IsString()
-  rif?: string;
+  rif?: string | null;
 
   @IsOptional()
   @IsString()
-  nit?: string;
+  nit?: string | null;
 
   @IsOptional()
   @IsString()
-  status?: string;
+  status?: string | null;
 
   @IsOptional()
   @IsString()
-  comentario?: string;
+  comentario?: string | null;
 
   @IsOptional()
   @IsString()
-  descrip?: string;
+  descrip?: string | null;
 
   @IsOptional()
-  tot_bruto?: number;
+  tot_bruto?: Decimal | null;
 
   @IsOptional()
-  tot_neto?: number;
+  tot_neto?: Decimal | null;
 
   @IsOptional()
-  glob_desc?: number;
+  tot_reca?: Decimal | null;
 
   @IsOptional()
-  tot_reca?: number;
+  fec_emis?: Date | null;
 
   @IsOptional()
-  @IsString()
-  porc_gdesc?: string;
+  co_cli?: string | null;
 
   @IsOptional()
-  @IsString()
-  porc_reca?: string;
-
-  @IsOptional()
-  total_uc?: number;
-
-  @IsOptional()
-  total_cp?: number;
-
-  @IsOptional()
-  tot_flete?: number;
-
-  @IsOptional()
-  monto_dev?: number;
-
-  @IsOptional()
-  totklu?: number;
+  co_ven?: string | null;
 
   @IsOptional()
   @IsBoolean()
-  anulada?: boolean;
+  valido?: boolean | null;
 
   @IsOptional()
-  @IsBoolean()
-  impresa?: boolean;
-
-  @IsOptional()
-  iva?: number;
-
-  @IsOptional()
-  iva_dev?: number;
-
-  @IsOptional()
-  @IsDate()
-  fec_emis?: Date;
-
-  @IsOptional()
-  @IsDate()
-  fec_venc?: Date;
-
-  @IsOptional()
-  @IsString()
-  co_cli?: string;
-
-  @IsOptional()
-  @IsString()
-  co_ven?: string;
-
-  @IsOptional()
-  @IsString()
-  co_tran?: string;
-
-  @IsOptional()
-  @IsString()
-  dir_ent?: string;
-
-  @IsOptional()
-  @IsString()
-  forma_pag?: string;
-
-  @IsOptional()
-  tasa?: number;
-
-  @IsOptional()
-  @IsString()
-  moneda?: string;
-
-  @IsOptional()
-  @IsString()
-  cta_contab?: string;
-
-  @IsOptional()
-  seriales?: number;
-
-  @IsOptional()
-  tasag?: number;
-
-  @IsOptional()
-  tasag10?: number;
-
-  @IsOptional()
-  tasag20?: number;
-
-  @IsOptional()
-  @IsString()
-  campo1?: string;
-
-  @IsOptional()
-  @IsString()
-  campo2?: string;
-
-  @IsOptional()
-  @IsString()
-  campo3?: string;
-
-  @IsOptional()
-  @IsString()
-  campo4?: string;
-
-  @IsOptional()
-  @IsString()
-  campo5?: string;
-
-  @IsOptional()
-  @IsString()
-  campo6?: string;
-
-  @IsOptional()
-  @IsString()
-  campo7?: string;
-
-  @IsOptional()
-  @IsString()
-  campo8?: string;
-
-  @IsOptional()
-  @IsString()
-  co_us_in?: string;
-
-  @IsOptional()
-  @IsDate()
-  fe_us_in?: Date;
-
-  @IsOptional()
-  @IsString()
-  co_us_mo?: string;
-
-  @IsOptional()
-  @IsDate()
-  fe_us_mo?: Date;
-
-  @IsOptional()
-  @IsString()
-  co_us_el?: string;
-
-  @IsOptional()
-  @IsDate()
-  fe_us_el?: Date;
-
-  @IsOptional()
-  @IsString()
-  revisado?: string;
-
-  @IsOptional()
-  @IsString()
-  trasnfe?: string;
-
-  @IsOptional()
-  @IsString()
-  co_sucu?: string;
-
-  @IsOptional()
-  @IsString()
-  rowguid?: string;
-
-  @IsOptional()
-  mon_ilc?: number;
-
-  @IsOptional()
-  otros1?: number;
-
-  @IsOptional()
-  otros2?: number;
-
-  @IsOptional()
-  otros3?: number;
-
-  @IsOptional()
-  @IsString()
-  serialp?: string;
-
-  @IsOptional()
-  @IsBoolean()
-  valido?: boolean;
-
-  @IsOptional()
-  @IsString()
-  dis_cen?: string;
-
-  @IsOptional()
-  aux01?: number;
-
-  @IsOptional()
-  @IsString()
-  aux02?: string;
-
-  @IsOptional()
-  ID?: number;
-
-  @IsOptional()
-  @IsString()
-  salestax?: string;
-
-  @IsOptional()
-  @IsString()
-  origen?: string;
-
-  @IsOptional()
-  @IsString()
-  origen_d?: string;
-
-  @IsOptional()
-  @IsString()
-  sta_prod?: string;
-
-  @IsOptional()
-  @IsString()
-  telefono?: string;
+  reng_ped?: RengPedDto[] | null;
 }

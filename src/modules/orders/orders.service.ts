@@ -7,7 +7,7 @@ import { DateUtils } from 'src/utils/date.utils';
 export class OrdersService {
   constructor(private readonly sql: SQLServerPrismaService) {}
 
-  async GetPedidos() {
+  async GetPedidos():Promise<PedidoDto[]> {
     const {start, end}=DateUtils.getCurrentMonthRange();
     return this.sql.pedidos.findMany({
       where: {
