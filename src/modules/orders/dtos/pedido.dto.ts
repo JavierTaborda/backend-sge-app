@@ -25,9 +25,7 @@ export class PedidoDto {
   @IsString()
   rif?: string | null;
 
-  @IsOptional()
-  @IsString()
-  nit?: string | null;
+
 
   @IsOptional()
   @IsString()
