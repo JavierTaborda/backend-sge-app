@@ -1,18 +1,26 @@
 import { Injectable } from '@nestjs/common';
-import { MySQLPrismaService } from '../../database/mysql.service';
 import { VendorDto } from './dto/vendor.dto';
+import { SQLServerPrismaService } from 'src/database/sqlserver.service';
 
 @Injectable()
 export class VendorsService {
-  constructor(private readonly mysql: MySQLPrismaService) {}
+  constructor(private readonly sql: SQLServerPrismaService) {}
 
-  async getAllVendors(): Promise<VendorDto[]> {
-    return this.mysql.$queryRaw<
-      VendorDto[]
-    >`SELECT * FROM clvendedores WHERE activo = true`;
+  async getAllVendors() {
+    return this.sql.vendedor.findMany({
+      where: {
+        tipo: 'A',
+        condic: false,
+        trasnfe: '1',
+      },
+    });
   }
-  async getVendorByCodven(codven: string): Promise<VendorDto[]> {
-    return this.mysql.$queryRaw<
-      VendorDto[]>`SELECT * FROM clvendedores WHERE codven = ${codven}`;
+
+  async getVendorByCodven(codven: string){
+    return this.sql.vendedor.findUnique({
+      where: {
+        co_ven: codven,
+      },
+    });
   }
 }

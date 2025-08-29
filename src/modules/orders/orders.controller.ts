@@ -1,4 +1,5 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Query } from '@nestjs/common';
+import { AprobacionPedidoDto } from './dtos/aprobacion.pedido.dto';
 import { OrdersService } from './orders.service';
 
 @Controller('orders')
@@ -9,13 +10,17 @@ export class OrdersController {
   async GetPedidos() {
     return this.orderService.GetPedidos();
   }
+  @Get('Approval')
+  async GetAprobacionPedidos(): Promise<AprobacionPedidoDto[]> {
+    return this.orderService.GetAprobacionPedidos();
+  }
 
   @Get('filters')
   async GetFilters(
     @Query('dateIni') dateIni?: string,
     @Query('dateEnd') dateEnd?: string,
     @Query('estatus') estatus?: string,
-   // @Query('zone') zone?: string,
+    // @Query('zone') zone?: string,
     @Query('cancelled') cancelled?: boolean,
     @Query('vendor') vendor?: string,
   ) {
@@ -29,5 +34,14 @@ export class OrdersController {
       cancelled,
       vendor,
     );
+  }
+
+  // PATCH /orders/:factNum
+  @Patch(':factNum/')
+  async updateRevisadoPedido(
+    @Param('factNum', ParseIntPipe) factNum: number,
+    @Body('status') status: string,
+  ) {
+    return this.orderService.UpdateRevisadoPedido(factNum, status);
   }
 }

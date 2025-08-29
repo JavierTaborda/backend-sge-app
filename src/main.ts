@@ -6,6 +6,14 @@ import { AllExeptionsFilter } from './filters/all-exeptions.filter';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  //enable cors
+  app.enableCors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
+
+
   //try catch global
   app.useGlobalFilters(new AllExeptionsFilter());
 
