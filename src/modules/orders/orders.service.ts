@@ -73,7 +73,7 @@ export class OrdersService {
     LEFT JOIN reng_ped r ON p.fact_num = r.fact_num
     LEFT JOIN art a ON r.co_art = a.co_art
     LEFT JOIN condicio co ON p.forma_pag= co.co_cond
-    WHERE p.fec_emis BETWEEN '${start.toISOString()}' AND '${end.toISOString()}'
+    --WHERE p.fec_emis BETWEEN '${start.toISOString()}' AND '${end.toISOString()}'
     ORDER BY p.fact_num, r.reng_num
   `)) as RawPedidoRow[];
 
@@ -165,8 +165,21 @@ export class OrdersService {
     return mapRawPedidos(result);
   }
 
+  async GetRengProductos(factNum: number) {
+   
+    return this.sql.reng_ped.findMany({
+      where: {
+        fact_num: factNum,
+      },
+    });
+  }
+
   async UpdateRevisadoPedido(factNum: number, status: string) {
-    const updateSttatus = status === 'Revisado' ? '1' : '0';
+    if (status !== '1' && status !== ' ') {
+      throw new Error(
+        `Estado inválido: '${status}'. Solo se permite '1' o ' ' (espacio).`,
+      );
+    }
 
     const pedido = await this.sql.pedidos.findUnique({
       where: { fact_num: factNum },
@@ -178,10 +191,10 @@ export class OrdersService {
 
     const response = await this.sql.pedidos.update({
       where: { fact_num: factNum },
-      data: { revisado: updateSttatus },
+      data: { revisado: status },
       include: { reng_ped: true },
     });
 
-    return response; // return updated pedido
+    return response;
   }
 }

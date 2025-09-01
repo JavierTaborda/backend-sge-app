@@ -10,12 +10,18 @@ export class OrdersController {
   async GetPedidos() {
     return this.orderService.GetPedidos();
   }
-  @Get('Approval')
+
+  @Get('rengpedidos/:factNum/')
+  async GetRengPedidos(@Param('factNum', ParseIntPipe) factNum: number,) {
+     
+    return this.orderService.GetRengProductos(factNum);
+  }
+  @Get('approval')
   async GetAprobacionPedidos(): Promise<AprobacionPedidoDto[]> {
     return this.orderService.GetAprobacionPedidos();
   }
 
-  @Get('filters')
+  @Get('aproval/filters')
   async GetFilters(
     @Query('dateIni') dateIni?: string,
     @Query('dateEnd') dateEnd?: string,

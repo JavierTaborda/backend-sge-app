@@ -1,34 +1,86 @@
-import { IsString, IsBoolean, IsOptional } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class VendorDto {
   @IsString()
-  codven: string;
-
-  @IsString()
-  vendes: string;
+  cod_ven: string;
 
   @IsOptional()
   @IsString()
-  cedula?: string;
+  ven_des?: string;
 
-  @IsOptional()
-  @IsString()
-  telefono1?: string;
+  // @IsOptional()
+  // @IsString()
+  // tipo?: string;
 
-  @IsOptional()
-  @IsString()
-  telefono2?: string;
+  // @IsOptional()
+  // @IsString()
+  // cedula?: string;
 
-  @IsOptional()
-  @IsString()
-  codzon?: string;
+  // @IsOptional()
+  // @IsString()
+  // direc1?: string;
 
-  @IsBoolean()
-  vende: boolean;
+  // @IsOptional()
+  // @IsString()
+  // direc2?: string;
 
-  @IsBoolean()
-  cobra: boolean;
+  // @IsOptional()
+  // @IsString()
+  // telefonos?: string;
 
-  @IsBoolean()
-  activo: boolean;
+  // @IsOptional()
+  // @IsBoolean()
+  // condic?: boolean;
+
+  // @IsOptional()
+  // @IsNumber()
+  // comision?: number;
+
+  // @IsOptional()
+  // @IsBoolean()
+  // fun_cob?: boolean;
+
+  // @IsOptional()
+  // @IsBoolean()
+  // fun_ven?: boolean;
+
+  // @IsOptional()
+  // @IsNumber()
+  // comisionv?: number;
+
+  // @IsOptional()
+  // @IsNumber()
+  // fac_ult_ve?: number;
+
+  // @IsOptional()
+  // @IsNumber()
+  // net_ult_ve?: number;
+
+  // @IsOptional()
+  // @IsString()
+  // cli_ult_ve?: string;
+
+  // @IsOptional()
+  // @IsString()
+  // cta_contab?: string;
+
+  // @IsOptional()
+  // @IsString()
+  // email?: string;
+
+  // @IsOptional()
+  // @IsString()
+  // login?: string;
+
+  // @IsOptional()
+  // @IsString()
+  // password?: string;
+
+  // @IsOptional()
+  // @IsString()
+  // codzon?: string;
+
+  // @IsOptional()
+  // @IsString()
+  // zon_des?: string;
 }

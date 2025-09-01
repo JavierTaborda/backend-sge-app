@@ -1,13 +1,13 @@
 import { Controller, Get, Param } from '@nestjs/common';
-import { VendorsService } from './vendors.service';
 import { VendorDto } from './dto/vendor.dto';
+import { VendorsService } from './vendors.service';
 
 @Controller('vendors')
 export class VendorsController {
   constructor(private readonly vendorsServise: VendorsService) {}
 
   @Get()
-  async getAll(){
+  async getAll(): Promise<VendorDto[]>{
     return this.vendorsServise.getAllVendors();
   }
   @Get(':codven')
