@@ -1,8 +1,11 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Query, UseGuards } from '@nestjs/common';
+import { Role } from 'src/auth/decorators/roles.decorator';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { AprobacionPedidoDto } from './dtos/aprobacion.pedido.dto';
 import { OrdersService } from './orders.service';
 
 @Controller('orders')
+@UseGuards(JwtAuthGuard)
 export class OrdersController {
   constructor(private readonly orderService: OrdersService) {}
 
@@ -12,8 +15,7 @@ export class OrdersController {
   }
 
   @Get('rengpedidos/:factNum/')
-  async GetRengPedidos(@Param('factNum', ParseIntPipe) factNum: number,) {
-     
+  async GetRengPedidos(@Param('factNum', ParseIntPipe) factNum: number) {
     return this.orderService.GetRengProductos(factNum);
   }
   @Get('approval')
@@ -43,6 +45,7 @@ export class OrdersController {
   }
 
   // PATCH /orders/:factNum
+  @Role('admin', 'gerente')
   @Patch(':factNum/')
   async updateRevisadoPedido(
     @Param('factNum', ParseIntPipe) factNum: number,

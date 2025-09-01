@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
-import { ZonesService } from './zones.service';
+import { AuthModule } from 'src/auth/auth.module';
 import { DatabaseModule } from 'src/database/database.module';
 import { ZonesController } from './zones.controller';
+import { ZonesService } from './zones.service';
 
 @Module({
-  imports:[DatabaseModule],
+  imports: [DatabaseModule, AuthModule],
   providers: [ZonesService],
-  controllers:[ZonesController]
+  controllers: [ZonesController],
 })
 export class ZonesModule {}

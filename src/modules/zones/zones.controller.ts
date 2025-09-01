@@ -1,19 +1,13 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { ZoneDto } from './dtos/zone.dto';
 import { ZonesService } from './zones.service';
 
 @Controller('zones')
+@UseGuards(JwtAuthGuard)
 export class ZonesController {
   constructor(private readonly zoneService: ZonesService) {}
-
-  @Get()
   async GetZones(): Promise<ZoneDto[]> {
-
-      return this.zoneService.GetZones();
+    return this.zoneService.GetZones();
   }
-//   @Get()
-//   async GetZones(@Req() request: Request): Promise<ZoneDto[]> {
-//     console.log('Headers:', request.headers); 
-//     return this.zoneService.GetZones();
-//   }
 }

@@ -8,7 +8,6 @@ export class ZonesService {
   constructor(private readonly sql: SQLServerPrismaService) {}
 
   async GetZones(): Promise<ZoneDto[]> {
-    
     const zones = await this.sql.zona.findMany({});
     return plainToInstance(ZoneDto, zones, { excludeExtraneousValues: true });
   }
