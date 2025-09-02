@@ -9,7 +9,7 @@ import { OrdersService } from './orders.service';
 export class OrdersController {
   constructor(private readonly orderService: OrdersService) {}
 
-  @Get()
+  @Get('All')
   async GetPedidos() {
     return this.orderService.GetPedidos();
   }

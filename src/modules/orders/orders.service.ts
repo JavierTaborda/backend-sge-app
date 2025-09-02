@@ -12,10 +12,10 @@ export class OrdersService {
     const { start, end } = DateUtils.getCurrentMonthRange();
     return this.sql.pedidos.findMany({
       where: {
-        fec_emis: {
-          gte: start, //gte: since / desde
-          lte: end, //lte: to / hasta
-        },
+        // fec_emis: {
+        //   gte: start, //gte: since / desde
+        //   lte: end, //lte: to / hasta
+        // },
       },
       include: { reng_ped: true },
     });
