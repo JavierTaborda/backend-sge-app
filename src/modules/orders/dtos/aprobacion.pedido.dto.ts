@@ -43,7 +43,6 @@ export class AprobacionPedidoDto {
   @IsString()
   ven_des: string;
 
-
   @IsString()
   dir_ent: string;
 
@@ -57,25 +56,21 @@ export class AprobacionPedidoDto {
   revisado: string;
 
   @IsString()
-  tot_bruto: string;
+  tot_bruto: number;
 
   @IsString()
-  tot_neto: string;
+  tot_neto: number;
 
   @IsString()
-  glob_desc: string;
+  iva: number;
 
-  @IsString()
-  iva: string;
 
-  @IsNumber()
-  impresa: number;
 
   @IsString()
   aux02: string;
 
   @IsString()
-  tasa: string;
+  tasa: number;
 
   @IsString()
   moneda: string;
@@ -89,8 +84,6 @@ export class AprobacionPedidoDto {
   @IsString()
   zon_des: string;
 
-  @IsNumber()
-  reng_max: number;
 
   @IsArray()
   @Type(() => RengPedDto)

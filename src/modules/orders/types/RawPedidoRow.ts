@@ -16,9 +16,7 @@ export type RawPedidoRow = {
   revisado: string;
   tot_bruto: string;
   tot_neto: string;
-  glob_desc: string;
   iva: string;
-  impresa: number;
   aux02: string;
   tasa: string;
   moneda: string;
@@ -33,7 +31,6 @@ export type RawPedidoRow = {
   stotal_art: string;
   pendiente: string;
   uni_venta: string;
-  des_uni: string;
   prec_vta: string;
   prec_vta2: string;
   reng_neto: string;

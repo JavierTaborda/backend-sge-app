@@ -11,5 +11,6 @@ export  class AllExeptionsFilter implements ExceptionFilter{
         const message=exception.message || 'Internal server error';
 
         response.status(status).json({statusCode: status,message});
+        console.log(exception)
     }
 }

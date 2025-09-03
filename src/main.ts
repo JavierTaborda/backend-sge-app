@@ -1,31 +1,37 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import * as fs from 'fs';
 import { AppModule } from './app.module';
 import { AllExeptionsFilter } from './filters/all-exeptions.filter';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const isProd = process.env.NODE_ENV === 'production';
 
-  //enable cors
+  const app = isProd
+    ? await NestFactory.create(AppModule, {
+        httpsOptions: {
+          key: fs.readFileSync(process.env.SSL_KEY_PATH || './cert/key.pem'),
+          cert: fs.readFileSync(process.env.SSL_CERT_PATH || './cert/cert.pem'),
+        },
+      })
+    : await NestFactory.create(AppModule);
+
   app.enableCors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
-
-  //try catch global
   app.useGlobalFilters(new AllExeptionsFilter());
 
-  // Enable global validation by class-validator
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, // delete properties no declared in DTO
-      forbidNonWhitelisted: true, // trow error if have extra properties 
-      transform: true, 
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
     }),
   );
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT || (isProd ? 443 : 3000));
 }
 bootstrap();
