@@ -10,17 +10,32 @@ export class OrdersService {
   constructor(private readonly sql: SQLServerPrismaService) {}
   async GetPedidos() {
     const { start, end } = DateUtils.getCurrentMonthRange();
-    return this.sql.pedidos.findMany({
+
+    const pedidos = await this.sql.pedidos.findMany({
       where: {
         // fec_emis: {
-        //   gte: start, //gte: since / desde
-        //   lte: end, //lte: to / hasta
+        //   gte: start,
+        //   lte: end,
         // },
       },
       include: { reng_ped: true },
     });
-  }
 
+    // Reemplazar tot_neto en dolares
+    const pedidosModificados = pedidos.map((pedido) => {
+      const totNetoOriginal = pedido.tot_neto?.toString() ?? '0';
+      const tasa = pedido.tasa?.toString() ?? '1';
+
+      const nuevoTotNeto = parseFloat(totNetoOriginal) / parseFloat(tasa);
+
+      return {
+        ...pedido,
+        tot_neto: nuevoTotNeto, 
+      };
+    });
+
+    return pedidosModificados;
+  }
   async GetAprobacionPedidos(): Promise<AprobacionPedidoDto[]> {
     const { start, end } = DateUtils.getCurrentMonthRange();
 
@@ -166,7 +181,6 @@ export class OrdersService {
   }
 
   async GetRengProductos(factNum: number) {
-   
     return this.sql.reng_ped.findMany({
       where: {
         fact_num: factNum,
