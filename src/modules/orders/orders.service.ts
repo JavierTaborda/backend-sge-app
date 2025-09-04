@@ -13,6 +13,8 @@ export class OrdersService {
 
     const pedidos = await this.sql.pedidos.findMany({
       where: {
+
+
         // fec_emis: {
         //   gte: start,
         //   lte: end,
@@ -86,7 +88,9 @@ export class OrdersService {
     LEFT JOIN reng_ped r ON p.fact_num = r.fact_num
     LEFT JOIN art a ON r.co_art = a.co_art
     LEFT JOIN condicio co ON p.forma_pag= co.co_cond
-    WHERE p.status = 0 AND p.anulada = 0 AND p.aux02 = ''  
+    WHERE p.status = 0 
+    --AND p.anulada = 0 
+    AND p.aux02 = ''  
     ORDER BY p.fact_num DESC
   `)) as RawPedidoRow[];
 

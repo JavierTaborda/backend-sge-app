@@ -73,28 +73,28 @@ prisma/
 
 Schema.prisma (MySQL)
 prisma/mysql/schema.prisma
-generator client {
-provider = "prisma-client-js"
-output = "../../prisma-clients/mysql"
-}
+  generator client {
+    provider = "prisma-client-js"
+    output = "../../prisma-clients/mysql"
+  }
 
-datasource db {
-provider = "mysql"
-url = env("MYSQL_DATABASE_URL")
-}
+  datasource db {
+    provider = "mysql"
+    url = env("MYSQL_DATABASE_URL")
+  }
 
 
 Schema.prisma (SQL Server)
 prisma/sqlserver/schema.prisma
-generator client {
-provider = "prisma-client-js"
-output = "../../prisma-clients/sqlserver"
-}
+  generator client {
+    provider = "prisma-client-js"
+    output = "../../prisma-clients/sqlserver"
+  }
 
-datasource db {
-provider = "sqlserver"
-url = env("SQLSERVER_DATABASE_URL")
-}
+  datasource db {
+    provider = "sqlserver"
+    url = env("SQLSERVER_DATABASE_URL")
+  }
 
 Generar tablas :
 

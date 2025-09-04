@@ -7,14 +7,16 @@ import { AllExeptionsFilter } from './filters/all-exeptions.filter';
 async function bootstrap() {
   const isProd = process.env.NODE_ENV === 'production';
 
-  const app = isProd
-    ? await NestFactory.create(AppModule, {
-        httpsOptions: {
-          key: fs.readFileSync(process.env.SSL_KEY_PATH || './cert/key.pem'),
-          cert: fs.readFileSync(process.env.SSL_CERT_PATH || './cert/cert.pem'),
-        },
-      })
-    : await NestFactory.create(AppModule);
+const app = isProd
+  ? await NestFactory.create(AppModule, {
+      httpsOptions: {
+        key: fs.readFileSync(process.env.SSL_KEY_PATH || './cert/server.key'),
+        cert: fs.readFileSync(process.env.SSL_CERT_PATH || './cert/server.crt'),
+      },
+    })
+  : await NestFactory.create(AppModule);
+  
+  app.setGlobalPrefix('api');
 
   app.enableCors({
     origin: '*',
