@@ -13,6 +13,9 @@ export class OrdersService {
 
     const pedidos = await this.sql.pedidos.findMany({
       where: {
+        revisado: '1',
+        aux02: 'Si',
+    
 
 
         // fec_emis: {
