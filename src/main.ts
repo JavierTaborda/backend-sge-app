@@ -10,8 +10,9 @@ async function bootstrap() {
 const app = isProd
   ? await NestFactory.create(AppModule, {
       httpsOptions: {
-        key: fs.readFileSync(process.env.SSL_KEY_PATH || './cert/server.key'),
-        cert: fs.readFileSync(process.env.SSL_CERT_PATH || './cert/server.crt'),
+        key: fs.readFileSync(process.env.SSL_KEY_PATH || './ssl/key.key'),
+        cert: fs.readFileSync(process.env.SSL_CERT_PATH || './ssl/cert.pem'),
+        ca: fs.readFileSync(process.env.SSL_CA_PATH || './ssl/ca_bundle.pem'),
       },
     })
   : await NestFactory.create(AppModule);
