@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 
-@Controller('isonline')
+@Controller('')
 export class IsOnlineController {
     @Get()
     async IsOnline(){
