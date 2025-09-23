@@ -23,7 +23,7 @@ export class OrdersController {
     return this.orderService.GetAprobacionPedidos();
   }
 
-  @Get('aproval/filters')
+  @Get('filters')
   async GetFilters(
     @Query('dateIni') dateIni?: string,
     @Query('dateEnd') dateEnd?: string,

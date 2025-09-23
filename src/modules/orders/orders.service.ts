@@ -24,7 +24,7 @@ export class OrdersService {
       include: { reng_ped: true },
     });
 
-    // Reemplazar tot_neto en dolares
+    
     const pedidosModificados = pedidos.map((pedido) => {
       const totNetoOriginal = pedido.tot_neto?.toString() ?? '0';
       const tasa = pedido.tasa?.toString() ?? '1';
@@ -109,7 +109,7 @@ export class OrdersService {
 
     if (dateIni && dateEnd) {
       filters.push(
-        `p.fec_emis BETWEEN '${dateIni.toISOString()}' AND '${dateEnd.toISOString()}'`,
+        `p.fec_emis BETWEEN '${(dateIni)}' AND '${(dateEnd)}'`,
       );
     }
 
@@ -125,13 +125,16 @@ export class OrdersService {
       filters.push(`p.co_ven = '${vendor}'`);
     }
 
+    const { start, end } = DateUtils.getCurrentMonthRange();
+
     const whereClause =
       filters.length > 0
-        ? `WHERE  p.status = 0 AND p.anulada = 0 AND p.aux02 = ''   ${filters.join(' AND ')}`
-        : `WHERE  p.status = 0 AND p.anulada = 0 AND p.aux02 = ''`;
+        ? `WHERE p.status = 0 AND p.aux02 = '' AND ${filters.join(' AND ')}`
+        : `WHERE p.status = 0 AND p.aux02 = '' 
+         AND p.fec_emis BETWEEN '${(start)}' AND '${(end)}'`;
 
     const result = (await this.sql.$queryRawUnsafe(`
-   SELECT 
+    SELECT 
       p.fact_num,
       p.status AS estatus,
       p.comentario,
@@ -145,7 +148,7 @@ export class OrdersService {
       v.ven_des,
       p.dir_ent,
       p.forma_pag,
-      co.cond_des ,
+      co.cond_des,
       p.revisado,
       CASE WHEN p.moneda = 'BS' THEN p.tot_bruto ELSE ROUND(p.tot_bruto/p.tasa,2) END AS tot_bruto,
       CASE WHEN p.moneda = 'BS' THEN p.tot_neto ELSE ROUND(p.tot_neto/p.tasa,2) END AS tot_neto,
@@ -175,12 +178,9 @@ export class OrdersService {
     LEFT JOIN vendedor v ON p.co_ven = v.co_ven
     LEFT JOIN reng_ped r ON p.fact_num = r.fact_num
     LEFT JOIN art a ON r.co_art = a.co_art
-    LEFT JOIN condicio co ON p.forma_pag= co.co_cond
- 
-    ORDER BY p.fact_num DESC
-    ${whereClause} 
-    
-    ORDER BY p.fact_num, r.reng_num
+    LEFT JOIN condicio co ON p.forma_pag = co.co_cond
+    ${whereClause}
+    ORDER BY p.fact_num DESC, r.reng_num
   `)) as RawPedidoRow[];
 
     return mapRawPedidos(result);
