@@ -1,9 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { DateUtils } from 'src/utils/date.utils';
 import { SQLServerPrismaService } from '../../database/sqlserver.service';
 import { AprobacionPedidoDto } from './dtos/aprobacion.pedido.dto';
+import { PedidoFilterDto } from './dtos/pedidos-filters';
 import { mapRawPedidos } from './helpers/mapRawPedidos';
 import { RawPedidoRow } from './types/RawPedidoRow';
+
 
 @Injectable()
 export class OrdersService {
@@ -97,43 +99,57 @@ export class OrdersService {
 
     return mapRawPedidos(result);
   }
+  
 
-  async GetPedidosFilters(
-    dateIni?: Date,
-    dateEnd?: Date,
-    estatus?: string,
-    cancelled?: boolean,
-    vendor?: string,
-  ): Promise<AprobacionPedidoDto[]> {
-    const filters: string[] = [];
+  async GetPedidosFilters(filters: PedidoFilterDto): Promise<AprobacionPedidoDto[]> {
+    const { dateIni, dateEnd, estatus, cancelled, vendor, zone } = filters;
 
-    if (dateIni && dateEnd) {
-      filters.push(
-        `p.fec_emis BETWEEN '${(dateIni)}' AND '${(dateEnd)}'`,
-      );
-    }
-
-    if (estatus) {
-      filters.push(`p.revisado = '${estatus}'`);
-    }
-
-    if (typeof cancelled === 'boolean') {
-      filters.push(`p.anulada = ${cancelled ? 1 : 0}`);
-    }
-
-    if (vendor) {
-      filters.push(`p.co_ven = '${vendor}'`);
+    // Validación de fechas
+    if (dateIni && dateEnd && new Date(dateIni) > new Date(dateEnd)) {
+      throw new BadRequestException('La fecha inicial no puede ser mayor que la final');
     }
 
     const { start, end } = DateUtils.getCurrentMonthRange();
+    const conditions: string[] = [];
 
-    const whereClause =
-      filters.length > 0
-        ? `WHERE p.status = 0 AND p.aux02 = '' AND ${filters.join(' AND ')}`
-        : `WHERE p.status = 0 AND p.aux02 = '' 
-         AND p.fec_emis BETWEEN '${(start)}' AND '${(end)}'`;
+    // Filtro por fecha
+    if (dateIni && dateEnd) {
+      conditions.push(`p.fec_emis BETWEEN '${new Date(dateIni).toISOString()}' AND '${new Date(dateEnd).toISOString()}'`);
+    } else {
+      conditions.push(`p.fec_emis BETWEEN '${start.toISOString()}' AND '${end.toISOString()}'`);
+    }
 
-    const result = (await this.sql.$queryRawUnsafe(`
+    // Filtro por estatus
+    if (estatus) {
+      conditions.push(`p.revisado = '${estatus}'`);
+    }
+    else
+    {
+      conditions.push(` p.revisado = 1 AND p.aux02 !=''`);
+    }
+
+    // Filtro por anulada
+    if (typeof cancelled === 'boolean') {
+      conditions.push(`p.anulada = ${cancelled ? 1 : 0}`);
+    } else {
+      conditions.push(`p.anulada = 0`);
+    }
+
+    // Filtro por vendedor
+    if (vendor) {
+      conditions.push(`v.ven_des = '${vendor}'`);
+    }
+
+    // Filtro por zona
+    if (zone) {
+      conditions.push(`z.zon_des = '${zone}'`);
+    }
+
+    const whereClause = `WHERE ${conditions.join(' AND ')}`;
+
+    //console.log(whereClause);
+
+    const result = await this.sql.$queryRawUnsafe(`
     SELECT 
       p.fact_num,
       p.status AS estatus,
@@ -181,7 +197,7 @@ export class OrdersService {
     LEFT JOIN condicio co ON p.forma_pag = co.co_cond
     ${whereClause}
     ORDER BY p.fact_num DESC, r.reng_num
-  `)) as RawPedidoRow[];
+  `) as RawPedidoRow[];
 
     return mapRawPedidos(result);
   }

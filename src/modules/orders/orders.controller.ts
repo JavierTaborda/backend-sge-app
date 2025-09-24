@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, ParseIntPipe, Patch, Query, UseGuards } f
 import { Role } from 'src/auth/decorators/roles.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { AprobacionPedidoDto } from './dtos/aprobacion.pedido.dto';
+import { PedidoFilterDto } from './dtos/pedidos-filters';
 import { OrdersService } from './orders.service';
 
 @Controller('orders')
@@ -25,22 +26,17 @@ export class OrdersController {
 
   @Get('filters')
   async GetFilters(
-    @Query('dateIni') dateIni?: string,
-    @Query('dateEnd') dateEnd?: string,
-    @Query('estatus') estatus?: string,
+    @Query() filters:PedidoFilterDto
+    // @Query('dateIni') dateIni?: string,
+    // @Query('dateEnd') dateEnd?: string,
+    // @Query('estatus') estatus?: string,
+    // @Query('cancelled') cancelled?: boolean,
+    // @Query('vendor') vendor?: string,
     // @Query('zone') zone?: string,
-    @Query('cancelled') cancelled?: boolean,
-    @Query('vendor') vendor?: string,
   ) {
-    const iniDate = dateIni ? new Date(dateIni) : undefined;
-    const endDate = dateEnd ? new Date(dateEnd) : undefined;
 
     return this.orderService.GetPedidosFilters(
-      iniDate,
-      endDate,
-      estatus,
-      cancelled,
-      vendor,
+     filters
     );
   }
 
