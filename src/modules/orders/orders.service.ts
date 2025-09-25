@@ -123,14 +123,15 @@ export class OrdersService {
     if (estatus) {
       conditions.push(`p.revisado = '${estatus}'`);
     }
-    else
-    {
-      conditions.push(` p.revisado = 1 AND p.aux02 !=''`);
-    }
+    // else
+    // {
+    //   conditions.push(` p.revisado = 1 AND p.aux02 !=''`);
+    // }
 
     // Filtro por anulada
-    if (typeof cancelled === 'boolean') {
-      conditions.push(`p.anulada = ${cancelled ? 1 : 0}`);
+
+    if (cancelled) {
+      conditions.push(`p.anulada = 1`);
     } else {
       conditions.push(`p.anulada = 0`);
     }
@@ -198,6 +199,8 @@ export class OrdersService {
     ${whereClause}
     ORDER BY p.fact_num DESC, r.reng_num
   `) as RawPedidoRow[];
+
+  console.log(whereClause)
 
     return mapRawPedidos(result);
   }
