@@ -200,7 +200,6 @@ export class OrdersService {
     ORDER BY p.fact_num DESC, r.reng_num
   `) as RawPedidoRow[];
 
-  console.log(whereClause)
 
     return mapRawPedidos(result);
   }
