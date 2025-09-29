@@ -12,7 +12,11 @@ export class PedidoFilterDto {
 
     @IsOptional()
     @IsString()
-    estatus?: string;
+    revisado?: string;
+
+    @IsOptional()
+    @IsString()
+    procesado?: string;
 
     @IsOptional()
     cancelled?: boolean;

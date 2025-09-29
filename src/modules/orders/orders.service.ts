@@ -44,7 +44,7 @@ export class OrdersService {
   async GetAprobacionPedidos(): Promise<AprobacionPedidoDto[]> {
     const { start, end } = DateUtils.getCurrentMonthRange();
 
-    const result = (await this.sql.$queryRawUnsafe(`
+    const result = (await this.sql.$queryRaw`
      SELECT 
       p.fact_num,
       p.status AS estatus,
@@ -95,16 +95,16 @@ export class OrdersService {
     AND p.anulada = 0 
     AND p.aux02 = ''  
     ORDER BY p.fact_num DESC
-  `)) as RawPedidoRow[];
+  `) as RawPedidoRow[];
 
     return mapRawPedidos(result);
   }
   
 
   async GetPedidosFilters(filters: PedidoFilterDto): Promise<AprobacionPedidoDto[]> {
-    const { dateIni, dateEnd, estatus, cancelled, vendor, zone } = filters;
+    const { dateIni, dateEnd, revisado, procesado,cancelled, vendor, zone } = filters;
 
-    // Validación de fechas
+    // Validacion de fechas
     if (dateIni && dateEnd && new Date(dateIni) > new Date(dateEnd)) {
       throw new BadRequestException('La fecha inicial no puede ser mayor que la final');
     }
@@ -119,17 +119,18 @@ export class OrdersService {
       conditions.push(`p.fec_emis BETWEEN '${start.toISOString()}' AND '${end.toISOString()}'`);
     }
 
-    // Filtro por estatus
-    if (estatus) {
-      conditions.push(`p.revisado = '${estatus}'`);
+    // Filtro por revisado
+    if (revisado) {
+      conditions.push(`p.revisado = '${revisado}'`);
     }
-    // else
-    // {
-    //   conditions.push(` p.revisado = 1 AND p.aux02 !=''`);
-    // }
 
+
+
+    if (procesado) {
+      conditions.push(`p.status = ${procesado}`);
+    }
+    
     // Filtro por anulada
-
     if (cancelled) {
       conditions.push(`p.anulada = 1`);
     } else {
@@ -215,7 +216,7 @@ export class OrdersService {
   async UpdateRevisadoPedido(factNum: number, status: string) {
     if (status !== '1' && status !== ' ') {
       throw new Error(
-        `Estado inválido: '${status}'. Solo se permite '1' o ' ' (espacio).`,
+        `Estado inválido: '${status}'. Solo se permite '1' o ' '.`,
       );
     }
 
