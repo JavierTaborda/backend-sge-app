@@ -17,12 +17,11 @@ export class OrdersService {
       where: {
         revisado: '1',
         aux02: 'Si',
-
         fec_emis: {
           gte: start,
           lte: end,
         },
-        
+        ...(role === '5' && codven ? { co_ven: codven } : {}),
       },
       include: { reng_ped: true },
     });
@@ -42,10 +41,18 @@ export class OrdersService {
 
     return pedidosModificados;
   }
-  async GetAprobacionPedidos(): Promise<AprobacionPedidoDto[]> {
+  async GetAprobacionPedidos(role?: string, codven?: string): Promise<AprobacionPedidoDto[]> {
+    const conditions: string[] = [
+      `p.status = 0`,
+      `p.anulada = 0`,
+      `p.aux02 = ''`,
+      ...(role === '5' && codven ? [`p.co_ven LIKE '%${codven}%'`] : []),
+    ];
 
-    const result = (await this.sql.$queryRaw`
-     SELECT 
+    const whereClause = `WHERE ${conditions.join(' AND ')}`;
+
+    const result = await this.sql.$queryRawUnsafe(`
+    SELECT 
       p.fact_num,
       p.status AS estatus,
       p.comentario,
@@ -59,7 +66,7 @@ export class OrdersService {
       v.ven_des,
       p.dir_ent,
       p.forma_pag,
-      co.cond_des ,
+      co.cond_des,
       p.revisado,
       CASE WHEN p.moneda = 'BS' THEN p.tot_bruto ELSE ROUND(p.tot_bruto/p.tasa,2) END AS tot_bruto,
       CASE WHEN p.moneda = 'BS' THEN p.tot_neto ELSE ROUND(p.tot_neto/p.tasa,2) END AS tot_neto,
@@ -83,17 +90,14 @@ export class OrdersService {
       CASE WHEN p.moneda = 'BS' THEN reng_neto ELSE CAST(ROUND(reng_neto/p.tasa,2) AS DECIMAL(18,5)) END AS reng_neto,
       porc_desc,
       r.tipo_imp
-
     FROM pedidos p
     LEFT JOIN clientes c ON p.co_cli = c.co_cli
     LEFT JOIN zona z ON c.co_zon = z.co_zon
     LEFT JOIN vendedor v ON p.co_ven = v.co_ven
     LEFT JOIN reng_ped r ON p.fact_num = r.fact_num
     LEFT JOIN art a ON r.co_art = a.co_art
-    LEFT JOIN condicio co ON p.forma_pag= co.co_cond
-    WHERE p.status = 0 
-    AND p.anulada = 0 
-    AND p.aux02 = ''  
+    LEFT JOIN condicio co ON p.forma_pag = co.co_cond
+    ${whereClause}
     ORDER BY p.fact_num DESC
   `) as RawPedidoRow[];
 
@@ -101,7 +105,7 @@ export class OrdersService {
   }
   
 
-  async GetPedidosFilters(filters: PedidoFilterDto): Promise<AprobacionPedidoDto[]> {
+  async GetPedidosFilters(filters: PedidoFilterDto, role?: string, codven?: string ): Promise<AprobacionPedidoDto[]> {
     const { dateIni, dateEnd, revisado, procesado,cancelled, vendor, zone } = filters;
 
     // Validacion de fechas
@@ -145,6 +149,11 @@ export class OrdersService {
     // Filtro por zona
     if (zone) {
       conditions.push(`z.zon_des = '${zone}'`);
+    }
+    //filtro por rol y codigo de venbdedor
+    if(role === '5' && codven)
+    {
+      conditions.push(` p.co_ven = '${codven}'`)
     }
 
     const whereClause = `WHERE ${conditions.join(' AND ')}`;

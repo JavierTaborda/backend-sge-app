@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, ParseIntPipe, Patch, Query, UseGuards } from '@nestjs/common';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
+import { Role } from 'src/auth/decorators/roles.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { AprobacionPedidoDto } from './dtos/aprobacion.pedido.dto';
@@ -9,7 +10,7 @@ import { OrdersService } from './orders.service';
 @Controller('orders')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class OrdersController {
-  constructor(private readonly orderService: OrdersService) {}
+  constructor(private readonly orderService: OrdersService) { }
 
   @Get('All')
   async GetPedidos(@CurrentUser('role') role: string, @CurrentUser('codven') codven: string) {
@@ -20,24 +21,25 @@ export class OrdersController {
   async GetRengPedidos(@Param('factNum', ParseIntPipe) factNum: number) {
     return this.orderService.GetRengProductos(factNum);
   }
+
   @Get('approval')
-  async GetAprobacionPedidos(): Promise<AprobacionPedidoDto[]> {
-    return this.orderService.GetAprobacionPedidos();
+  async GetAprobacionPedidos(@CurrentUser('role') role: string, @CurrentUser('codven') codven: string): Promise<AprobacionPedidoDto[]> {
+    return this.orderService.GetAprobacionPedidos(role, codven);
   }
 
   @Get('filters')
   async GetFilters(
-    @Query() filters:PedidoFilterDto
-
-  ) {
+    @Query() filters: PedidoFilterDto,
+    @CurrentUser('role') role: string, @CurrentUser('codven') codven: string) {
 
     return this.orderService.GetPedidosFilters(
-     filters
+      filters,
+      role, 
+      codven
     );
   }
-
   // PATCH /orders/:factNum
-  //@Role('admin', 'gerente')
+  @Role('1', '2')
   @Patch(':factNum/')
   async updateRevisadoPedido(
     @Param('factNum', ParseIntPipe) factNum: number,
@@ -46,3 +48,4 @@ export class OrdersController {
     return this.orderService.UpdateRevisadoPedido(factNum, status);
   }
 }
+
