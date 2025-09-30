@@ -62,10 +62,9 @@ export function mapRawPedidos(rows: RawPedidoRow[]): AprobacionPedidoDto[] {
         forma_pag: safeString(row.forma_pag),
         cond_des: safeString(row.cond_des),
         revisado: safeString(row.revisado),
-        tot_bruto: safeString(row.tot_bruto, '0'),
-        tot_neto: safeString(row.tot_neto, '0'),
-  
-        iva: safeString(row.iva, '0'),
+        tot_bruto: safeNumber(row.tot_bruto, 0),
+        tot_neto: safeNumber(row.tot_neto, 0),
+        iva: safeNumber(row.iva, 0),
       
         aux02: safeString(row.aux02),
         tasa: safeString(row.tasa, '1'),

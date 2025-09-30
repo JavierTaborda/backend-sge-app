@@ -1,18 +1,19 @@
 import { Body, Controller, Get, Param, ParseIntPipe, Patch, Query, UseGuards } from '@nestjs/common';
-import { Role } from 'src/auth/decorators/roles.decorator';
+import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { AprobacionPedidoDto } from './dtos/aprobacion.pedido.dto';
 import { PedidoFilterDto } from './dtos/pedidos-filters';
 import { OrdersService } from './orders.service';
 
 @Controller('orders')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class OrdersController {
   constructor(private readonly orderService: OrdersService) {}
 
   @Get('All')
-  async GetPedidos() {
-    return this.orderService.GetPedidos();
+  async GetPedidos(@CurrentUser('role') role: string, @CurrentUser('codven') codven: string) {
+    return this.orderService.GetPedidos(role, codven);
   }
 
   @Get('rengpedidos/:factNum/')
@@ -27,12 +28,7 @@ export class OrdersController {
   @Get('filters')
   async GetFilters(
     @Query() filters:PedidoFilterDto
-    // @Query('dateIni') dateIni?: string,
-    // @Query('dateEnd') dateEnd?: string,
-    // @Query('estatus') estatus?: string,
-    // @Query('cancelled') cancelled?: boolean,
-    // @Query('vendor') vendor?: string,
-    // @Query('zone') zone?: string,
+
   ) {
 
     return this.orderService.GetPedidosFilters(
@@ -41,7 +37,7 @@ export class OrdersController {
   }
 
   // PATCH /orders/:factNum
-  @Role('admin', 'gerente')
+  //@Role('admin', 'gerente')
   @Patch(':factNum/')
   async updateRevisadoPedido(
     @Param('factNum', ParseIntPipe) factNum: number,

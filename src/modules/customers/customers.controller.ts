@@ -1,9 +1,9 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { CustomersService } from './customers.service';
 
 @Controller('customers')
 export class CustomersController {
-  constructor(private readonly customersService: CustomersService) {}
+  constructor(private readonly customersService: CustomersService) { }
 
   @Get()
   async GetAllClientes() {
@@ -11,12 +11,12 @@ export class CustomersController {
   }
 
   @Get(':codcliente')
-  async GetClienteByCode(codcliente: string) {
+  async GetClienteByCode(@Param('codcliente') codcliente: string) {
     return this.customersService.GetCliente(codcliente);
   }
 
-  @Get('zone:codzone')
-  async GetClientesZone(codzone: string) {
+  @Get('zone/:codzone')
+  async GetClientesZone(@Param('codzone') codzone: string) {
     return this.customersService.GetZoneClientes(codzone);
   }
 }

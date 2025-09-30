@@ -55,13 +55,13 @@ export class AprobacionPedidoDto {
   @IsString()
   revisado: string;
 
-  @IsString()
+  @IsNumber()
   tot_bruto: number;
 
-  @IsString()
+  @IsNumber()
   tot_neto: number;
 
-  @IsString()
+  @IsNumber()
   iva: number;
 
 

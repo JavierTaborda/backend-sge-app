@@ -10,7 +10,7 @@ import { RawPedidoRow } from './types/RawPedidoRow';
 @Injectable()
 export class OrdersService {
   constructor(private readonly sql: SQLServerPrismaService) {}
-  async GetPedidos() {
+  async GetPedidos(role: string, codven: string) {
     const { start, end } = DateUtils.getCurrentMonthRange();
 
     const pedidos = await this.sql.pedidos.findMany({
@@ -22,6 +22,7 @@ export class OrdersService {
           gte: start,
           lte: end,
         },
+        
       },
       include: { reng_ped: true },
     });
@@ -42,7 +43,6 @@ export class OrdersService {
     return pedidosModificados;
   }
   async GetAprobacionPedidos(): Promise<AprobacionPedidoDto[]> {
-    const { start, end } = DateUtils.getCurrentMonthRange();
 
     const result = (await this.sql.$queryRaw`
      SELECT 
