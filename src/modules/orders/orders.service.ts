@@ -9,7 +9,7 @@ import { RawPedidoRow } from './types/RawPedidoRow';
 
 @Injectable()
 export class OrdersService {
-  constructor(private readonly sql: SQLServerPrismaService) {}
+  constructor(private readonly sql: SQLServerPrismaService) { }
   async GetPedidos(role: string, codven: string) {
     const { start, end } = DateUtils.getCurrentMonthRange();
 
@@ -26,7 +26,7 @@ export class OrdersService {
       include: { reng_ped: true },
     });
 
-    
+
     const pedidosModificados = pedidos.map((pedido) => {
       const totNetoOriginal = pedido.tot_neto?.toString() ?? '0';
       const tasa = pedido.tasa?.toString() ?? '1';
@@ -35,7 +35,7 @@ export class OrdersService {
 
       return {
         ...pedido,
-        tot_neto: nuevoTotNeto, 
+        tot_neto: nuevoTotNeto,
       };
     });
 
@@ -57,8 +57,9 @@ export class OrdersService {
       p.status AS estatus,
       p.comentario,
       CAST(p.saldo AS VARCHAR) AS saldo,
-      p.fec_emis,
-      p.fec_venc,
+      CONVERT(VARCHAR, p.fec_emis, 120) AS fec_emis,
+      CONVERT(VARCHAR, p.fec_venc, 120) AS fec_venc,
+
       p.co_cli,
       c.cli_des,
       CAST(c.mont_cre AS FLOAT) AS credito,
@@ -103,10 +104,10 @@ export class OrdersService {
 
     return mapRawPedidos(result);
   }
-  
 
-  async GetPedidosFilters(filters: PedidoFilterDto, role?: string, codven?: string ): Promise<AprobacionPedidoDto[]> {
-    const { dateIni, dateEnd, revisado, procesado,cancelled, vendor, zone } = filters;
+
+  async GetPedidosFilters(filters: PedidoFilterDto, role?: string, codven?: string): Promise<AprobacionPedidoDto[]> {
+    const { dateIni, dateEnd, revisado, procesado, cancelled, vendor, zone } = filters;
 
     // Validacion de fechas
     if (dateIni && dateEnd && new Date(dateIni) > new Date(dateEnd)) {
@@ -114,17 +115,19 @@ export class OrdersService {
     }
 
     const { start, end } = DateUtils.getCurrentMonthRange();
+
     const conditions: string[] = [];
+   
 
     // Filtro por fecha
     if (dateIni && dateEnd) {
       conditions.push(`p.fec_emis BETWEEN '${new Date(dateIni).toISOString()}' AND '${new Date(dateEnd).toISOString()}'`);
     } else {
-      conditions.push(`p.fec_emis BETWEEN '${start.toISOString()}' AND '${end.toISOString()}'`);
+      conditions.push(`YEAR(p.fec_emis) = YEAR(GETDATE()) AND MONTH(p.fec_emis) = MONTH(GETDATE())`);
     }
 
     // Filtro por revisado
-    if (revisado) {
+    if (revisado && revisado !== 'TODOS') {
       conditions.push(`p.revisado = '${revisado}'`);
     }
 
@@ -133,7 +136,7 @@ export class OrdersService {
     if (procesado) {
       conditions.push(`p.status = ${procesado}`);
     }
-    
+
     // Filtro por anulada
     if (cancelled) {
       conditions.push(`p.anulada = 1`);
@@ -142,17 +145,16 @@ export class OrdersService {
     }
 
     // Filtro por vendedor
-    if (vendor) {
+    if (vendor && vendor !== 'TODOS') {
       conditions.push(`v.ven_des = '${vendor}'`);
     }
 
     // Filtro por zona
-    if (zone) {
+    if (zone && zone !== 'TODOS') {
       conditions.push(`z.zon_des = '${zone}'`);
     }
     //filtro por rol y codigo de venbdedor
-    if(role === '5' && codven)
-    {
+    if (role === '5' && codven) {
       conditions.push(` p.co_ven = '${codven}'`)
     }
 
@@ -166,8 +168,8 @@ export class OrdersService {
       p.status AS estatus,
       p.comentario,
       CAST(p.saldo AS VARCHAR) AS saldo,
-      p.fec_emis,
-      p.fec_venc,
+      CONVERT(VARCHAR, p.fec_emis, 120) AS fec_emis,
+      CONVERT(VARCHAR, p.fec_venc, 120) AS fec_venc,
       p.co_cli,
       c.cli_des,
       CAST(c.mont_cre AS FLOAT) AS credito,

@@ -7,19 +7,10 @@ export class DateUtils {
     const today = new Date();
 
     const start = new Date(today.getFullYear(), today.getMonth(), 1);
-    const end = new Date(
-      today.getFullYear(),
-      today.getMonth() + 1,
-      0,
-      23,
-      59,
-      59,
-      999,
-    );
+    const end = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 0, 0); 
 
     return { start, end };
   }
-
   /**
    * Retorna el primer y último día de un mes específico.
    * Returns the first and last day of a specific month.
