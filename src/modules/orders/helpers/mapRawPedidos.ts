@@ -3,6 +3,20 @@ import { AprobacionPedidoDto } from '../dtos/aprobacion.pedido.dto';
 import { RengPedDto } from '../dtos/reng_ped.dto';
 import { RawPedidoRow } from '../types/RawPedidoRow';
 
+// Funcion para aplicar descuentos
+const CalculateDesc  = (amount: number, desc: string): number => {
+  if (!desc) return amount;
+
+  const discounts = desc.split('+').map(Number); //  [N, N]
+
+  let finalAmount = amount;
+  for (const d of discounts) {
+    finalAmount -= finalAmount * (d / 100); // aplica cada descuento
+  }
+
+  return finalAmount;
+};
+
 // Función segura para convertir a número
 const safeNumber = (value: any, defaultValue = 0): number => {
   if (value === null || value === undefined || value === '')
@@ -16,6 +30,7 @@ const safeString = (value: any, defaultValue = ''): string => {
   if (value === null || value === undefined) return defaultValue;
   return String(value);
 };
+
 
 // Función segura para fechas
 const safeDate = (value: any, defaultValue = new Date()): Date => {
@@ -37,12 +52,13 @@ export function mapRawPedidos(rows: RawPedidoRow[]): AprobacionPedidoDto[] {
       total_art: safeString(row.total_art, '0'),
       stotal_art: safeString(row.stotal_art, '0'),
       uni_venta: safeString(row.uni_venta),
-
+      porc_desc: row.porc_desc,
       prec_vta: safeString(row.prec_vta, '0'),
       prec_vta2: safeString(row.prec_vta2, '0'),
       reng_neto: safeString(row.reng_neto, '0'),
-      porc_desc: safeString(row.porc_desc, '0'),
       tipo_imp: safeString(row.tipo_imp),
+      prec_vta_desc: CalculateDesc( Number(row.prec_vta2), row.porc_desc)
+
     });
 
     if (!pedidosMap.has(safeNumber(row.fact_num))) {
@@ -68,7 +84,7 @@ export function mapRawPedidos(rows: RawPedidoRow[]): AprobacionPedidoDto[] {
       
         aux02: safeString(row.aux02),
         tasa: safeString(row.tasa, '1'),
-        moneda: safeString(row.moneda, 'US'),
+        moneda: safeString(row.moneda, 'US$'),
         anulada: safeNumber(row.anulada),
         co_zon: safeString(row.co_zon),
         zon_des: safeString(row.zon_des),

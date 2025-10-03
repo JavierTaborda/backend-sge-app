@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ServeStaticModule } from '@nestjs/serve-static';
 import { CustomersModule } from './modules/customers/customers.module';
 import { IsOnlineModule } from './modules/isonline/isonline.module';
 import { OrdersModule } from './modules/orders/orders.module';
@@ -8,7 +9,13 @@ import { ZonesModule } from './modules/zones/zones.module';
 
 
 @Module({
-  imports: [VendorsModule, OrdersModule, ZonesModule, CustomersModule, ProductsModule, IsOnlineModule],
+  imports: [
+    
+    ServeStaticModule.forRoot({
+      rootPath: 'C:/Users/jtaborda/Desktop/Images', // route in project
+      serveRoot: '/api/images',        // public route
+    }),
+    VendorsModule, OrdersModule, ZonesModule, CustomersModule, ProductsModule, IsOnlineModule],
 
 
 })

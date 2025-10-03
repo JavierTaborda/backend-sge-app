@@ -49,5 +49,9 @@ export class RengPedDto {
   @IsString()
   tipo_imp: string;
 
+  //TODO: send to frontend
+  @IsString()
+  prec_vta_desc: number;
+
 
 }
