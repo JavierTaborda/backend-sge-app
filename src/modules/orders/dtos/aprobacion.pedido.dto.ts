@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsDate,
   IsNumber,
   IsString
@@ -17,8 +18,8 @@ export class AprobacionPedidoDto {
   @IsString()
   comentario: string;
 
-  @IsString()
-  saldo: string;
+  @IsNumber()
+  saldo: number;
 
   @IsDate()
   @Type(() => Date)
@@ -64,26 +65,26 @@ export class AprobacionPedidoDto {
   @IsNumber()
   iva: number;
 
-
-
   @IsString()
   aux02: string;
 
-  @IsString()
+  @IsNumber()
   tasa: number;
+
+  @IsNumber()
+  tasag: number;
 
   @IsString()
   moneda: string;
 
-  @IsNumber()
-  anulada: number;
+  @IsBoolean()
+  anulada: boolean;
 
   @IsString()
   co_zon: string;
 
   @IsString()
   zon_des: string;
-
 
   @IsArray()
   @Type(() => RengPedDto)

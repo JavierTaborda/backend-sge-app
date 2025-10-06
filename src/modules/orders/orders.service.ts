@@ -52,14 +52,13 @@ export class OrdersService {
     const whereClause = `WHERE ${conditions.join(' AND ')}`;
 
     const result = await this.sql.$queryRawUnsafe(`
-    SELECT 
+    SELECT
       p.fact_num,
       p.status AS estatus,
       p.comentario,
       CAST(p.saldo AS VARCHAR) AS saldo,
       CONVERT(VARCHAR, p.fec_emis, 120) AS fec_emis,
       CONVERT(VARCHAR, p.fec_venc, 120) AS fec_venc,
-
       p.co_cli,
       c.cli_des,
       CAST(c.mont_cre AS FLOAT) AS credito,
@@ -74,6 +73,7 @@ export class OrdersService {
       CASE WHEN p.moneda = 'BS' THEN p.iva ELSE ROUND(p.iva/p.tasa,2) END AS iva,
       p.aux02,
       p.tasa,
+      p.tasag,
       p.moneda,
       p.anulada,
       c.co_zon,
@@ -90,7 +90,8 @@ export class OrdersService {
       r.prec_vta2,
       CASE WHEN p.moneda = 'BS' THEN reng_neto ELSE CAST(ROUND(reng_neto/p.tasa,2) AS DECIMAL(18,5)) END AS reng_neto,
       porc_desc,
-      r.tipo_imp
+      r.tipo_imp,
+      al.des_sub
     FROM pedidos p
     LEFT JOIN clientes c ON p.co_cli = c.co_cli
     LEFT JOIN zona z ON c.co_zon = z.co_zon
@@ -98,6 +99,7 @@ export class OrdersService {
     LEFT JOIN reng_ped r ON p.fact_num = r.fact_num
     LEFT JOIN art a ON r.co_art = a.co_art
     LEFT JOIN condicio co ON p.forma_pag = co.co_cond
+    LEFT JOIN almacenes al ON r.co_alma = al.co_sub
     ${whereClause}
     ORDER BY p.fact_num DESC
   `) as RawPedidoRow[];
@@ -117,7 +119,7 @@ export class OrdersService {
     const { start, end } = DateUtils.getCurrentMonthRange();
 
     const conditions: string[] = [];
-   
+
 
     // Filtro por fecha
     if (dateIni && dateEnd) {
@@ -184,6 +186,7 @@ export class OrdersService {
       CASE WHEN p.moneda = 'BS' THEN p.iva ELSE ROUND(p.iva/p.tasa,2) END AS iva,
       p.aux02,
       p.tasa,
+      p.tasag,
       p.moneda,
       p.anulada,
       c.co_zon,
@@ -196,11 +199,13 @@ export class OrdersService {
       stotal_art,
       pendiente,
       r.uni_venta,
-      CASE WHEN p.moneda = 'BS' THEN r.prec_vta ELSE CAST(ROUND(r.prec_vta/p.tasa,2) AS DECIMAL(18,5)) END AS prec_vta,
+      --CASE WHEN p.moneda = 'BS' THEN r.prec_vta ELSE CAST(ROUND(r.prec_vta/p.tasa,2) AS DECIMAL(18,5)) END AS prec_vta,
+      r.prec_vta,
       r.prec_vta2,
       CASE WHEN p.moneda = 'BS' THEN reng_neto ELSE CAST(ROUND(reng_neto/p.tasa,2) AS DECIMAL(18,5)) END AS reng_neto,
       porc_desc,
-      r.tipo_imp
+      r.tipo_imp,
+      al.des_sub
     FROM pedidos p
     LEFT JOIN clientes c ON p.co_cli = c.co_cli
     LEFT JOIN zona z ON c.co_zon = z.co_zon
@@ -208,6 +213,7 @@ export class OrdersService {
     LEFT JOIN reng_ped r ON p.fact_num = r.fact_num
     LEFT JOIN art a ON r.co_art = a.co_art
     LEFT JOIN condicio co ON p.forma_pag = co.co_cond
+    LEFT JOIN almacenes al ON r.co_alma = al.co_sub
     ${whereClause}
     ORDER BY p.fact_num DESC, r.reng_num
   `) as RawPedidoRow[];

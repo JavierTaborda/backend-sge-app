@@ -5,7 +5,9 @@ import { IsOnlineModule } from './modules/isonline/isonline.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { ProductsModule } from './modules/products/products.module';
 import { VendorsModule } from './modules/vendors/vendors.module';
+import { WarehousesModule } from './modules/warehouses/warehouses.module';
 import { ZonesModule } from './modules/zones/zones.module';
+
 
 
 @Module({
@@ -15,7 +17,7 @@ import { ZonesModule } from './modules/zones/zones.module';
       rootPath: 'C:/Users/jtaborda/Desktop/Images', // route in project
       serveRoot: '/api/images',        // public route
     }),
-    VendorsModule, OrdersModule, ZonesModule, CustomersModule, ProductsModule, IsOnlineModule],
+    VendorsModule, OrdersModule, ZonesModule, CustomersModule, ProductsModule, IsOnlineModule, WarehousesModule],
 
 
 })

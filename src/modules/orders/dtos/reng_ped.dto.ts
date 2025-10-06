@@ -1,4 +1,4 @@
-import { IsNumber, IsString } from 'class-validator';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class RengPedDto {
   @IsNumber()
@@ -16,32 +16,23 @@ export class RengPedDto {
   @IsString()
   co_alma: string;
 
-  // @IsString()
-  // alma_des: string;
+  @IsNumber()
+  total_art: number;
 
-  @IsString()
-  total_art: string;
-
-  @IsString()
-  stotal_art: string;
-
-  // @IsString()
-  // pendiente: string;
+  @IsNumber()
+  stotal_art: number;
 
   @IsString()
   uni_venta: string;
 
-  // @IsString()
-  // des_uni: string;
+  @IsNumber()
+  prec_vta: number;
 
-  @IsString()
-  prec_vta: string;
+  @IsNumber()
+  prec_vta2: number;
 
-  @IsString()
-  prec_vta2: string;
-
-  @IsString()
-  reng_neto: string;
+  @IsNumber()
+  reng_neto: number;
 
   @IsString()
   porc_desc: string;
@@ -49,9 +40,10 @@ export class RengPedDto {
   @IsString()
   tipo_imp: string;
 
-  //TODO: send to frontend
-  @IsString()
+  @IsNumber()
   prec_vta_desc: number;
 
-
+  @IsOptional()
+  @IsString()
+  des_sub: string;
 }
