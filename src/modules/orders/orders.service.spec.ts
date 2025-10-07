@@ -21,7 +21,7 @@ describe('OrdersService', () => {
   });
 
   it('should convert tot_neto to dollars', async () => {
-    const result = await service.GetPedidos();
+    const result = await service.GetPedidos('1','N/A');
     expect(result[0].tot_neto).toBe(20); // 100 / 5
   });
 });

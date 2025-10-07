@@ -138,14 +138,14 @@ export class OrdersService {
     if (procesado) {
       conditions.push(`p.status = ${procesado}`);
     }
-
+    
     // Filtro por anulada
-    if (cancelled) {
+    if (String(cancelled).toLowerCase() === "true") {
       conditions.push(`p.anulada = 1`);
+  
     } else {
       conditions.push(`p.anulada = 0`);
     }
-
     // Filtro por vendedor
     if (vendor && vendor !== 'TODOS') {
       conditions.push(`v.ven_des = '${vendor}'`);

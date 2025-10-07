@@ -14,7 +14,6 @@ const CalculateDesc = (amount: number, desc: string): number => {
   for (const d of discounts) {
     finalAmount -= finalAmount * (d / 100); // aplica cada descuento
   }
-
   return finalAmount;
 };
 
@@ -26,11 +25,6 @@ const safeNumber = (value: any, defaultValue = 0): number => {
   return isNaN(num) ? defaultValue : num;
 };
 
-// Función segura para convertir a string
-const safeString = (value: any, defaultValue = ''): string => {
-  if (value === null || value === undefined) return defaultValue;
-  return String(value);
-};
 
 
 // Función segura para fechas
@@ -64,11 +58,13 @@ export function mapRawPedidos(rows: RawPedidoRow[]): AprobacionPedidoDto[] {
 
 
     const iva = safeNumber(row.tasag, 1) / 100;
+ 
 
     renglon.prec_vta *= (1 + iva); // Pice BS
     renglon.prec_vta2 *= (1 + iva); // Price US$
     renglon.prec_vta_desc *= (1 + iva); // Price +Discount US$
     renglon.reng_neto *= (1 + iva); // Total
+    
     const factNum = safeNumber(row.fact_num);
 
     if (!pedidosMap.has(factNum)) {
@@ -101,6 +97,7 @@ export function mapRawPedidos(rows: RawPedidoRow[]): AprobacionPedidoDto[] {
         reng_max: safeNumber(row.reng_num),
         reng_ped: [renglon],
       });
+      
       pedidosMap.set(factNum, pedido);
     } else {
       pedidosMap.get(factNum)?.reng_ped.push(renglon);

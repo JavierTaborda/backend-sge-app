@@ -14,7 +14,8 @@ import { ZonesModule } from './modules/zones/zones.module';
   imports: [
     
     ServeStaticModule.forRoot({
-      rootPath: 'C:/Users/jtaborda/Desktop/Images', // route in project
+     
+      rootPath: process.env.IMAGES_ROUTE, // route in project
       serveRoot: '/api/images',        // public route
     }),
     VendorsModule, OrdersModule, ZonesModule, CustomersModule, ProductsModule, IsOnlineModule, WarehousesModule],
