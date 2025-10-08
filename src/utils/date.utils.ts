@@ -6,8 +6,11 @@ export class DateUtils {
   static getCurrentMonthRange(): { start: Date; end: Date } {
     const today = new Date();
 
-    const start = new Date(today.getFullYear(), today.getMonth(), 1);
-    const end = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 0, 0); 
+    const startDateOnly = new Date(today.getFullYear(), today.getMonth(), 1);
+    const endDateOnly = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+    const start = new Date(`${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-01T00:00:00.000Z`);
+    const end = new Date(`${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate()}T23:59:59.999Z`);
 
     return { start, end };
   }

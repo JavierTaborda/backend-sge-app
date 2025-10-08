@@ -27,7 +27,7 @@ export class OrdersService {
     });
 
 
-    const pedidosModificados = pedidos.map((pedido) => {
+      const pedidosModificados = pedidos.map((pedido) => {
       const totNetoOriginal = pedido.tot_neto?.toString() ?? '0';
       const tasa = pedido.tasa?.toString() ?? '1';
 
@@ -41,6 +41,7 @@ export class OrdersService {
 
     return pedidosModificados;
   }
+  
   async GetAprobacionPedidos(role?: string, codven?: string): Promise<AprobacionPedidoDto[]> {
     const conditions: string[] = [
       `p.status = 0`,
