@@ -8,8 +8,13 @@ export class ZonesService {
   constructor(private readonly sql: SQLServerPrismaService) {}
   async GetZones(): Promise<ZoneDto[]> {
     const zones = await this.sql.zona.findMany({
+      where:{
+        trasnfe:'1',
+      },
       orderBy: {
         zon_des : 'asc', 
+      
+        
       },
     });
     return plainToInstance(ZoneDto, zones, { excludeExtraneousValues: true });

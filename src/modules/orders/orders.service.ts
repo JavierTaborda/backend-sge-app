@@ -21,7 +21,9 @@ export class OrdersService {
           gte: start,
           lte: end,
         },
-        ...(role === '5' && codven ? { co_ven: codven } : {}),
+       
+        ...((role === '5'|| role==='4') && codven ? { co_ven: codven } : {}),
+        ...(role === '2' ? { co_ven: { not: '00001' } }:{}),
       },
       include: { reng_ped: true },
     });
@@ -46,7 +48,8 @@ export class OrdersService {
     const conditions: string[] = [
       `p.status = 0`,
       `p.anulada = 0`,
-      ...(role === '5' && codven ? [`p.co_ven LIKE '%${codven}%'`] : []),
+      ...((role === '5' || role === '4') && codven ? [`p.co_ven LIKE '%${codven}%'`] : []),
+      ...(role === '2'  ? [`p.co_ven NOT LIKE '%00001%'`] : []),
     ];
 
     const whereClause = `WHERE ${conditions.join(' AND ')}`;
@@ -156,9 +159,13 @@ export class OrdersService {
       conditions.push(`z.zon_des = '${zone}'`);
     }
     //filtro por rol y codigo de venbdedor
-    if (role === '5' && codven) {
+    if ((role === '5' || role==='4') && codven) {
       conditions.push(` p.co_ven = '${codven}'`)
     }
+    if (role === '2') {
+      conditions.push(` p.co_ven != '00001'`)
+    }
+   
 
     const whereClause = `WHERE ${conditions.join(' AND ')}`;
 
