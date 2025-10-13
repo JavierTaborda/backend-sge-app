@@ -172,8 +172,9 @@ model clbancoswift {
 }
 
 model clcategoria {
-  codcat String @id @db.VarChar(6)
-  catdes String @db.VarChar(60)
+  codcat      String        @id @db.VarChar(6)
+  catdes      String        @db.VarChar(60)
+  mtarticulos mtarticulos[]
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
@@ -494,6 +495,8 @@ model metas {
   asignado  Int    @default(0)
   utilizado Int    @default(0)
 
+  articulo mtarticulos? @relation(fields: [codart], references: [codart])
+
   @@id([anio, mes, codven, codart])
 }
 
@@ -510,7 +513,7 @@ model metas_articulos {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model mtarticulos {
-  codart      String    @db.VarChar(30)
+  codart      String    @id @db.VarChar(30)
   artdes      String    @db.VarChar(120)
   fecrec      DateTime  @db.Date
   mseriales   Boolean?  @default(false)
@@ -576,7 +579,9 @@ model mtarticulos {
   medancho    Int       @default(0)
   medlargo    Int       @default(0)
 
-  @@ignore
+  //  manual inputs
+  categoria clcategoria? @relation(fields: [codcat], references: [codcat])
+  metas     metas[]
 }
 
 model mtclientes {

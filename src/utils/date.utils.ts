@@ -29,4 +29,13 @@ export class DateUtils {
 
     return { start, end };
   }
+
+  static GetYear() {
+    return String(new Date().getFullYear());
+  }
+  static GetMonthMM() {
+    const month = new Date().getMonth()
+    let MM = month < 10 ? '0'+ month: month
+    return String(MM);
+  }
 }

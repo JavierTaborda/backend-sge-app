@@ -1,15 +1,15 @@
 import { Module } from '@nestjs/common';
+import { MySQLPrismaService } from './mysql.service';
 import { SQLServerPrismaService } from './sqlserver.service';
-//import { MySQLPrismaService } from './mysql.service';
 
 @Module({
   providers: [
     SQLServerPrismaService,
-    // MySQLPrismaService
+     MySQLPrismaService
   ],
   exports: [
     SQLServerPrismaService, 
-   // MySQLPrismaService
+    MySQLPrismaService
   ],
 })
 export class DatabaseModule {}
