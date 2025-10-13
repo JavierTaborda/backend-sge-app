@@ -2,22 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.0] - YYYY-MM-DD
+## [1.0.0] - 2025-10-10
 
 ### Added
 
 - Prima clients on MSSQL & MySQL
 - orders, zones, customers, vendors module
-- ServeStaticModule for images in api/images
+- ServeStaticModule for images in `api/images`
+- Supabase with secret Keys  
+- .env Databases connet: MYSQL_DATABASE_URL,SQLSERVER_DATABASE_URL,
+- .env for supabase project: SUPABASE_PROJECT,
+- .env for enviroment: NODE_ENV,PORT
+- .env for images rouytes:  IMAGES_ROUTE
 
-### Changed (template)
+### Changed
 
-- [List modifications, UI updates, refactors.]
+-N/A
 
-### Fixed (template)
+### Fixed
 
-- [Mention bugs or issues resolved.]
+-N/A
 
-### Removed (template)
+### Removed
 
-- [List deprecated or removed features.]
+-N/A
