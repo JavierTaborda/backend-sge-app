@@ -1,12 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { MySQLPrismaService } from 'src/database/mysql.service';
 import { SQLServerPrismaService } from 'src/database/sqlserver.service';
+import { DateUtils } from 'src/utils/date.utils';
+import { GoalsDto } from './dtos/goals.dto';
+import { DataGoalsProfit } from './interfaces/DataGoalsProfit';
+import { DataGoals } from './types/DataGoals';
 
 @Injectable()
 export default class GoalsService {
     constructor(private readonly sql: SQLServerPrismaService, private readonly mysql: MySQLPrismaService) { }
 
-    async DataGoals(role?: string, codven?: string) {
+    async DataGoals(codven?: string): Promise<DataGoals[]> {
 
         let whereClause = `
           anulada = 0 AND 
@@ -32,53 +36,80 @@ export default class GoalsService {
             INNER JOIN TECH_A.dbo.pedidos ON pedidos.fact_num = reng_ped.fact_num
             WHERE ${whereClause}
             GROUP BY YEAR(fec_emis), MONTH(fec_emis), co_art, co_ven
-        `);
-        return pedidos;
+        `) as DataGoalsProfit[];
+
+        const dataGoals: DataGoals[] = [];
+        pedidos.forEach(data => {
+            dataGoals.push({
+                year: data.eanio.toString(),
+                month: data.emes.toString(),
+                co_art: data.co_art.toString(),
+                co_ven: data.co_ven.toString(),
+                totalart: Number(data.totalart),
+            }
+            )
+        }
+        )
+        return dataGoals;
     }
-    async 
 
-    async GetGoals(role?: string, codven?: string) {
-
-        const dataGoals = await this.DataGoals(role, codven);
+    async setUtilizado(codven?: string): Promise<boolean> {
 
         //UPDATE metas SET utilizado = 0 WHERE anio = EXTRACT(YEAR FROM NOW()) AND mes = EXTRACT(MONTH FROM NOW()) AND codven = '$coven';");
-        console.log(dataGoals)
 
+        const whereClause: any = {
+            anio: DateUtils.GetYear(),
+            mes: DateUtils.GetMonthMM(),
+            ...(codven ? { codven } : {}),
+        };
+
+        const result = await this.mysql.metas.updateMany({
+            where: whereClause,
+            data: { utilizado: 0 },
+        });
+
+        return result.count >= 0;
+    }
+
+
+    async GetGoals(codven?: string): Promise<GoalsDto[]> {
+
+        // SELECT...      FROM TECH_A.dbo.reng_ped... GROUP BY YEAR(fec_emis)...;
+        const dataGoals = await this.DataGoals(codven);
+
+        //UPDATE metas SET utilizado = 0 
+        //const setUtilizado: boolean = await this.setUtilizado(codven);
 
 
         //UPDATE metas SET utilizado = $totalart WHERE anio = '$eanio' AND mes = '$emes' AND codven = '$coven' AND codart = '$co_art';
 
 
-        // for (const item of dataGoals) {
-        //     const { eanio, emes, co_ven, co_art, totalart } = item;
-
-        //     try {
-        //         await this.prisma.metas.update({
+        //rollback
+        // await this.mysql.$transaction(async (tx) => {
+        //     for (const item of dataGoals) {
+        //         await tx.metas.update({
         //             where: {
         //                 anio_mes_codven_codart: {
-        //                     anio: String(eanio),
-        //                     mes: String(emes),
-        //                     codven: co_ven,
-        //                     codart: co_art,
+        //                     anio: item.year,
+        //                     mes: item.month,
+        //                     codven: item.co_ven,
+        //                     codart: item.co_art,
         //                 },
         //             },
         //             data: {
-        //                 utilizado: Math.round(totalart),
+        //                 utilizado: Math.round(item.totalart),
         //             },
         //         });
-        //     } catch (error) {
-        //         console.warn(`No se pudo actualizar meta para ${co_art} - ${co_ven}:`, error.message);
-        //         // Puedes manejar errores aquí si la combinación no existe
+
         //     }
-        // }
+        // });
 
 
-        const result = await this.mysql.metas.findMany({
+        const goals = await this.mysql.metas.findMany({
             where: {
-                anio: '2024',//DateUtils.GetYear(),
-                mes: '06',//DateUtils.GetMonthMM(),
-                //codven: '00002',
-                ...((role === '5' || role === '4') && codven ? { codven: codven } : {}),
+                anio: DateUtils.GetYear(),
+                mes: DateUtils.GetMonthMM(),
+                ...(codven ? { codven: codven } : {}),
             },
             include: {
                 articulo: {
@@ -97,7 +128,18 @@ export default class GoalsService {
             },
         });
 
-        return dataGoals;
+        return goals.map((item) => ({
+            year: item.anio,
+            mes: item.mes,
+            codven: item.codven,
+            codart: item.codart,
+            artdes: item.articulo?.artdes ?? '',
+            codcat: item.articulo?.categoria?.codcat ?? '',
+            catdes: item.articulo?.categoria?.catdes ?? '',
+            asignado: item.asignado,
+            utilizado: item.utilizado,
+        }));
+
     }
 
 }
