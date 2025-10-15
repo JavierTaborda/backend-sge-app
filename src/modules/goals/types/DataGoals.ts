@@ -3,5 +3,5 @@ export type DataGoals = {
     month: string,
     co_ven: string,
     co_art: string,
-    totalart: number,
+    totalart: number
 }
