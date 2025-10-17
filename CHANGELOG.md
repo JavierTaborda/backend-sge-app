@@ -10,7 +10,25 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Add model mtarticulos and relation { codart  String   `@id` @db.VarChar(30) ...} in model prisma for use it:
+- Ad @id in clvendedores of prisma client, and relation with metas
+
+``` prisma
+model clvendedores  {
+  codven    String  @id @db.VarChar(6)
+  vendes    String  @db.VarChar(60)
+  cedula    String? @db.VarChar(15)
+  telefono1 String? @db.VarChar(15)
+  telefono2 String? @db.VarChar(15)
+  codzon    String? @db.VarChar(6)
+  vende     Boolean @default(true)
+  cobra     Boolean @default(true)
+  activo    Boolean @default(true)
+    //manual input 
+    metas     metas[]
+}
+```
+
+- Add model mtarticulos and vendedores and relation { codart  String   `@id` @db.VarChar(30) ...} in model prisma for use it:
 
 ``` prisma
 model metas {
@@ -22,7 +40,8 @@ model metas {
   utilizado Int    @default(0)
 
   articulo  mtarticulos? @relation(fields: [codart], references: [codart])
-
+  vendedores clvendedores? @relation(fields: [codven], references: [codven])
+  
   @@id([anio, mes, codven, codart])
 }
 ```

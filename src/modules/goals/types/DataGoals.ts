@@ -1,4 +1,4 @@
-export type DataGoals = {
+export type DataGoals= {
     year: string,
     month: string,
     co_ven: string,

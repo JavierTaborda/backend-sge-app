@@ -283,8 +283,8 @@ model cltransporte {
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
-model clvendedores {
-  codven    String  @db.VarChar(6)
+model clvendedores  {
+  codven    String  @id @db.VarChar(6)
   vendes    String  @db.VarChar(60)
   cedula    String? @db.VarChar(15)
   telefono1 String? @db.VarChar(15)
@@ -294,7 +294,8 @@ model clvendedores {
   cobra     Boolean @default(true)
   activo    Boolean @default(true)
 
-  @@ignore
+  //manual input 
+    metas     metas[]
 }
 
 model clzonas {
@@ -495,7 +496,10 @@ model metas {
   asignado  Int    @default(0)
   utilizado Int    @default(0)
 
+ //  manual inputs
   articulo mtarticulos? @relation(fields: [codart], references: [codart])
+  vendedores clvendedores? @relation(fields: [codven], references: [codven])
+
 
   @@id([anio, mes, codven, codart])
 }

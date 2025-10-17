@@ -1,4 +1,4 @@
-import { IsNumber, IsString } from 'class-validator';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class GoalsDto {
     @IsString()
@@ -23,11 +23,8 @@ export class GoalsDto {
     @IsString()
     artdes: string;
 
+    @IsOptional()
     @IsString()
-    codcat: string;
-    
-    @IsString()
-    catdes: string;
-
+    vendes: string;
 
 }

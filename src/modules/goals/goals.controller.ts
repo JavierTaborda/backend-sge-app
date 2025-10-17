@@ -1,28 +1,43 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
 import GoalsService from './goals.service';
 
 @Controller('goals')
-//@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class GoalsController {
     constructor(private readonly goalService: GoalsService) { }
 
-    @Get()
+    //@Get(':cod_vend')
+    @Get('')
+    async GetGoals(
+        @CurrentUser('role') role: string,
+        @CurrentUser('codven') codven: string,
+        @Query('cod_ven') cod_ven?: string
 
-    async GetGoals(role?: string, codven?: string, cod_ven?: string) {
-    // async GetGoals(
-    //     @CurrentUser('role') role: string,
-    //     @CurrentUser('codven') codven: string,
-    //     @Query('cod_ven') cod_ven?: string) {
 
+
+    ) { 
+
+        
         if (role === '4' || role === '5') {
             return await this.goalService.GetGoals(codven);
         }
 
-        if (!cod_ven) {
+        if (!cod_ven || cod_ven.length === 0) {
             return await this.goalService.GetGoals();
         }
+       
+        const codVenList = cod_ven?.split(',').map(c => `'${c}'`).join(',');
 
-        return await this.goalService.GetGoals(cod_ven);
+    
+        return await this.goalService.GetGoals(codVenList);
+    }
+
+    @Get('sellers')
+    async GetArticulos(codven?: string) {
+        return await this.goalService.GetSellers();
     }
 
 
