@@ -10,46 +10,46 @@ import { DataGoals } from './types/DataGoals';
 @Injectable()
 export default class GoalsService {
     constructor(private readonly sql: SQLServerPrismaService, private readonly mysql: MySQLPrismaService) { }
-
     async DataGoals(codven?: string): Promise<DataGoals[]> {
-
         const whereClause = [
             'anulada = 0',
             'YEAR(fec_emis) = YEAR(GETDATE())',
             'MONTH(fec_emis) = MONTH(GETDATE())'
         ];
 
-
         if (codven) {
             if (codven.includes(',')) {
-                //  "'001','002','003'"
-                whereClause.push(`co_ven IN (${codven})`);
-            } else {
-                whereClause.push(`co_ven = @codven`);
-            }
+                // Si vienen varios: "00006,00022"
+                const list = codven
+                    .split(',')
+                    .map(v => `'${v.trim()}'`)
+                    .join(',');
 
-            
+                whereClause.push(`(LTRIM(RTRIM(co_ven)) IN (${list}))`);
+
+            } else {
+                whereClause.push(`(co_ven) = '${codven}'`);
+            }
         }
 
+        const query = `
+    SELECT 
+      YEAR(fec_emis) AS eanio,
+      RIGHT('0' + CAST(MONTH(fec_emis) AS VARCHAR(2)), 2) AS emes,
+      co_art,
+      ${codven ? 'co_ven,' : `'GENERAL' AS co_ven,`}
+      SUM(total_art) AS totalart
+    FROM TECH_A.dbo.reng_ped rp
+    INNER JOIN TECH_A.dbo.pedidos p ON p.fact_num = rp.fact_num
+    WHERE ${whereClause.join(' AND ')}
+    GROUP BY YEAR(fec_emis), MONTH(fec_emis), co_art, co_ven
+  `;
 
 
-        const pedidos = (await this.sql.$queryRawUnsafe(
-            `
-      SELECT 
-        YEAR(fec_emis) AS eanio,
-        RIGHT('0' + CAST(MONTH(fec_emis) AS VARCHAR(2)), 2) AS emes,
-        co_art,
-        ${codven ? 'co_ven,' : `'GENERAL' AS co_ven,`}
-        SUM(total_art) AS totalart
-      FROM TECH_A.dbo.reng_ped rp
-      INNER JOIN TECH_A.dbo.pedidos p ON p.fact_num = rp.fact_num
-      WHERE ${whereClause.join(' AND ')}
-      GROUP BY YEAR(fec_emis), MONTH(fec_emis), co_art, co_ven
-    `,
-            codven ? { codven } : undefined,
-        )) as DataGoalsProfit[];
+        const pedidos = await this.sql.$queryRawUnsafe(query) as DataGoalsProfit[];
 
-        return pedidos.map((d) => ({
+
+        const result = pedidos.map((d) => ({
             year: d.eanio.toString(),
             month: d.emes.toString(),
             co_art: d.co_art.toString(),
@@ -57,7 +57,9 @@ export default class GoalsService {
             totalart: Number(d.totalart),
         }));
 
+        return result;
     }
+
 
     async resetUtilizado(codven?: string): Promise<boolean> {
 
@@ -128,13 +130,18 @@ export default class GoalsService {
         //         ),
         //     );
         // });
-        //TODO: fix sql
+
         if (codven) {
+            const codvenList = codven
+                .split(',')
+                .map(v => v)
+                .filter(Boolean);
+
             const goals = await this.mysql.metas.findMany({
                 where: {
                     anio: DateUtils.GetYear(),
                     mes: DateUtils.GetMonthMM(),
-                    ...(codven ? { codven: codven } : {}),
+                    ...(codvenList ? { codven: { in: codvenList } } : {}),
                 },
                 include: {
                     articulo: {
@@ -143,12 +150,12 @@ export default class GoalsService {
                             artdes: true,
                         },
                     },
-                    vendedores:{
-                        select:{
-                            vendes:true
+                    vendedores: {
+                        select: {
+                            vendes: true
                         }
                     }
-                    
+
                 },
             });
 
@@ -194,16 +201,16 @@ export default class GoalsService {
             return {
                 year: m.anio,
                 mes: m.mes,
-                codven: '', 
+                codven: '',
                 codart: m.codart,
                 artdes: art?.artdes ?? '',
                 asignado: m._sum.asignado ?? 0,
                 utilizado: m._sum.utilizado ?? 0,
-                vendes:''
+                vendes: ''
             };
         }).sort((a, b) => a.utilizado - b.utilizado);
     }
-    
+
     //filter data
     async GetSellers(): Promise<SellersDto[]> {
         // Goals by vendedores

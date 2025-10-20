@@ -16,11 +16,8 @@ export class GoalsController {
         @CurrentUser('codven') codven: string,
         @Query('cod_ven') cod_ven?: string
 
-
-
     ) { 
-
-        
+        console.log(cod_ven)
         if (role === '4' || role === '5') {
             return await this.goalService.GetGoals(codven);
         }
@@ -28,11 +25,10 @@ export class GoalsController {
         if (!cod_ven || cod_ven.length === 0) {
             return await this.goalService.GetGoals();
         }
-       
-        const codVenList = cod_ven?.split(',').map(c => `'${c}'`).join(',');
+       console.log(cod_ven)
 
     
-        return await this.goalService.GetGoals(codVenList);
+        return await this.goalService.GetGoals(cod_ven);
     }
 
     @Get('sellers')

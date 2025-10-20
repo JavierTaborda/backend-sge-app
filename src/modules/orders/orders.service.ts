@@ -260,4 +260,21 @@ export class OrdersService {
 
     return response;
   }
+  async UpdateComment(factNum: number, newcomment: string) {
+
+    const pedido = await this.sql.pedidos.findUnique({
+      where: { fact_num: factNum },
+    });
+
+    if (!pedido) {
+      throw new Error(`Pedido con número de factura ${factNum} no encontrado`);
+    }
+   
+    const response = await this.sql.pedidos.update({
+      where: { fact_num: factNum },
+      data: { comentario: newcomment },
+      include: { reng_ped: true },
+    });
+    return response;
+  }
 }
