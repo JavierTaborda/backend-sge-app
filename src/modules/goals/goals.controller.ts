@@ -17,7 +17,7 @@ export class GoalsController {
         @Query('cod_ven') cod_ven?: string
 
     ) { 
-        console.log(cod_ven)
+        //console.log(cod_ven)
         if (role === '4' || role === '5') {
             return await this.goalService.GetGoals(codven);
         }
@@ -25,7 +25,7 @@ export class GoalsController {
         if (!cod_ven || cod_ven.length === 0) {
             return await this.goalService.GetGoals();
         }
-       console.log(cod_ven)
+       
 
     
         return await this.goalService.GetGoals(cod_ven);
