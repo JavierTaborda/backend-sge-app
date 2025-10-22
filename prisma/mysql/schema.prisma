@@ -497,7 +497,10 @@ model metas {
   utilizado Int    @default(0)
 
  //  manual inputs
-  articulo mtarticulos? @relation(fields: [codart], references: [codart])
+  //articulo mtarticulos? @relation(fields: [codart], references: [codart])
+
+  articulo mtprofitart? @relation(fields: [codart], references: [codart])
+
   vendedores clvendedores? @relation(fields: [codven], references: [codven])
 
 
@@ -585,7 +588,7 @@ model mtarticulos {
 
   //  manual inputs
   categoria clcategoria? @relation(fields: [codcat], references: [codcat])
-  metas     metas[]
+
 }
 
 model mtclientes {
@@ -683,6 +686,9 @@ model mtprofitart {
   medalto     Int       @default(0)
   medancho    Int       @default(0)
   medlargo    Int       @default(0)
+  //manual   
+  metas     metas[]
+
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.

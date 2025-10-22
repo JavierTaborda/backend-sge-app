@@ -28,7 +28,7 @@ model clvendedores  {
 }
 ```
 
-- Add model mtarticulos and vendedores and relation { codart  String   `@id` @db.VarChar(30) ...} in model prisma for use it:
+- Add model mtprofitart and vendedores and relation { codart  String   `@id` @db.VarChar(30) ...} in model prisma for use it:
 
 ``` prisma
 model metas {
@@ -47,7 +47,7 @@ model metas {
 ```
 
 ``` prisma
-model mtarticulos {
+model mtprofitart {
   codart String @id @db.VarChar(30)
   // ...others 
 

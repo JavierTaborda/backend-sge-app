@@ -14,7 +14,8 @@ export default class GoalsService {
         const whereClause = [
             'anulada = 0',
             'YEAR(fec_emis) = YEAR(GETDATE())',
-            'MONTH(fec_emis) = MONTH(GETDATE())'
+            'MONTH(fec_emis) = MONTH(GETDATE())',
+           
         ];
 
         if (codven) {
@@ -30,24 +31,28 @@ export default class GoalsService {
             } else {
                 whereClause.push(`(co_ven) = '${codven}'`);
             }
+        } else{
+            whereClause.push(`co_ven <>'00001'`)
         }
 
-        const query = `
-    SELECT 
-      YEAR(fec_emis) AS eanio,
-      RIGHT('0' + CAST(MONTH(fec_emis) AS VARCHAR(2)), 2) AS emes,
-      co_art,
-      ${codven ? 'co_ven,' : `'GENERAL' AS co_ven,`}
-      SUM(total_art) AS totalart
-    FROM TECH_A.dbo.reng_ped rp
-    INNER JOIN TECH_A.dbo.pedidos p ON p.fact_num = rp.fact_num
-    WHERE ${whereClause.join(' AND ')}
-    GROUP BY YEAR(fec_emis), MONTH(fec_emis), co_art, co_ven
-  `;
 
+
+        const query = `
+        SELECT 
+            YEAR(fec_emis) AS eanio,
+            RIGHT('0' + CAST(MONTH(fec_emis) AS VARCHAR(2)), 2) AS emes,
+            co_art,
+            co_ven,
+            
+            SUM(total_art) AS totalart
+        FROM TECH_A.dbo.reng_ped rp
+        INNER JOIN TECH_A.dbo.pedidos p ON p.fact_num = rp.fact_num
+        WHERE ${whereClause.join(' AND ')}
+        GROUP BY YEAR(fec_emis), MONTH(fec_emis), co_art, co_ven
+        ORDER BY co_art
+        `;
 
         const pedidos = await this.sql.$queryRawUnsafe(query) as DataGoalsProfit[];
-
 
         const result = pedidos.map((d) => ({
             year: d.eanio.toString(),
@@ -92,46 +97,31 @@ export default class GoalsService {
         //UPDATE metas SET utilizado = $totalart WHERE anio = '$eanio' AND mes = '$emes' AND codven = '$coven' AND codart = '$co_art';
 
 
-        //rollback
-        // await this.mysql.$transaction(async (tx) => {
-        //     for (const item of dataGoals) {
-        //         await tx.metas.update({
-        //             where: {
-        //                 anio_mes_codven_codart: {
-        //                     anio: item.year,
-        //                     mes: item.month,
-        //                     codven: item.co_ven,
-        //                     codart: item.co_art,
-        //                 },
-        //             },
-        //             data: {
-        //                 utilizado: Math.round(item.totalart),
-        //             },
-        //         });
+        try {
+            await this.mysql.$transaction(async (tx) => {
+                await Promise.all(
+                    dataGoals.map((item) =>
+                        tx.metas.updateMany({
+                            where: {
+                                anio: item.year,
+                                mes: item.month,
+                                codven: item.co_ven,
+                                codart: item.co_art,
+                            },
+                            data: { utilizado: item.totalart },
+                        })
 
-        //     }
-        // });
+                    )
+                );
+            });
+        } catch (error) {
+            console.log('fail to update *metas*:', error);
+        }
 
-        //method 2
-        // await this.mysql.$transaction(async (tx) => {
 
-        //     // make  batch with Promise.all
-        //     await Promise.all(
-        //         dataGoals.map((item) =>
-        //             tx.metas.updateMany({
-        //                 where: {
-        //                     anio: item.year,
-        //                     mes: item.month,
-        //                     codven: item.co_ven,
-        //                     codart: item.co_art,
-        //                 },
-        //                 data: { utilizado: Math.round(item.totalart) },
-        //             }),
-        //         ),
-        //     );
-        // });
 
         if (codven) {
+
             const codvenList = codven
                 .split(',')
                 .map(v => v)
@@ -141,7 +131,15 @@ export default class GoalsService {
                 where: {
                     anio: DateUtils.GetYear(),
                     mes: DateUtils.GetMonthMM(),
-                    ...(codvenList ? { codven: { in: codvenList } } : {}),
+                    asignado: { gt: 0 },
+                    ...(codvenList
+                        ? {
+                            OR: codvenList.map((cod) => ({
+                                codven: { startsWith: cod.trim() },
+                            })),
+                        }
+                        : {}),
+
                 },
                 include: {
                     articulo: {
@@ -150,14 +148,11 @@ export default class GoalsService {
                             artdes: true,
                         },
                     },
-                    vendedores: {
-                        select: {
-                            vendes: true
-                        }
-                    }
+
 
                 },
             });
+            const vendedores = await this.GetSellers();
 
 
             const result: GoalsDto[] = goals
@@ -169,20 +164,25 @@ export default class GoalsService {
                     artdes: item.articulo?.artdes ?? '',
                     asignado: item.asignado,
                     utilizado: item.utilizado,
-                    vendes: item.vendedores?.vendes.trim() ?? '',
+                    vendes: vendedores.find(v => v.codven.startsWith(item.codven))?.vendes ?? '',
                 }))
-                .sort((a, b) => a.utilizado - b.utilizado);
+                .sort((a, b) => a.codart.localeCompare(b.codart))
 
+
+        
             return result;
 
+
         }
+
+
         // if codven is null
         const year = DateUtils.GetYear();
         const month = DateUtils.GetMonthMM();
 
         const metasAgrupadas = await this.mysql.metas.groupBy({
             by: ['anio', 'mes', 'codart'],
-            where: { anio: year, mes: month },
+            where: { anio: year, mes: month, asignado: { gt: 0 } },
             _sum: {
                 asignado: true,
                 utilizado: true,
@@ -191,7 +191,7 @@ export default class GoalsService {
 
         // get info
         const codarts = metasAgrupadas.map((m) => m.codart);
-        const arts = await this.mysql.mtarticulos.findMany({
+        const arts = await this.mysql.mtprofitart.findMany({
             where: { codart: { in: codarts } },
         });
 
@@ -208,40 +208,25 @@ export default class GoalsService {
                 utilizado: m._sum.utilizado ?? 0,
                 vendes: ''
             };
-        }).sort((a, b) => a.utilizado - b.utilizado);
+        }).sort((a, b) => a.codart.localeCompare(b.codart));
+        ;
     }
 
     //filter data
     async GetSellers(): Promise<SellersDto[]> {
         // Goals by vendedores
-        const metas = await this.mysql.metas.findMany({
+        const ven = await this.mysql.clvendedores.findMany({
             where: {
-                anio: DateUtils.GetYear(),
-                mes: DateUtils.GetMonthMM(),
+
+                codven: { not: '00001' }
             },
             select: {
-                vendedores: {
-                    select: {
-                        codven: true,
-                        vendes: true,
-                    },
-                },
+                codven: true,
+                vendes: true,
             },
         });
 
-        // Filter uniq
-        const uniqueSellersMap = new Map<string, SellersDto>();
-        metas.forEach(meta => {
-            const seller = meta.vendedores;
-            if (seller && !uniqueSellersMap.has(seller.codven)) {
-                uniqueSellersMap.set(seller.vendes, {
-                    co_ven: seller.codven,
-                    des_ven: seller.vendes,
-                });
-            }
-        });
-
-        return Array.from(uniqueSellersMap.values());
+        return ven;
     }
 
 }
