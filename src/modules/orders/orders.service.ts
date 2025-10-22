@@ -270,12 +270,12 @@ export class OrdersService {
       throw new Error(`Pedido con número de factura ${factNum} no encontrado`);
     }
    
-    // const response = await this.sql.pedidos.update({
-    //   where: { fact_num: factNum },
-    //   data: { comentario: newcomment },
-    //   include: { reng_ped: true },
-    // });
-    // return response;
-    return true
+    const response = await this.sql.pedidos.update({
+      where: { fact_num: factNum },
+      data: { comentario: newcomment },
+      //include: { reng_ped: true },
+    });
+    return response;
+  
   }
 }

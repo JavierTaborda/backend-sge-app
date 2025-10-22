@@ -48,7 +48,7 @@ export class OrdersController {
     return this.orderService.UpdateRevisadoPedido(factNum, status);
   }
   // PATCH /orders/comment/:factNum
-  @Role('4', '5', '1')
+  @Role('4', '5')
   @Patch('/comment/:factNum/')
   async updatecommentFact(
     @Param('factNum', ParseIntPipe) factNum: number,
