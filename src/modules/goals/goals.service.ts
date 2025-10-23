@@ -152,6 +152,8 @@ export default class GoalsService {
 
                 },
             });
+
+            // This way is for: The relation of vendedores dont match with the codven in metas
             const vendedores = await this.GetSellers();
 
 

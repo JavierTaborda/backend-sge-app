@@ -2,11 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.1] - YYYY-MM-DD
+## [1.0.1] - 2025-10-22
 
 ### Added
 
--N/A
+- Module goals: goals.dto, Sellers.dto, getgoals by role of the user.
+Note:  The goals service get the data from sql server  and update in my sql to get the data.
 
 ### Changed
 
@@ -73,6 +74,8 @@ model clcategoria {
   articulos  mtarticulos[] //  invert relation
 }
 ```
+
+-Add  conntroller and service `PATCH /orders/comment/:factNum` in orders for update the comment to `**` or `` by the sellers.
 
 ### Fixed
 
