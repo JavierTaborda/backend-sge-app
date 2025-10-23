@@ -2,7 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.1] - 2025-10-22
+## [1.0.2] - 2025-MM-DD #UNRELEASED
+
+### Added
+
+- Creater Order Module
+
+### Changed
+
+### Fixed
+
+### Removed
+
+## [1.0.1](https://github.com/JavierTaborda/backend-sge-app/releases/tag/v1.0.1) - 2025-10-22
 
 ### Added
 

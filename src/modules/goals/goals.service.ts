@@ -169,11 +169,7 @@ export default class GoalsService {
                     vendes: vendedores.find(v => v.codven.startsWith(item.codven))?.vendes ?? '',
                 }))
                 .sort((a, b) => a.codart.localeCompare(b.codart))
-
-
-        
             return result;
-
 
         }
 
@@ -211,7 +207,7 @@ export default class GoalsService {
                 vendes: ''
             };
         }).sort((a, b) => a.codart.localeCompare(b.codart));
-        ;
+        
     }
 
     //filter data
