@@ -26,5 +26,8 @@ export class GoalsDto {
     @IsOptional()
     @IsString()
     vendes: string;
+    @IsOptional()
+    @IsString()
+    catdes: string;
 
 }

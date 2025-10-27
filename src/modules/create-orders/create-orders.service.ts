@@ -9,6 +9,7 @@ export class CreateOrdersService {
     async GetProductsOrders(codven?:string) {
         const year = DateUtils.GetYear();
         const month = DateUtils.GetMonthMM();
+        console.log(codven)
 
         const metas = await this.mysql.metas.findMany({
             where:

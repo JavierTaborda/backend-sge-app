@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { CreateOrdersService } from './create-orders.service';
 
 @Controller('create-orders')
@@ -8,9 +8,11 @@ export class CreateOrdersController {
 
     @Get()
     async GetProductsOrders(
+        @Query('codven') codven?: string
         // @CurrentUser('role') role: string,
         // @CurrentUser('codven') codven: string,
     ) {
-        return await this.CreateOrderService.GetProductsOrders();
+
+        return await this.CreateOrderService.GetProductsOrders(codven);
     }
 }

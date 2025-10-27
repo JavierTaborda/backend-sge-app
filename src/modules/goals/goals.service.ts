@@ -139,19 +139,23 @@ export default class GoalsService {
                             })),
                         }
                         : {}),
-
                 },
                 include: {
                     articulo: {
                         select: {
                             codart: true,
                             artdes: true,
+                            categoria: {
+                                select: {
+                                    codcat: true,
+                                    catdes: true,
+                                },
+                            },
                         },
                     },
-
-
                 },
             });
+
 
             // This way is for: The relation of vendedores dont match with the codven in metas
             const vendedores = await this.GetSellers();
@@ -167,6 +171,8 @@ export default class GoalsService {
                     asignado: item.asignado,
                     utilizado: item.utilizado,
                     vendes: vendedores.find(v => v.codven.startsWith(item.codven))?.vendes ?? '',
+                    catdes: item.articulo?.categoria?.codcat ?? '',
+                 
                 }))
                 .sort((a, b) => a.codart.localeCompare(b.codart))
             return result;
@@ -191,6 +197,16 @@ export default class GoalsService {
         const codarts = metasAgrupadas.map((m) => m.codart);
         const arts = await this.mysql.mtprofitart.findMany({
             where: { codart: { in: codarts } },
+            select: {
+                codart: true,
+                artdes: true,
+                categoria: {
+                    select: {
+                        codcat: true,
+                        catdes: true,
+                    },
+                },
+            },
         });
 
         // group data
@@ -204,7 +220,8 @@ export default class GoalsService {
                 artdes: art?.artdes ?? '',
                 asignado: m._sum.asignado ?? 0,
                 utilizado: m._sum.utilizado ?? 0,
-                vendes: ''
+                vendes: '',
+                catdes: art?.categoria?.codcat ?? '',
             };
         }).sort((a, b) => a.codart.localeCompare(b.codart));
         

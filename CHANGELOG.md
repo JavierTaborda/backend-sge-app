@@ -6,9 +6,21 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Creater Order Module
+- `getcategorys` endpoint in products module
 
 ### Changed
+
+- Add in mtprofitart
+
+``` prisma
+
+categoria  clcategoria? @relation(fields: [codcat], references: [codcat])
+
+```
+
+- Add   mtprofitart mtprofitart[] in categorias
+
+- Add code of category en goals module
 
 ### Fixed
 

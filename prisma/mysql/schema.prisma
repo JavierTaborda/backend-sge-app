@@ -174,7 +174,9 @@ model clbancoswift {
 model clcategoria {
   codcat      String        @id @db.VarChar(6)
   catdes      String        @db.VarChar(60)
-  mtarticulos mtarticulos[]
+
+  //mtarticulos mtarticulos[]
+  mtprofitart mtprofitart[]
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
@@ -587,7 +589,7 @@ model mtarticulos {
   medlargo    Int       @default(0)
 
   //  manual inputs
-  categoria clcategoria? @relation(fields: [codcat], references: [codcat])
+ // categoria clcategoria? @relation(fields: [codcat], references: [codcat])
 
 }
 
@@ -688,6 +690,8 @@ model mtprofitart {
   medlargo    Int       @default(0)
   //manual   
   metas     metas[]
+  categoria clcategoria? @relation(fields: [codcat], references: [codcat])
+
 
 }
 
