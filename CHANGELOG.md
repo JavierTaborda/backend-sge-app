@@ -24,7 +24,11 @@ categoria  clcategoria? @relation(fields: [codcat], references: [codcat])
 
 ### Fixed
 
+-N/A
+
 ### Removed
+
+-N/A
 
 ## [1.0.1](https://github.com/JavierTaborda/backend-sge-app/releases/tag/v1.0.1) - 2025-10-22
 
