@@ -1,6 +1,8 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CustomersService } from './customers.service';
 
+ @UseGuards(JwtAuthGuard)
 @Controller('customers')
 export class CustomersController {
   constructor(private readonly customersService: CustomersService) { }
@@ -13,6 +15,7 @@ export class CustomersController {
   @Get(':codcliente')
   async GetClienteByCode(@Param('codcliente') codcliente: string) {
     return this.customersService.GetCliente(codcliente);
+
   }
 
   @Get('zone/:codzone')

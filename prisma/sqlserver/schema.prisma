@@ -228,6 +228,9 @@ model art {
   uni_emp    String?                  @db.Char(6)
   rel_emp    Decimal?                 @db.Decimal(18, 5)
   movil      Boolean?
+
+  //manual 
+  reng_ped reng_ped[]
 }
 
 model clientes {
@@ -309,6 +312,8 @@ model clientes {
   sincredito Boolean?
   porc_esp   Float?
   contribu_e Boolean?
+  //manual
+     pedidos pedidos[] 
 }
 
 model condicio {
@@ -409,6 +414,7 @@ model pedidos {
   telefono   String?    @db.VarChar(60)
   //Add raltion manual
   reng_ped   reng_ped[] 
+   cliente  clientes? @relation(fields: [co_cli], references: [co_cli])
 }
 
 model reng_ped {
@@ -459,7 +465,7 @@ model reng_ped {
 
 //relation manual
   pedido pedidos @relation(fields: [fact_num], references: [fact_num])
-
+  art art? @relation(fields: [co_art], references: [co_art])
   @@id([fact_num, reng_num], map: "reng_ped_reng_ped")
 }
 

@@ -1,23 +1,24 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { ProductsService } from './products.service';
 
-// @UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('products')
 export class ProductsController {
-  constructor(private readonly productsServise: ProductsService) {}
+  constructor(private readonly productsService: ProductsService) { }
   @Get()
   async getAll(
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '10',
   ) {
-    return this.productsServise.getProducts(+page, +limit);
+    return this.productsService.getProducts(+page, +limit);
   }
   @Get('categorys')
   async getcategorys(
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '15',
   ) {
-    return this.productsServise.getCategorys(+page, +limit);
+    return this.productsService.getCategorys(+page, +limit);
   }
-  
+
 }

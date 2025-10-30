@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.3] - 2025-MM-DD
+
+### Added
+
+Add return reports module
+
+### Changed
+
+-Add relation in  reng_ped and art:
+
+``` prisma
+  art art? @relation(fields: [co_art], references: [co_art])
+```
+
+``` prisma
+ reng_ped reng_ped[]
+```
+
+-Add relation in  pedidos and clientes:
+
+``` prisma
+cliente  clientes? @relation(fields: [co_cli], references: [co_cli])
+```
+
+``` prisma
+pedidos pedidos[] 
+
+```
+
+### Fixed
+
+### Removed
+
 ## [1.0.2] - 2025-10-27
 
 ### Added

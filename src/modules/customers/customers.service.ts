@@ -6,7 +6,17 @@ export class CustomersService {
   constructor(private readonly sql: SQLServerPrismaService) {}
 
   async GetAllClientes() {
-    return this.sql.clientes.findMany();
+    return this.sql.clientes.findMany({
+      select:{
+
+        co_cli:true,
+        cli_des:true,
+        direc1:true,
+        direc2:true,
+        dir_ent2:true,        
+        co_zon:true,
+      }
+    });
   }
 
   async GetZoneClientes(codzone: string){

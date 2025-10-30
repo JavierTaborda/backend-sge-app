@@ -7,6 +7,7 @@ import { GoalsModule } from './modules/goals/goals.module';
 import { IsOnlineModule } from './modules/isonline/isonline.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { ProductsModule } from './modules/products/products.module';
+import { ReturnsModule } from './modules/returns/returns.module';
 import { VendorsModule } from './modules/vendors/vendors.module';
 import { WarehousesModule } from './modules/warehouses/warehouses.module';
 import { ZonesModule } from './modules/zones/zones.module';
@@ -26,7 +27,8 @@ import { ZonesModule } from './modules/zones/zones.module';
       serveRoot: '/',
     }),
 
-    VendorsModule, OrdersModule, ZonesModule, CustomersModule, ProductsModule, IsOnlineModule, WarehousesModule, GoalsModule, CreateOrdersModule],
+    VendorsModule, OrdersModule, ZonesModule, CustomersModule, ProductsModule, IsOnlineModule, WarehousesModule, GoalsModule, CreateOrdersModule, ReturnsModule],
+
 
 })
 export class AppModule { }

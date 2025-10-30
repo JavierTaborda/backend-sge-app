@@ -203,12 +203,11 @@ model clchoferes {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model clcliente {
-  codcli  Int    @db.SmallInt
+  codcli  Int    @id @db.SmallInt
   descli  String @db.VarChar(40)
   rifoced String @db.VarChar(20)
   unidad  String @default("CYBERLUX") @db.VarChar(10)
 
-  @@ignore
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
