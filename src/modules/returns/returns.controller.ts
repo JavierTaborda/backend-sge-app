@@ -9,11 +9,18 @@ export class ReturnsController {
 
     @Get('byfactnumber/:fact_number')
     async getOrderByFactNumber(
-       // @Query('fact_number') fact_number?: number,
+        // @Query('fact_number') fact_number?: number,
         @Param('fact_number') fact_number: number
     ) {
         console.log(fact_number)
         return this.returnsService.getOrderByFactNumber(fact_number);
 
+    }
+
+    @Get('byserial/:serial')
+    async getBySerial(
+        @Param('serial') serial: string
+    ) {
+        return this.returnsService.getDataBySerial(serial);
     }
 }

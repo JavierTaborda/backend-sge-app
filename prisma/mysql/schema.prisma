@@ -172,8 +172,8 @@ model clbancoswift {
 }
 
 model clcategoria {
-  codcat      String        @id @db.VarChar(6)
-  catdes      String        @db.VarChar(60)
+  codcat String @id @db.VarChar(6)
+  catdes String @db.VarChar(60)
 
   //mtarticulos mtarticulos[]
   mtprofitart mtprofitart[]
@@ -207,7 +207,6 @@ model clcliente {
   descli  String @db.VarChar(40)
   rifoced String @db.VarChar(20)
   unidad  String @default("CYBERLUX") @db.VarChar(10)
-
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
@@ -284,7 +283,7 @@ model cltransporte {
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
-model clvendedores  {
+model clvendedores {
   codven    String  @id @db.VarChar(6)
   vendes    String  @db.VarChar(60)
   cedula    String? @db.VarChar(15)
@@ -296,7 +295,7 @@ model clvendedores  {
   activo    Boolean @default(true)
 
   //manual input 
-    metas     metas[]
+  metas metas[]
 }
 
 model clzonas {
@@ -440,11 +439,11 @@ model dtpredes {
   manjser   Boolean @default(true)
   codalma   String  @db.VarChar(6)
   codbarra  String? @db.VarChar(30)
-  serial1   String? @db.VarChar(40)
+  serial1   String @db.VarChar(40)
   refbarra  String? @db.VarChar(30)
   recouser  Int     @default(1)
 
-  @@ignore
+  @@id([pednum, serial1])
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
@@ -497,13 +496,12 @@ model metas {
   asignado  Int    @default(0)
   utilizado Int    @default(0)
 
- //  manual inputs
+  //  manual inputs
   //articulo mtarticulos? @relation(fields: [codart], references: [codart])
 
   articulo mtprofitart? @relation(fields: [codart], references: [codart])
 
   vendedores clvendedores? @relation(fields: [codven], references: [codven])
-
 
   @@id([anio, mes, codven, codart])
 }
@@ -588,8 +586,7 @@ model mtarticulos {
   medlargo    Int       @default(0)
 
   //  manual inputs
- // categoria clcategoria? @relation(fields: [codcat], references: [codcat])
-
+  // categoria clcategoria? @relation(fields: [codcat], references: [codcat])
 }
 
 model mtclientes {
@@ -622,76 +619,74 @@ model mtclientes {
 }
 
 model mtprofitart {
-  codart      String    @id @db.VarChar(30)
-  artdes      String    @db.VarChar(120)
-  fecrec      DateTime  @db.Date
-  mseriales   Boolean?  @default(false)
-  mlote       Boolean?  @default(false)
-  mgarantia   Boolean?  @default(false)
-  codlin      String    @db.VarChar(6)
-  codcat      String    @db.VarChar(6)
-  codsubl     String    @db.VarChar(6)
-  codcolor    String    @db.VarChar(6)
-  codbarra    String?   @db.VarChar(20)
-  artref      String?   @db.VarChar(30)
-  modelo      String    @db.VarChar(20)
-  coment      String?   @db.VarChar(100)
-  univenta    String    @db.VarChar(6)
-  unicompra   String    @db.VarChar(6)
-  unirelac    Decimal   @default(0.00000) @db.Decimal(18, 5)
-  stockact    Int       @default(0) @db.MediumInt
-  stockcom    Int       @default(0) @db.MediumInt
-  stocklle    Int       @default(0) @db.MediumInt
-  stockdes    Int       @default(0) @db.MediumInt
-  suniventa   String    @db.VarChar(6)
-  sunicompra  String    @db.VarChar(6)
-  sunirelac   Decimal   @default(0.00000) @db.Decimal(18, 5)
-  sstockact   Int       @default(0) @db.MediumInt
-  sstockcom   Int       @default(0) @db.MediumInt
-  sstocklle   Int       @default(0) @db.MediumInt
-  sstockdes   Int       @default(0) @db.MediumInt
-  precioom    Boolean   @default(false)
-  precvta1    Decimal   @default(0.00) @db.Decimal(18, 2)
-  fecprecv1   DateTime? @db.Date
-  precvta2    Decimal   @default(0.00) @db.Decimal(18, 2)
-  fecprecv2   DateTime? @db.Date
-  precvta3    Decimal   @db.Decimal(18, 2)
-  fecprecv3   DateTime? @db.Date
-  precvta4    Decimal   @db.Decimal(18, 2)
-  fecprecv4   DateTime? @db.Date
-  precvta5    Decimal   @db.Decimal(18, 2)
-  fecprecv5   DateTime? @db.Date
-  fecdesp5    DateTime  @db.Date
-  fechasp5    DateTime  @db.Date
-  ultcosun    Decimal   @default(0.00) @db.Decimal(18, 2)
-  fultcosun   DateTime? @db.Date
-  cosproun    Decimal   @default(0.00) @db.Decimal(18, 2)
-  fcosproun   DateTime? @db.Date
-  cosunan     Decimal   @default(0.00) @db.Decimal(18, 2)
-  fcosunan    DateTime? @db.Date
-  ultcosunom  Decimal   @default(0.00) @db.Decimal(18, 2)
-  fultcosunom DateTime? @db.Date
-  cosprounom  Decimal   @default(0.00) @db.Decimal(18, 2)
-  fcosprounom DateTime? @db.Date
-  cosunanom   Decimal   @default(0.00) @db.Decimal(18, 2)
-  fcosunanom  DateTime? @db.Date
-  tipocosto   String    @db.VarChar(4)
-  invfisico   Boolean   @default(false)
-  diasrepo    Int       @default(0) @db.SmallInt
-  tipoart     String    @db.VarChar(1)
-  anulado     Boolean   @default(false)
-  tipoimp     String    @db.VarChar(1)
-  compuesto   Int       @default(0) @db.TinyInt
-  peso        Decimal   @default(0.00000) @db.Decimal(18, 5)
-  volumen     Decimal   @default(0.00000) @db.Decimal(18, 5)
-  medalto     Int       @default(0)
-  medancho    Int       @default(0)
-  medlargo    Int       @default(0)
+  codart      String       @id @db.VarChar(30)
+  artdes      String       @db.VarChar(120)
+  fecrec      DateTime     @db.Date
+  mseriales   Boolean?     @default(false)
+  mlote       Boolean?     @default(false)
+  mgarantia   Boolean?     @default(false)
+  codlin      String       @db.VarChar(6)
+  codcat      String       @db.VarChar(6)
+  codsubl     String       @db.VarChar(6)
+  codcolor    String       @db.VarChar(6)
+  codbarra    String?      @db.VarChar(20)
+  artref      String?      @db.VarChar(30)
+  modelo      String       @db.VarChar(20)
+  coment      String?      @db.VarChar(100)
+  univenta    String       @db.VarChar(6)
+  unicompra   String       @db.VarChar(6)
+  unirelac    Decimal      @default(0.00000) @db.Decimal(18, 5)
+  stockact    Int          @default(0) @db.MediumInt
+  stockcom    Int          @default(0) @db.MediumInt
+  stocklle    Int          @default(0) @db.MediumInt
+  stockdes    Int          @default(0) @db.MediumInt
+  suniventa   String       @db.VarChar(6)
+  sunicompra  String       @db.VarChar(6)
+  sunirelac   Decimal      @default(0.00000) @db.Decimal(18, 5)
+  sstockact   Int          @default(0) @db.MediumInt
+  sstockcom   Int          @default(0) @db.MediumInt
+  sstocklle   Int          @default(0) @db.MediumInt
+  sstockdes   Int          @default(0) @db.MediumInt
+  precioom    Boolean      @default(false)
+  precvta1    Decimal      @default(0.00) @db.Decimal(18, 2)
+  fecprecv1   DateTime?    @db.Date
+  precvta2    Decimal      @default(0.00) @db.Decimal(18, 2)
+  fecprecv2   DateTime?    @db.Date
+  precvta3    Decimal      @db.Decimal(18, 2)
+  fecprecv3   DateTime?    @db.Date
+  precvta4    Decimal      @db.Decimal(18, 2)
+  fecprecv4   DateTime?    @db.Date
+  precvta5    Decimal      @db.Decimal(18, 2)
+  fecprecv5   DateTime?    @db.Date
+  fecdesp5    DateTime     @db.Date
+  fechasp5    DateTime     @db.Date
+  ultcosun    Decimal      @default(0.00) @db.Decimal(18, 2)
+  fultcosun   DateTime?    @db.Date
+  cosproun    Decimal      @default(0.00) @db.Decimal(18, 2)
+  fcosproun   DateTime?    @db.Date
+  cosunan     Decimal      @default(0.00) @db.Decimal(18, 2)
+  fcosunan    DateTime?    @db.Date
+  ultcosunom  Decimal      @default(0.00) @db.Decimal(18, 2)
+  fultcosunom DateTime?    @db.Date
+  cosprounom  Decimal      @default(0.00) @db.Decimal(18, 2)
+  fcosprounom DateTime?    @db.Date
+  cosunanom   Decimal      @default(0.00) @db.Decimal(18, 2)
+  fcosunanom  DateTime?    @db.Date
+  tipocosto   String       @db.VarChar(4)
+  invfisico   Boolean      @default(false)
+  diasrepo    Int          @default(0) @db.SmallInt
+  tipoart     String       @db.VarChar(1)
+  anulado     Boolean      @default(false)
+  tipoimp     String       @db.VarChar(1)
+  compuesto   Int          @default(0) @db.TinyInt
+  peso        Decimal      @default(0.00000) @db.Decimal(18, 5)
+  volumen     Decimal      @default(0.00000) @db.Decimal(18, 5)
+  medalto     Int          @default(0)
+  medancho    Int          @default(0)
+  medlargo    Int          @default(0)
   //manual   
-  metas     metas[]
-  categoria clcategoria? @relation(fields: [codcat], references: [codcat])
-
-
+  metas       metas[]
+  categoria   clcategoria? @relation(fields: [codcat], references: [codcat])
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.

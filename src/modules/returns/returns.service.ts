@@ -57,5 +57,16 @@ export class ReturnsService {
         return result;
 
     }
+    async getDataBySerial(serial:string){
+
+        const data = await this.mysql.dtpredes.findFirst({
+            where:{
+                serial1:{
+                    startsWith:serial
+                }
+            }
+        })
+        return data
+    }
 
 }
