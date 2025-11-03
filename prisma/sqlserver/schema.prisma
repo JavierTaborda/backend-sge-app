@@ -415,6 +415,7 @@ model pedidos {
   //Add raltion manual
   reng_ped   reng_ped[] 
    cliente  clientes? @relation(fields: [co_cli], references: [co_cli])
+   vendedor  vendedor? @relation(fields: [co_ven], references: [co_ven])
 }
 
 model reng_ped {
@@ -512,6 +513,9 @@ model vendedor {
   password   String?   @db.Char(50)
   email      String?   @db.Char(40)
   PSW_M      String?   @db.Char(20)
+  //manual 
+
+  pedidos pedidos[]
 }
 
 model zona {

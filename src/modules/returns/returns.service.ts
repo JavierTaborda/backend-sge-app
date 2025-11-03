@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { MySQLPrismaService } from 'src/database/mysql.service';
 import { SQLServerPrismaService } from 'src/database/sqlserver.service';
 import { ReturnByFactDto } from './dtos/returnbyfact.dts';
+import { DtPredes } from './types/dtpredes';
 
 @Injectable()
 export class ReturnsService {
@@ -36,36 +37,90 @@ export class ReturnsService {
                         cli_des: true
                     },
                 },
+                vendedor:{
+                    select:{
+                        ven_des:true
+                    }
+                }
             },
         });
 
 
-        const result: ReturnByFactDto = {           
-            fact_num: order?.fact_num ?? 0,           
-            fecemis: order?.fec_emis as Date,               
+        const result: ReturnByFactDto = {
+            fact_num: order?.fact_num ?? 0,
+            fecemis: order?.fec_emis as Date,
             codcli: order?.co_cli ?? '',
-            clides: order?.cliente?.cli_des ?? '',          
-              codven: order?.co_ven ?? '',                        
-              vendes: '',           
+            clides: order?.cliente?.cli_des ?? '',
+            codven: order?.co_ven ?? '',
+            vendes: order?.vendedor?.ven_des ?? '',
             art: (order?.reng_ped ?? []).map(r => ({
                 co_art: r.co_art?.trim() ?? '',
                 art_des: r.art?.art_des?.trim() ?? ''
             }))
-             
+
         }
 
         return result;
 
     }
-    async getDataBySerial(serial:string){
+    async getDataBySerial(serial: string) {
 
-        const data = await this.mysql.dtpredes.findFirst({
-            where:{
-                serial1:{
-                    startsWith:serial
+        const predes = await this.mysql.dtpredes.findFirst({
+            where: {
+                serial1: {
+                    startsWith: serial
                 }
             }
-        })
+        }) as DtPredes;
+
+        const order = await this.sql.pedidos.findFirst({
+            where: {
+                fact_num: predes?.pednum,
+            },
+            select: {
+                fact_num: true,
+                fec_emis: true,
+                co_cli: true,
+                co_ven: true,
+                reng_ped: {
+                    where: {
+                        co_art: predes?.codart
+                    },
+                    select: {
+                        co_art: true,
+                        art: {
+                            select: {
+                                art_des: true
+                            }
+                        }
+                    }
+                },
+                cliente: {
+                    select: {
+                        cli_des: true
+                    }
+                },
+                vendedor: {
+                    select: {
+                        ven_des: true
+                    }
+                }
+            }
+        });
+        console.log(order)
+
+        const data = {
+            fact_num: order?.fact_num,
+            fecemis: order?.fec_emis as Date,
+            codcli: order?.co_cli ?? '',
+            clides: order?.cliente?.cli_des ?? '',
+            codven: order?.co_ven ?? '',
+            vendes: order?.vendedor?.ven_des,
+            codart: predes.codart,
+            artdes: order?.reng_ped.find(c => c.art?.art_des)?.art?.art_des,
+            codbarra: predes?.codbarra,
+            serial: predes.serial1
+        }
         return data
     }
 

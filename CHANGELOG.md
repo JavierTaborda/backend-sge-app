@@ -31,6 +31,17 @@ pedidos pedidos[]
 
 ```
 
+-Add relation in  pedidos and vendedor:
+
+``` prisma
+   vendedor  vendedor? @relation(fields: [co_ven], references: [co_ven])
+```
+
+``` prisma
+pedidos pedidos[] 
+
+```
+
 ### Fixed
 
 ### Removed
