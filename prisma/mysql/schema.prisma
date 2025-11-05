@@ -688,6 +688,40 @@ model mtprofitart {
   metas       metas[]
   categoria   clcategoria? @relation(fields: [codcat], references: [codcat])
 }
+model mvdevolucion {
+  devonum         Int       @id @default(autoincrement())
+  fecemis         DateTime
+  estatus         String    @db.Char(1)
+  anulada         String    @db.Char(1)
+  cerrada         String    @db.Char(1)
+  codcli          String    @db.VarChar(6)
+  clides          String    @db.VarChar(100)
+  codven          String    @db.VarChar(6)
+  vendes          String    @db.VarChar(60)
+  motivo          String?   @db.VarChar(255)
+  obsvendedor     String?   @db.VarChar(255)
+  codart          String    @db.Char(30)
+  artdes          String    @db.VarChar(120)
+  codbarra        String?   @db.Char(20)
+  serial1         String    @db.VarChar(40)
+  registradopor   String    @db.Char(30)
+  fecharegistro   DateTime
+  recibidopor     String?   @db.Char(30)
+  fecharecibido   DateTime?
+  obsrecibido     String?   @db.VarChar(255)
+  tipo            Int?      @db.TinyInt
+  chofer          String?   @db.VarChar(255)
+  inspeccionpor   String?   @db.Char(30)
+  fechainspeccion DateTime?
+  obsinspeccion   String?   @db.VarChar(255)
+  tecnicopor      String?   @db.Char(30)
+  fechatecnico    DateTime?
+  obstecnico      String?   @db.VarChar(255)
+  clasificacion   String?   @db.Char(1)
+  imgart          String?   @db.VarChar(255)
+
+}
+
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model mvcajachica {

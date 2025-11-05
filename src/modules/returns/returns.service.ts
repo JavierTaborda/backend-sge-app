@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { MySQLPrismaService } from 'src/database/mysql.service';
 import { SQLServerPrismaService } from 'src/database/sqlserver.service';
+import { CreateDevolucionDto } from './dtos/create-devolucion.dto';
 import { ReturnByFactDto } from './dtos/returnbyfact.dts';
 import { DtPredes } from './types/dtpredes';
 
@@ -44,7 +45,21 @@ export class ReturnsService {
                 }
             },
         });
+        
 
+        if (!order) {
+           return null;
+        }
+
+        const barcodes = await this.mysql.mtarticulos.findMany({
+            where: {
+                codart: { in: order.reng_ped.map(r => r.co_art ?? '') }
+            },
+            select: {
+                codart: true,
+                codbarra: true
+            }
+        });
 
         const result: ReturnByFactDto = {
             fact_num: order?.fact_num ?? 0,
@@ -55,7 +70,8 @@ export class ReturnsService {
             vendes: order?.vendedor?.ven_des ?? '',
             art: (order?.reng_ped ?? []).map(r => ({
                 co_art: r.co_art?.trim() ?? '',
-                art_des: r.art?.art_des?.trim() ?? ''
+                art_des: r.art?.art_des?.trim() ?? '',
+                codbarra: barcodes.find(b => b.codart === r.co_art)?.codbarra ?? ''
             }))
 
         }
@@ -73,6 +89,9 @@ export class ReturnsService {
             }
         }) as DtPredes;
 
+        if(predes == null){
+            return null;
+        }
         const order = await this.sql.pedidos.findFirst({
             where: {
                 fact_num: predes?.pednum,
@@ -107,7 +126,7 @@ export class ReturnsService {
                 }
             }
         });
-        console.log(order)
+        
 
         const data = {
             fact_num: order?.fact_num,
@@ -122,6 +141,25 @@ export class ReturnsService {
             serial: predes.serial1
         }
         return data
+    }
+    async createReturn(createDevolucionDto: CreateDevolucionDto) {
+        const newReturn = await this.mysql.mvdevolucion.create({
+            data: createDevolucionDto
+        });
+        return newReturn;
+        
+       
+    }
+
+    async getDevolveds(serial: string) {
+        const devolveds = await this.mysql.mvdevolucion.findMany({
+            where: {
+                serial1: {
+                    startsWith: serial
+                },
+            }
+        });
+        return devolveds;
     }
 
 }

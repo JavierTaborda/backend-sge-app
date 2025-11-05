@@ -1,4 +1,5 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { CreateDevolucionDto } from './dtos/create-devolucion.dto';
 import { ReturnsService } from './returns.service';
 
 //@UseGuards(JwtAuthGuard)
@@ -12,7 +13,7 @@ export class ReturnsController {
         // @Query('fact_number') fact_number?: number,
         @Param('fact_number') fact_number: number
     ) {
-        console.log(fact_number)
+      
         return this.returnsService.getOrderByFactNumber(fact_number);
 
     }
@@ -22,5 +23,11 @@ export class ReturnsController {
         @Param('serial') serial: string
     ) {
         return this.returnsService.getDataBySerial(serial);
+    }
+    @Post()
+    async createReturn(
+        @Body() createDevolucionDto: CreateDevolucionDto
+    ) {
+        return this.returnsService.createReturn(createDevolucionDto);
     }
 }
