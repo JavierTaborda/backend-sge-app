@@ -4,7 +4,7 @@ import { SQLServerPrismaService } from 'src/database/sqlserver.service';
 
 @Injectable()
 export class ProductsService {
-constructor(private readonly sql: SQLServerPrismaService, private readonly mysql: MySQLPrismaService) { }
+  constructor(private readonly sql: SQLServerPrismaService, private readonly mysql: MySQLPrismaService) { }
   async getProducts(page = 1, limit = 10) {
     const skip = (page - 1) * limit;
 
@@ -13,12 +13,12 @@ constructor(private readonly sql: SQLServerPrismaService, private readonly mysql
         skip,
         take: limit,
 
-        select:{
-          co_art:true,
-          art_des:true,
-          co_cat:true,
-          modelo:true,
-          
+        select: {
+          co_art: true,
+          art_des: true,
+          co_cat: true,
+          modelo: true,
+
 
         }
       }),
@@ -40,7 +40,7 @@ constructor(private readonly sql: SQLServerPrismaService, private readonly mysql
         skip,
         take: limit,
 
-        select:{
+        select: {
           codcat: true,
           catdes: true,
 
@@ -55,5 +55,29 @@ constructor(private readonly sql: SQLServerPrismaService, private readonly mysql
       page,
       lastPage: Math.ceil(total / limit),
     };
+  }
+  async getProductsWithBarcode() {
+
+    const products = await
+      this.mysql.mtarticulos.findMany({
+
+        select: {
+          codart: true,
+          artdes: true,
+          codbarra: true
+
+        },
+        where: {
+          anulado: false,
+        }
+      });
+
+    const product = products.map((p) => ({
+      co_art: p.codart,
+      art_des: p.artdes,
+      codbarra: p.codbarra,
+    }))
+
+    return product
   }
 }

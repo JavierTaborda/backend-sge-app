@@ -88,7 +88,7 @@ export class ReturnsService {
                 }
             }
         }) as DtPredes;
-
+        
         if(predes == null){
             return null;
         }
@@ -140,6 +140,7 @@ export class ReturnsService {
             codbarra: predes?.codbarra,
             serial: predes.serial1
         }
+      
         return data
     }
     async createReturn(createDevolucionDto: CreateDevolucionDto) {

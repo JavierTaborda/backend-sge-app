@@ -6,12 +6,17 @@ import { ProductsService } from './products.service';
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) { }
+ 
   @Get()
   async getAll(
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '10',
   ) {
     return this.productsService.getProducts(+page, +limit);
+  }
+   @Get('codebar')
+  async getAllWithCodeBar() {
+    return this.productsService.getProductsWithBarcode();
   }
   @Get('categorys')
   async getcategorys(

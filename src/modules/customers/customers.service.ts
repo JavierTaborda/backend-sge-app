@@ -5,7 +5,7 @@ import { SQLServerPrismaService } from 'src/database/sqlserver.service';
 export class CustomersService {
   constructor(private readonly sql: SQLServerPrismaService) {}
 
-  async GetAllClientes() {
+  async GetAllClientes(role?: string, codven?: string) {
     return this.sql.clientes.findMany({
       select:{
 
@@ -15,6 +15,9 @@ export class CustomersService {
         direc2:true,
         dir_ent2:true,        
         co_zon:true,
+      }, where:{
+        inactivo:false, 
+        ...((role === '5' || role === '4') && codven ? { co_ven: codven } : {}),
       }
     });
   }
