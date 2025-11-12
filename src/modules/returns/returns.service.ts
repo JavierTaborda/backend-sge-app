@@ -38,17 +38,17 @@ export class ReturnsService {
                         cli_des: true
                     },
                 },
-                vendedor:{
-                    select:{
-                        ven_des:true
+                vendedor: {
+                    select: {
+                        ven_des: true
                     }
                 }
             },
         });
-        
+
 
         if (!order) {
-           return null;
+            return null;
         }
 
         const barcodes = await this.mysql.mtarticulos.findMany({
@@ -88,8 +88,8 @@ export class ReturnsService {
                 }
             }
         }) as DtPredes;
-        
-        if(predes == null){
+
+        if (predes == null) {
             return null;
         }
         const order = await this.sql.pedidos.findFirst({
@@ -126,7 +126,7 @@ export class ReturnsService {
                 }
             }
         });
-        
+
 
         const data = {
             fact_num: order?.fact_num,
@@ -140,16 +140,34 @@ export class ReturnsService {
             codbarra: predes?.codbarra,
             serial: predes.serial1
         }
-      
+
         return data
     }
-    async createReturn(createDevolucionDto: CreateDevolucionDto) {
-        const newReturn = await this.mysql.mvdevolucion.create({
+    async createReturn(createDevolucionDto: CreateDevolucionDto, codven?: string) {
+
+        if (!createDevolucionDto) {
+            throw new Error("Datos de devolución no proporcionados.");
+        }
+      
+        if (!createDevolucionDto.codven || createDevolucionDto.codven.trim().length === 0) {
+            if (!codven || codven.trim().length === 0) {
+                throw new Error("Código de vendedor no proporcionado.");
+            }
+
+            const vendedor = await this.sql.vendedor.findFirst({
+                select: { ven_des: true },
+                where: { co_ven: { startsWith: codven } }
+            });
+
+            createDevolucionDto.vendes = vendedor?.ven_des ?? 'Sin descripción';
+        }
+
+        const nuevaDevolucion = await this.mysql.mvdevolucion.create({
             data: createDevolucionDto
         });
-        return newReturn;
-        
-       
+
+        return nuevaDevolucion;
+
     }
 
     async getDevolveds(serial: string) {

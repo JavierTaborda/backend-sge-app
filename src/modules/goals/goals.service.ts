@@ -115,7 +115,7 @@ export default class GoalsService {
                 );
             });
         } catch (error) {
-            console.log('fail to update *metas*:', error);
+           // console.log('fail to update *metas*:', error);
         }
 
 

@@ -1,8 +1,10 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CreateDevolucionDto } from './dtos/create-devolucion.dto';
 import { ReturnsService } from './returns.service';
 
-//@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('returns')
 export class ReturnsController {
 
@@ -10,7 +12,6 @@ export class ReturnsController {
 
     @Get('byfactnumber/:fact_number')
     async getOrderByFactNumber(
-        // @Query('fact_number') fact_number?: number,
         @Param('fact_number') fact_number: number
     ) {
       
@@ -26,8 +27,10 @@ export class ReturnsController {
     }
     @Post()
     async createReturn(
+        @CurrentUser('codven') codven: string,
         @Body() createDevolucionDto: CreateDevolucionDto
     ) {
-        return this.returnsService.createReturn(createDevolucionDto);
+        
+        return this.returnsService.createReturn(createDevolucionDto, codven);
     }
 }
