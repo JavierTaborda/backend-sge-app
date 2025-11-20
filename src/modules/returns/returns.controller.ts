@@ -14,7 +14,7 @@ export class ReturnsController {
     async getOrderByFactNumber(
         @Param('fact_number') fact_number: number
     ) {
-      
+
         return this.returnsService.getOrderByFactNumber(fact_number);
 
     }
@@ -25,12 +25,18 @@ export class ReturnsController {
     ) {
         return this.returnsService.getDataBySerial(serial);
     }
+    @Get('motives')
+    async getMotives(
+
+    ) {
+        return this.returnsService.getMotives();
+    }
     @Post()
     async createReturn(
         @CurrentUser('codven') codven: string,
         @Body() createDevolucionDto: CreateDevolucionDto
     ) {
-        
+
         return this.returnsService.createReturn(createDevolucionDto, codven);
     }
 }

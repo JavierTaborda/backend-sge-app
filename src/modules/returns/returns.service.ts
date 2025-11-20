@@ -2,8 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { MySQLPrismaService } from 'src/database/mysql.service';
 import { SQLServerPrismaService } from 'src/database/sqlserver.service';
 import { CreateDevolucionDto } from './dtos/create-devolucion.dto';
+import { MotiveItemDto } from './dtos/motive.dto';
 import { ReturnByFactDto } from './dtos/returnbyfact.dts';
+import { CodMotives } from './types/CodMotives';
 import { DtPredes } from './types/dtpredes';
+
 
 @Injectable()
 export class ReturnsService {
@@ -148,7 +151,7 @@ export class ReturnsService {
         if (!createDevolucionDto) {
             throw new Error("Datos de devolución no proporcionados.");
         }
-      
+
         if (!createDevolucionDto.codven || createDevolucionDto.codven.trim().length === 0) {
             if (!codven || codven.trim().length === 0) {
                 throw new Error("Código de vendedor no proporcionado.");
@@ -179,6 +182,27 @@ export class ReturnsService {
             }
         });
         return devolveds;
+    }
+    async getMotives() {
+
+        const codmotives: CodMotives[] = [
+            "DAÑADO",
+            "GARANTIA",
+            "NO SOLICITADO",
+            "GOLPEADO",
+            "REPONER",
+            "CAMBIO X CAMBIO",
+            "EXCEDENTE"
+        ];
+
+        const motives: MotiveItemDto[] = codmotives.map((codmotive, index) => ({
+            id: index + 1,
+            codmotive
+        }));
+
+
+
+        return motives;
     }
 
 }
