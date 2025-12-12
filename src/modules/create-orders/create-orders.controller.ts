@@ -15,4 +15,10 @@ export class CreateOrdersController {
 
         return await this.CreateOrderService.GetProductsOrders(codven);
     }
+
+    @Get("exchangerate")
+    async GetExhangeRate() {
+
+        return await this.CreateOrderService.GetExchangeRate();
+    }
 }

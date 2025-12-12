@@ -471,7 +471,25 @@ model reng_ped {
 
   @@id([fact_num, reng_num], map: "reng_ped_reng_ped")
 }
+model tasas {
+  co_mone   String   @db.Char(6)
+  fecha     DateTime @db.SmallDateTime
+  tasa_c    Decimal  @db.Decimal(18, 5)
+  tasa_v    Decimal  @db.Decimal(18, 5)
+  co_us_in  String   @db.Char(6)
+  fe_us_in  DateTime @db.DateTime
+  co_us_mo  String   @db.Char(6)
+  fe_us_mo  DateTime @db.DateTime
+  co_us_el  String   @db.Char(6)
+  fe_us_el  DateTime @db.DateTime
+  trasnfe   String   @db.Char(1)
+  revisado  String   @db.Char(1)
+  co_sucu   String   @db.Char(6)
+  rowguid   String   @db.UniqueIdentifier
 
+  @@id([co_mone, fecha]) 
+
+}
 model vendedor {
   co_ven     String    @id(map: "vendedor_co_ven") @db.Char(6)
   tipo       String?   @db.Char(1)
