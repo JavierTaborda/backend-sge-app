@@ -1,12 +1,13 @@
 generator client {
-  provider = "prisma-client-js"
-   binaryTargets = ["native", "debian-openssl-1.0.x"]
-  output   = "../../prisma-clients/sqlserver"
+  provider      = "prisma-client"
+  //binaryTargets = ["native", "debian-openssl-1.0.x"]
+  output        = "../../src/prisma-clients/sqlserver"
+
+  moduleFormat = "cjs"
 }
 
 datasource db {
   provider = "sqlserver"
-  url      = env("SQLSERVER_DATABASE_URL")
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
@@ -313,7 +314,7 @@ model clientes {
   porc_esp   Float?
   contribu_e Boolean?
   //manual
-     pedidos pedidos[] 
+  pedidos    pedidos[]
 }
 
 model condicio {
@@ -413,9 +414,9 @@ model pedidos {
   sta_prod   String?    @db.Char(1)
   telefono   String?    @db.VarChar(60)
   //Add raltion manual
-  reng_ped   reng_ped[] 
-   cliente  clientes? @relation(fields: [co_cli], references: [co_cli])
-   vendedor  vendedor? @relation(fields: [co_ven], references: [co_ven])
+  reng_ped   reng_ped[]
+  cliente    clientes?  @relation(fields: [co_cli], references: [co_cli])
+  vendedor   vendedor?  @relation(fields: [co_ven], references: [co_ven])
 }
 
 model reng_ped {
@@ -464,9 +465,10 @@ model reng_ped {
   cant_prod  Decimal?  @db.Decimal(18, 5)
   imp_prod   Decimal?  @db.Decimal(18, 5)
 
-//relation manual
+  //relation manual
   pedido pedidos @relation(fields: [fact_num], references: [fact_num])
-  art art? @relation(fields: [co_art], references: [co_art])
+  art    art?    @relation(fields: [co_art], references: [co_art])
+
   @@id([fact_num, reng_num], map: "reng_ped_reng_ped")
 }
 

@@ -1,11 +1,11 @@
 generator client {
-  provider = "prisma-client-js"
-  output   = "../../prisma-clients/mysql"
+  provider = "prisma-client"
+  output   = "../../src/prisma-clients/mysql"
+  moduleFormat    = "cjs"
 }
 
 datasource db {
   provider = "mysql"
-  url      = env("MYSQL_DATABASE_URL")
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.

@@ -58,9 +58,31 @@ cp .env.example .env
 
 Edita .env con tus credenciales de base de datos:
 
-MYSQL_DATABASE_URL="mysql://USER:PASSWORD@localhost:3306/DB_NAME"
+```bash
+# SQL Server
 
-SQLSERVER_DATABASE_URL="sqlserver://USER:PASSWORD@HOST:PORT;database=DB_NAME;encrypt=true;trustServerCertificate=true"
+SQLSERVER_USER="user"
+SQLSERVER_PASSWORD="password"
+SQLSERVER_DATABASE="dbname"
+SQLSERVER_HOST="host"
+SQLSERVER_PORT="port"
+SQLSERVER_DATABASE_URL="sqlserver://host:port;database=dbname;user=user;password=password;encrypt=true;trustServerCertificate=true"
+
+# MySQL
+
+MYSQL_USER="root"
+MYSQL_PASSWORD=""
+MYSQL_DATABASE="dbname"
+MYSQL_HOST="localhost"
+MYSQL_PORT=port
+MYSQL_DATABASE_URL="mysql://root:@localhost:port/dbname"
+
+# OTHERS
+SUPABASE_PROJECT=your-supabase-url-here
+NODE_ENV=development - production
+PORT=3000 - XXX
+IMAGES_ROUTE=C:\\Your\\Route\\Here\\Images
+```
 
 Estructura de Prisma:
 Crea dos carpetas de schema para mantenerlos separados:
@@ -70,31 +92,58 @@ prisma/
 └── sqlserver/
 └── schema.prisma
 
-
 Schema.prisma (MySQL)
 prisma/mysql/schema.prisma
   generator client {
     provider = "prisma-client-js"
-    output = "../../prisma-clients/mysql"
+    output = "../../src/prisma-clients/mysql”
   }
 
   datasource db {
     provider = "mysql"
-    url = env("MYSQL_DATABASE_URL")
   }
 
-
 Schema.prisma (SQL Server)
+
 prisma/sqlserver/schema.prisma
   generator client {
     provider = "prisma-client-js"
-    output = "../../prisma-clients/sqlserver"
+    output = "../../src/prisma-clients/sqlserver
   }
 
   datasource db {
     provider = "sqlserver"
-    url = env("SQLSERVER_DATABASE_URL")
   }
+prisma.sql.config.ts y prisma.mysql.config.ts
+
+```bash
+import "dotenv/config";
+import { defineConfig, env } from "prisma/config";
+
+export default defineConfig({
+    schema: "prisma/mysql/schema.prisma",
+    migrations: {
+        path: "prisma/mysql/migrations",
+        seed: "tsx prisma/mysql/seed.ts",
+    },
+    datasource: {
+        url: env("MYSQL_DATABASE_URL"),
+    },
+});
+
+import 'dotenv/config'
+import { defineConfig, env } from 'prisma/config'
+
+export default defineConfig({
+    schema: 'prisma/sqlserver/schema.prisma',
+    migrations: {
+        path: 'prisma/migrations',
+    },
+    datasource: {
+        url: env('SQLSERVER_DATABASE_URL'),
+    },
+})
+```
 
 Generar tablas :
 
@@ -107,6 +156,9 @@ npx prisma db pull --schema=prisma/sqlserver/schema.prisma
 
 ```bash
 npm run prisma:generate
+
+npx prisma generate  --config=prisma.mysql.config.ts  
+npx prisma generate  --config=prisma.sql.config.ts  
 ```
 
 Esto generará los clientes de Prisma en prisma-clients/mysql y prisma-clients/sqlserver.
@@ -117,7 +169,7 @@ Esto generará los clientes de Prisma en prisma-clients/mysql y prisma-clients/s
 npm run start:dev
 ```
 
-La API estará disponible en http://localhost:3000.
+La API estará disponible en <http://localhost:3000>.
 
 Todos los cambios en src/ se recargan automáticamente.
 
