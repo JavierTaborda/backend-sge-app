@@ -17,7 +17,11 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- change start:prod : node dist/src/main.js in package.json
+
 ### Removed
+
+-foldder prisma-clientes in root
 
 ## [1.0.3] - 2025-11-25
 
