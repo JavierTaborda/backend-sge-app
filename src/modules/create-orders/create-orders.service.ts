@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { MySQLPrismaService } from 'src/database/mysql.service';
 import { SQLServerPrismaService } from 'src/database/sqlserver.service';
 import { DateUtils } from 'src/utils/date.utils';
+import { CondicionDto } from './dtos/condicion.dto';
 import { TasaDto } from './dtos/tasa.dto';
 @Injectable()
 export class CreateOrdersService {
@@ -54,11 +55,33 @@ export class CreateOrdersService {
         }).sort((a, b) => a.codart.localeCompare(b.codart));
     }
 
+    async GetConditions(): Promise<CondicionDto[]> {
+        const condi = await this.sql.condicio.findMany({
+            select:
+            {
+                co_cond: true,
+                cond_des: true,
+                dias_cred: true,
+            },
+            orderBy: {
+                cond_des: "asc",
+            },
+        });
+        const result: CondicionDto[] = condi.map(c => ({
+            co_cond: c.co_cond,
+            cond_des: c.cond_des,
+            dias_cred: c.dias_cred,
+        }));
+
+
+        return result;
+    }
+    
     async GetExchangeRate(fecha?: Date): Promise<TasaDto> {
         const tasa = await this.sql.tasas.findFirst({
             where: {
                 ...(fecha ? { fecha } : {}),
-                
+
             },
             orderBy: {
                 fecha: 'desc',
@@ -68,7 +91,7 @@ export class CreateOrdersService {
         const result: TasaDto = {
             fecha: tasa?.fecha ?? new Date(),
             co_mone: tasa?.co_mone ?? 'USD',
-            tasa_v: Number(tasa?.tasa_v) 
+            tasa_v: Number(tasa?.tasa_v)
         };
 
         return result;

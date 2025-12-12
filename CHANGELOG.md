@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+-Exchange Rate endpoint
+
 ### Changed
 
 - Update prisma 7.1

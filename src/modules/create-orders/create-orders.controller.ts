@@ -21,4 +21,10 @@ export class CreateOrdersController {
 
         return await this.CreateOrderService.GetExchangeRate();
     }
+
+    @Get("conditions")
+    async GetConditions() {
+
+        return await this.CreateOrderService.GetConditions();
+    }
 }
