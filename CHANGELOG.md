@@ -2,21 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.3] - 2025-11-21
+## [1.0.4] - 2025-MM-DD #UNRELEASED
 
 ### Added
 
-Add return reports module
+### Changed
+
+- Update prisma 7.1
+- use prisma.mysql.config.ts y prisma.sql.config.ts to renplace url in schema prisma
+- Update Nest JS version to 11
+- Use `@prisma/adapter-mariadb` and `@prisma/adapter-mssql` to connect the database
+- Change ouput from  `"../../prisma-clients/"` to `"../../src/prisma-clients/"`
+- Add env to use connection in mysql.service.ts and sqlserver.service.ts
+
+### Fixed
+
+### Removed
+
+## [1.0.3] - 2025-11-25
+
+### Added
+
+-Add return reports module
 
 ### Changed
 
--Add relation in  reng_ped and art:
+- Add relation in  reng_ped and art:
 
 ``` prisma
   art art? @relation(fields: [co_art], references: [co_art])
 ```
 
-``` prisma
+``` prisma.  
  reng_ped reng_ped[]
 ```
 

@@ -6,6 +6,7 @@
 # Prisma generated clients
 /prisma-clients/
 /generated/
+/src/prisma-clients/
 
 # Logs
 logs
@@ -58,3 +59,5 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+/generated/prisma
