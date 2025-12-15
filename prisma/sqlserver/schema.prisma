@@ -471,6 +471,26 @@ model reng_ped {
 
   @@id([fact_num, reng_num], map: "reng_ped_reng_ped")
 }
+model tab_enc {
+  fecha      DateTime   @id
+  tasa       Decimal
+  tasag10    Decimal
+  tasag20    Decimal
+  tipo_imp   Int
+  co_us_in   String     @db.Char(6)
+  fe_us_in   DateTime
+  co_us_mo   String     @db.Char(6)
+  fe_us_mo   DateTime
+  co_us_el   String     @db.Char(6)
+  fe_us_el   DateTime
+  revisado   String     @db.Char(1)
+  trasnfe    String     @db.Char(1)
+  rowguid    String     @unique @db.UniqueIdentifier
+  tasa3      Decimal
+  tasa4      Decimal
+  tasa5      Decimal
+  compras    Boolean
+}
 model tasas {
   co_mone   String   @db.Char(6)
   fecha     DateTime @db.SmallDateTime

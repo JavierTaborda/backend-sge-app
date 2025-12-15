@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
 import { MySQLPrismaService } from 'src/database/mysql.service';
 import { SQLServerPrismaService } from 'src/database/sqlserver.service';
 import { DateUtils } from 'src/utils/date.utils';
 import { CondicionDto } from './dtos/condicion.dto';
+import { IVADto } from './dtos/iva.dto';
 import { TasaDto } from './dtos/tasa.dto';
 @Injectable()
 export class CreateOrdersService {
@@ -76,7 +78,7 @@ export class CreateOrdersService {
 
         return result;
     }
-    
+
     async GetExchangeRate(fecha?: Date): Promise<TasaDto> {
         const tasa = await this.sql.tasas.findFirst({
             where: {
@@ -96,4 +98,33 @@ export class CreateOrdersService {
 
         return result;
     }
+
+    async GetIVA(): Promise<IVADto | null> {
+        const iva = await this.sql.tab_enc.findFirst({
+            select: {
+                tasa: true,
+                //fecha: true,
+                // tasa3: true,
+                // tasa4: true,
+                // tasa5: true,
+                // tasag10: true,
+                // tasag20: true,
+            },
+            orderBy: {
+                fecha: 'desc',
+            },
+        });
+
+        if (!iva) return null;
+
+        const mapped = {
+            ...iva,
+            tasa: Number(iva.tasa) / 100,
+        };
+
+        return plainToInstance(IVADto, mapped, {
+            enableImplicitConversion: true,
+        });
+    }
+
 }
