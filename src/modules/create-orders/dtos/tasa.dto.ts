@@ -12,4 +12,4 @@ export class TasaDto {
     @IsNumber()
     @Type(() => Number)
     tasa_v: number;
-}
+} 

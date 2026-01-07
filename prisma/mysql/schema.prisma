@@ -134,7 +134,7 @@ model cbsolicimat {
   anulado           Boolean   @default(false)
 }
 
-/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+
 model clbancopago {
   codigobanco       String  @default("0") @db.VarChar(4)
   bancopago         String? @db.VarChar(40)
@@ -148,9 +148,11 @@ model clbancopago {
   pagoporbanco      Boolean @default(false)
   esavanti          Boolean @default(false)
   monedapago        String? @default("VED") @db.VarChar(4)
-
-  @@ignore
+  codigounico       Int      @id @default(0) 
+  textList          String?  @db.VarChar(40)
+  pordefecto        Boolean  @default(false) @db.TinyInt
 }
+ 
 
 model clbancoprov {
   numerocuenta  Int     @id @default(autoincrement()) @db.SmallInt
