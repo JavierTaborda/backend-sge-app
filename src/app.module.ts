@@ -11,6 +11,7 @@ import { ReturnsModule } from './modules/returns/returns.module';
 import { VendorsModule } from './modules/vendors/vendors.module';
 import { WarehousesModule } from './modules/warehouses/warehouses.module';
 import { ZonesModule } from './modules/zones/zones.module';
+import { PaysModule } from './modules/pays/pays.module';
 
 
 
@@ -27,7 +28,7 @@ import { ZonesModule } from './modules/zones/zones.module';
       serveRoot: '/',
     }),
 
-    VendorsModule, OrdersModule, ZonesModule, CustomersModule, ProductsModule, IsOnlineModule, WarehousesModule, GoalsModule, CreateOrdersModule, ReturnsModule],
+    VendorsModule, OrdersModule, ZonesModule, CustomersModule, ProductsModule, IsOnlineModule, WarehousesModule, GoalsModule, CreateOrdersModule, ReturnsModule, PaysModule],
 
 
 })

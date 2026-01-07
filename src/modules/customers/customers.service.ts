@@ -11,10 +11,14 @@ export class CustomersService {
 
         co_cli:true,
         cli_des:true,
-        direc1:true,
+        direc1:true, 
         direc2:true,
         dir_ent2:true,        
         co_zon:true,
+        rif:true,
+        telefonos:true,
+        email:true
+         
       }, where:{
         inactivo:false, 
         ...((role === '5' || role === '4') && codven ? { co_ven: codven } : {}),

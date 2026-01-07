@@ -97,6 +97,8 @@ prisma/mysql/schema.prisma
   generator client {
     provider = "prisma-client-js"
     output = "../../src/prisma-clients/mysql”
+      moduleFormat    = "cjs"
+
   }
 
   datasource db {
@@ -109,6 +111,8 @@ prisma/sqlserver/schema.prisma
   generator client {
     provider = "prisma-client-js"
     output = "../../src/prisma-clients/sqlserver
+      moduleFormat    = "cjs"
+
   }
 
   datasource db {
