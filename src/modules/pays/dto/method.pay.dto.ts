@@ -9,6 +9,10 @@ export class MethodPayDto {
     textList: string;
     @IsString()
     monedapago: string;
+    @IsString()
+    bancopago: string;
+    @IsString()
+    empresapagadora: string;
     @IsBoolean()
     pagoporbanco: boolean;
 

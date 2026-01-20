@@ -5,7 +5,8 @@ import { PrismaClient as SQLServerClient } from '../prisma-clients/sqlserver/cli
 @Injectable()
 export class SQLServerPrismaService
   extends SQLServerClient
-  implements OnModuleInit, OnModuleDestroy {
+  implements OnModuleInit, OnModuleDestroy
+{
   constructor() {
     const adapter = new PrismaMssql({
       server: process.env.SQLSERVER_HOST,
@@ -16,11 +17,10 @@ export class SQLServerPrismaService
       password: process.env.SQLSERVER_PASSWORD,
       database: process.env.SQLSERVER_DATABASE,
       options: {
-        encrypt: true, 
+        encrypt: true,
         trustServerCertificate: true,
       },
     });
-
 
     super({ adapter });
   }

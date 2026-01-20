@@ -61,26 +61,26 @@ model cbefectivo {
 }
 
 model cbplanpagos {
-  planpagonumero      Int       @id @default(0) @db.SmallInt
-  unidad              String    @db.VarChar(10)
-  empresa             String    @db.VarChar(40)
-  fechapagoautorizada DateTime  @db.Date
-  descripcionplan     String    @db.VarChar(255)
-  fechaautorizadopor  DateTime? @default(now()) @db.Date
-  autorizadopor       String?   @db.Char(30)
-  totalnetobsd        Decimal   @default(0.00) @db.Decimal(18, 2)
-  totalnetousd        Decimal   @default(0.00) @db.Decimal(18, 2)
-  totalsaldobsd       Decimal   @default(0.00) @db.Decimal(18, 2)
-  totalsaldousd       Decimal   @default(0.00) @db.Decimal(18, 2)
-  totalautorizadobsd  Decimal   @default(0.00) @db.Decimal(18, 2)
-  totalautorizadousd  Decimal   @default(0.00) @db.Decimal(18, 2)
-  totalpagadobsd      Decimal   @default(0.00) @db.Decimal(18, 2)
-  totalpagadousd      Decimal   @default(0.00) @db.Decimal(18, 2)
-  totalxpagarbsd      Decimal   @default(0.00) @db.Decimal(18, 2)
-  totalxpagarusd      Decimal   @default(0.00) @db.Decimal(18, 2)
-  generadotxt         Boolean   @default(false)
-  conciliadopago      Boolean   @default(false)
-  owneruser           Int       @default(1)
+  planpagonumero       Int       @id @db.SmallInt
+  unidad               String    @db.VarChar(11)
+  empresa              String    @db.VarChar(40)
+  fechapagoautorizada  DateTime  @db.Date
+  descripcionplan      String    @db.VarChar(255)
+  fechaautorizadopor   DateTime? @db.DateTime
+  autorizadopor        String?   @db.Char(30)
+  totalnetobsd         Decimal   @db.Decimal(18, 2)
+  totalnetousd         Decimal   @db.Decimal(18, 2)
+  totalsaldobsd        Decimal   @db.Decimal(18, 2)
+  totalsaldousd        Decimal   @db.Decimal(18, 2)
+  totalautorizadobsd   Decimal   @db.Decimal(18, 2)
+  totalautorizadousd   Decimal   @db.Decimal(18, 2)
+  totalpagadobsd       Decimal   @db.Decimal(18, 2)
+  totalpagadousd       Decimal   @db.Decimal(18, 2)
+  totalxpagarbsd       Decimal   @db.Decimal(18, 2)
+  totalxpagarusd       Decimal   @db.Decimal(18, 2)
+  generadotxt          Boolean   @db.TinyInt
+  conciliadopago       Boolean   @db.TinyInt
+  owneruser            Int       @db.Int
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
@@ -375,12 +375,12 @@ model dtdevoluciones {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model dtplanpagos {
-  planpagonumero     Int       @default(0) @db.SmallInt
-  autorizadonumero   Int       @default(0)
-  unidad             String    @db.VarChar(10)
+    planpagonumero     Int       @db.SmallInt
+  autorizadonumero   Int
+  unidad             String    @db.VarChar(11)
   empresa            String    @db.VarChar(40)
   tipodocumento      String    @db.VarChar(10)
-  numerodocumento    Int       @default(0)
+  numerodocumento    Int
   codigobeneficiario String?   @db.VarChar(10)
   beneficiario       String    @db.VarChar(100)
   titularcuenta      String?   @db.VarChar(100)
@@ -388,47 +388,56 @@ model dtplanpagos {
   banco              String?   @db.Char(18)
   codigobanco        String?   @db.VarChar(4)
   codigoswift        String?   @db.VarChar(8)
-  tipocuenta         String?   @db.Char(2)
+  tipocuenta         String    @db.Char(2)
   tipoproveedor      String    @db.VarChar(60)
   rifproveedor       String    @db.Char(18)
   monedaproveedor    String?   @db.VarChar(60)
-  autorizadopagar    Boolean   @default(true)
+  autorizadopagar    Boolean   @db.TinyInt
   registradopor      String    @db.Char(30)
   fechaemision       DateTime  @db.Date
   fechavencimiento   DateTime  @db.Date
   fecharegistro      DateTime  @db.Date
-  numerofactura      Int       @default(0)
+  numerofactura      Int
   observacion        String?   @db.VarChar(120)
-  tasacambio         Decimal   @default(1.00) @db.Decimal(18, 2)
+  tasacambio         Decimal   @db.Decimal(18, 2)
   moneda             String    @db.VarChar(6)
-  montoneto          Decimal   @default(0.00) @db.Decimal(18, 2)
-  montosaldo         Decimal   @default(0.00) @db.Decimal(18, 2)
+  montoneto          Decimal   @db.Decimal(18, 2)
+  montosaldo         Decimal   @db.Decimal(18, 2)
   metodopago         String?   @db.VarChar(40)
-  fechaautorizadopor DateTime? @default(now()) @db.Date
+  fechaautorizadopor DateTime? @db.DateTime
   autorizadopor      String?   @db.Char(30)
   tasaautorizada     Decimal?  @db.Decimal(18, 2)
   montoautorizado    Decimal?  @db.Decimal(18, 2)
   monedaautorizada   String?   @db.VarChar(6)
-  fechaautorizada    DateTime? @db.Date
   empresapagadora    String?   @db.VarChar(40)
-  pagado             Boolean   @default(false)
+  pagado             Boolean   @db.TinyInt
   fechapagado        DateTime? @db.Date
   clasegasto         String?   @db.VarChar(60)
   bancopagador       String    @db.VarChar(40)
-  codigounico        Int       @default(0) @db.SmallInt
-  origenhes          Boolean   @default(false)
-  generadotxt        Boolean   @default(false)
-  enviadocajachica   Boolean   @default(false)
-  conciliadopago     Boolean   @default(false)
-  cob_num            Int       @default(0)
+  codigounico        Int       @db.SmallInt
+  origenhes          Boolean   @db.TinyInt
+  generadotxt        Boolean   @db.TinyInt
+  enviadocajachica   Boolean   @db.TinyInt
+  conciliadopago     Boolean   @db.TinyInt
+  cob_num            Int
   moneda_pago        String?   @db.VarChar(6)
-  mont_cob           Decimal?  @db.Decimal(18, 2)
-  monto_pago         Decimal?  @db.Decimal(18, 2)
-  neto               Decimal?  @db.Decimal(18, 2)
-  owneruser          Int       @default(1)
+  monto_pago         Decimal   @db.Decimal(18, 2)
+  cantidadSKU        Int?      @db.Int
+  unidades           Int?      @db.Int
+  origen             String?   @db.Char(20)
+  numeroPOOdoo       String?   @db.VarChar(10)
+  linkproforma       String?   @db.VarChar(60)
+  linkseleccion      String?   @db.VarChar(60)
+  categoria          String?   @db.VarChar(20)
+  temporada          String?   @db.VarChar(20)
+  estatuscompras     String?   @db.VarChar(20)
+  fechacompras       DateTime? @db.Date
+  estatuslogistico   String?   @db.VarChar(20)
+  fechalogistico     DateTime? @db.Date
+  owneruser          Int
 
-  @@ignore
-}
+  @@id([numerodocumento, fechaemision])
+  }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model dtpredes {
@@ -464,7 +473,7 @@ model dtsolicimat {
 }
 
 model hsplanpagos {
-  unidad             String   @db.VarChar(10)
+  unidad             String   @db.VarChar(11)
   empresa            String   @db.VarChar(40)
   tipodocumento      String   @db.VarChar(10)
   numerodocumento    Int      @id @default(autoincrement())
@@ -487,8 +496,23 @@ model hsplanpagos {
   montoneto          Decimal  @default(0.00) @db.Decimal(18, 2)
   montosaldo         Decimal  @default(0.00) @db.Decimal(18, 2)
   clasegasto         String?  @db.VarChar(60)
+
+  cantidadSKU        Int?     @db.Int
+  unidades           Int?     @db.Int
+  origen             String?  @db.Char(20)
+  numeroPOOdoo       String?  @db.VarChar(10)
+  linkproforma       String?  @db.VarChar(60)
+  linkseleccion      String?  @db.VarChar(60)
+  categoria          String?  @db.VarChar(20)
+  temporada          String?  @db.VarChar(20)
+  estatuscompras     String?  @db.VarChar(20)
+  fechacompras       DateTime? @db.Date
+  estatuslogistico   String?  @db.VarChar(20)
+  fechalogistico     DateTime? @db.Date
+
   owneruser          Int      @default(1)
 }
+
 
 model metas {
   anio      String @db.VarChar(4)
@@ -790,7 +814,7 @@ model mvplanpagos {
   unidad             String    @db.VarChar(10)
   empresa            String    @db.VarChar(40)
   tipodocumento      String    @db.VarChar(10)
-  numerodocumento    Int       @default(0)
+  numerodocumento    Int       @id @default(0)
   codigobeneficiario String?   @db.VarChar(10)
   beneficiario       String    @db.VarChar(100)
   titularcuenta      String?   @db.VarChar(100)
@@ -819,15 +843,27 @@ model mvplanpagos {
   tasaautorizada     Decimal?  @db.Decimal(18, 2)
   montoautorizado    Decimal?  @db.Decimal(18, 2)
   monedaautorizada   String?   @db.VarChar(6)
-  fechaautorizada    DateTime? @db.Date
   empresapagadora    String?   @db.VarChar(40)
   clasegasto         String?   @db.VarChar(60)
   bancopagador       String    @db.VarChar(40)
   codigounico        Int       @default(0) @db.SmallInt
   origenhes          Boolean   @default(false)
   owneruser          Int       @default(1)
+  cantidadSKU        Int?      @db.Int
+  unidades           Int?      @db.Int
+  origen             String?   @db.Char(20)
+  numeroPOOdoo       String?   @db.VarChar(10)
+  linkproforma       String?   @db.VarChar(60)
+  linkseleccion      String?   @db.VarChar(60)
+  categoria          String?   @db.VarChar(20)
+  temporada          String?   @db.VarChar(20)
+  estatuscompras     String?   @db.VarChar(20)
+  fechacompras       DateTime? @db.Date
+  estatuslogistico   String?   @db.VarChar(20)
+  fechalogistico     DateTime? @db.Date
 
-  @@ignore
+
+
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.

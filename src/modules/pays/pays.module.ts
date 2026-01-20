@@ -4,7 +4,7 @@ import { PaysController } from './pays.controller';
 import { PaysService } from './pays.service';
 
 @Module({
-  imports:[DatabaseModule],
+  imports: [DatabaseModule],
   controllers: [PaysController],
   providers: [PaysService],
 })
