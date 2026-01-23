@@ -1,7 +1,9 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import * as bodyParser from 'body-parser';
 import { AppModule } from './app.module';
 import { AllExeptionsFilter } from './filters/all-exeptions.filter';
+
 //import * as fs from 'fs';
 
 async function bootstrap() {
@@ -19,7 +21,9 @@ async function bootstrap() {
   //   : await NestFactory.create(AppModule);
 
   const app = await NestFactory.create(AppModule);
-  
+
+  app.use(bodyParser.json({ limit: '5mb' }));
+  app.use(bodyParser.urlencoded({ limit: '5mb', extended: true }));
   //root uri
   app.setGlobalPrefix('api');
 

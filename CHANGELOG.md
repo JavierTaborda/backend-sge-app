@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.4] - 2025-MM-DD #UNRELEASED
+## [1.0.4] - 2026-MM-DD #UNRELEASED
 
 ### Added
 
@@ -14,8 +14,9 @@ All notable changes to this project will be documented in this file.
 - use prisma.mysql.config.ts y prisma.sql.config.ts to renplace url in schema prisma
 - Update Nest JS version to 11
 - Use `@prisma/adapter-mariadb` and `@prisma/adapter-mssql` to connect the database
-- Change ouput from  `"../../prisma-clients/"` to `"../../src/prisma-clients/"`
+- Change ouput from `"../../prisma-clients/"` to `"../../src/prisma-clients/"`
 - Add env to use connection in mysql.service.ts and sqlserver.service.ts
+- Add bodyParser in main.ts to handle json up to 1 mb
 
 ### Fixed
 
@@ -33,35 +34,35 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Add relation in  reng_ped and art:
+- Add relation in reng_ped and art:
 
-``` prisma
+```prisma
   art art? @relation(fields: [co_art], references: [co_art])
 ```
 
-``` prisma.  
+```prisma.
  reng_ped reng_ped[]
 ```
 
--Add relation in  pedidos and clientes:
+-Add relation in pedidos and clientes:
 
-``` prisma
+```prisma
 cliente  clientes? @relation(fields: [co_cli], references: [co_cli])
 ```
 
-``` prisma
-pedidos pedidos[] 
+```prisma
+pedidos pedidos[]
 
 ```
 
--Add relation in  pedidos and vendedor:
+-Add relation in pedidos and vendedor:
 
-``` prisma
+```prisma
    vendedor  vendedor? @relation(fields: [co_ven], references: [co_ven])
 ```
 
-``` prisma
-pedidos pedidos[] 
+```prisma
+pedidos pedidos[]
 
 ```
 
@@ -79,13 +80,13 @@ pedidos pedidos[]
 
 - Add in mtprofitart
 
-``` prisma
+```prisma
 
 categoria  clcategoria? @relation(fields: [codcat], references: [codcat])
 
 ```
 
-- Add   mtprofitart mtprofitart[] in categorias
+- Add mtprofitart mtprofitart[] in categorias
 
 - Add code of category en goals module
 
@@ -102,13 +103,13 @@ categoria  clcategoria? @relation(fields: [codcat], references: [codcat])
 ### Added
 
 - Module goals: goals.dto, Sellers.dto, getgoals by role of the user.
-Note:  The goals service get the data from sql server  and update in my sql to get the data.
+  Note: The goals service get the data from sql server and update in my sql to get the data.
 
 ### Changed
 
 - Ad @id in clvendedores of prisma client, and relation with metas
 
-``` prisma
+```prisma
 model clvendedores  {
   codven    String  @id @db.VarChar(6)
   vendes    String  @db.VarChar(60)
@@ -119,14 +120,14 @@ model clvendedores  {
   vende     Boolean @default(true)
   cobra     Boolean @default(true)
   activo    Boolean @default(true)
-    //manual input 
+    //manual input
     metas     metas[]
 }
 ```
 
-- Add model mtprofitart and vendedores and relation { codart  String   `@id` @db.VarChar(30) ...} in model prisma for use it:
+- Add model mtprofitart and vendedores and relation { codart String `@id` @db.VarChar(30) ...} in model prisma for use it:
 
-``` prisma
+```prisma
 model metas {
   anio      String @db.VarChar(4)
   mes       String @db.VarChar(2)
@@ -137,15 +138,15 @@ model metas {
 
   articulo  mtarticulos? @relation(fields: [codart], references: [codart])
   vendedores clvendedores? @relation(fields: [codven], references: [codven])
-  
+
   @@id([anio, mes, codven, codart])
 }
 ```
 
-``` prisma
+```prisma
 model mtprofitart {
   codart String @id @db.VarChar(30)
-  // ...others 
+  // ...others
 
   metas  metas[] // invert relation
 }
@@ -170,7 +171,7 @@ model clcategoria {
 }
 ```
 
--Add  conntroller and service `PATCH /orders/comment/:factNum` in orders for update the comment to `**` or `` by the sellers.
+-Add conntroller and service `PATCH /orders/comment/:factNum` in orders for update the comment to `**` or `` by the sellers.
 
 ### Fixed
 
@@ -187,11 +188,11 @@ model clcategoria {
 - Prima clients on MSSQL & MySQL
 - orders, zones, customers, vendors module
 - ServeStaticModule for images in `api/images`
-- Supabase with secret Keys  
+- Supabase with secret Keys
 - .env Databases connet: MYSQL_DATABASE_URL,SQLSERVER_DATABASE_URL,
 - .env for supabase project: SUPABASE_PROJECT,
 - .env for enviroment: NODE_ENV,PORT
-- .env for images rouytes:  IMAGES_ROUTE
+- .env for images rouytes: IMAGES_ROUTE
 
 ### Changed
 

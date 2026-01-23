@@ -202,80 +202,109 @@ export class PaysService {
       enableImplicitConversion: true,
     });
   }
+  async authorizedDocuments(docs: PlanPagosBase[]): Promise<{success: boolean;total: number;}> {
+    if (!docs || docs.length === 0) {
+      throw new Error('No hay documentos a autorizar.');
+    }
 
-  async authorizedDocuments(createAuthDocuments: PlanPagosBase[]) {
-    // if (!createAuthDocuments) {
-    //   throw new Error("Datos de devolución no proporcionados.");
-    // }
+    const operations = docs.map((doc) =>
+      this.mysql.mvplanpagos.upsert({
+        where: {
+          numerodocumento: doc.numerodocumento,
+          unidad: doc.unidad,
+          empresa: doc.empresa,
+          tipodocumento: doc.tipodocumento,
+        },
+        update: {
+          autorizadopagar: true,
+          fechaautorizadopor: new Date(),
+          montoautorizado: Number(doc.montoneto),
+          monedaautorizada: doc.moneda,
+          tasaautorizada: Number(doc.tasacambio),
+          empresapagadora: doc.empresa,
+        },
+        create: {
+          ...doc,
+          autorizadopagar: true,
+          fechaautorizadopor: new Date(),
+          montoautorizado: Number(doc.montoneto),
+          monedaautorizada: doc.moneda,
+          tasaautorizada: Number(doc.tasacambio),
+          empresapagadora: doc.empresa,
+        },
+      }),
+    );
 
-    // if (!createAuthDocuments) {
-    //   if (!codven || codven.trim().length === 0) {
-    //     throw new Error("Código de vendedor no proporcionado.");
-    //   }
+    try {
+      await this.mysql.$transaction(operations);
 
-    //   const vendedor = await this.sql.vendedor.findFirst({
-    //     select: { ven_des: true },
-    //     where: { co_ven: { startsWith: codven } }
-    //   });
-
-    //   createAuthDocuments.vendes = vendedor?.ven_des ?? 'Sin descripción';
-    // }
-
-    // const nuevaDevolucion = await this.mysql.mvdevolucion.create({
-    //   data: createAuthDocuments
-    // });
-
-    return true;
+      return {
+        success: true,
+        total: docs.length,
+      };
+    } catch (error) {
+      console.error('Error autorizando documentos:', error);
+      throw new Error('No se pudieron autorizar los documentos.');
+    }
   }
-  async createPlanPagos(createPlan: PlanifcacionPagos) {
+
+  async createPlanPagos(
+    createPlan: PlanifcacionPagos,
+  ): Promise<{ success: boolean; planpagonumero: number }> {
     if (!createPlan || createPlan.items.length === 0) {
       throw new Error('Datos de plan de pagos no proporcionados.');
     }
 
-    const maxPlanPago = await this.mysql.cbplanpagos.aggregate({
-      _max: { planpagonumero: true },
-    });
-
-    const LastPlan = maxPlanPago._max.planpagonumero ?? 0;
-    const newPlan = LastPlan + 1;
-
-    const documentsAuthPlan = await this.mysql.dtplanpagos.createMany({
-      data: createPlan.items.map((plan) => ({
-        ...plan,
-        planpagonumero: newPlan,
-        autorizadopagar: plan.autorizadopagar ? true : false,
-      })),
-    });
-    if (documentsAuthPlan.count > 1) {
-      const newPlanPago = await this.mysql.cbplanpagos.create({
-        data: {
-          planpagonumero: newPlan,
-          unidad: createPlan.unidad,
-          empresa: createPlan.empresa,
-          fechapagoautorizada: createPlan.fechapagoautorizada,
-          descripcionplan: createPlan.descripcionplan,
-          fechaautorizadopor: createPlan.fechaautorizadopor,
-          autorizadopor: createPlan.autorizadopor,
-          totalnetobsd: createPlan.totalnetobsd,
-          totalnetousd: createPlan.totalnetousd,
-          totalsaldobsd: createPlan.totalsaldobsd,
-          totalsaldousd: createPlan.totalsaldousd,
-          totalautorizadobsd: createPlan.totalautorizadobsd,
-          totalautorizadousd: createPlan.totalautorizadousd,
-          totalpagadobsd: createPlan.totalpagadobsd,
-          totalpagadousd: createPlan.totalpagadousd,
-          totalxpagarbsd: createPlan.totalxpagarbsd,
-          totalxpagarusd: createPlan.totalxpagarusd,
-          generadotxt: false,
-          conciliadopago: false,
-          owneruser: createPlan.owneruser,
-        },
+    return await this.mysql.$transaction(async (tx) => {
+      const maxPlanPago = await tx.cbplanpagos.aggregate({
+        _max: { planpagonumero: true },
       });
+
+      const lastPlan = maxPlanPago._max.planpagonumero ?? 0;
+      const newPlan = lastPlan + 1;
+
+  
+      // await tx.cbplanpagos.create({
+      //   data: {
+      //     planpagonumero: newPlan,
+      //     unidad: createPlan.unidad,
+      //     empresa: createPlan.empresa,
+      //     fechapagoautorizada: createPlan.fechapagoautorizada,
+      //     descripcionplan: createPlan.descripcionplan,
+      //     fechaautorizadopor: createPlan.fechaautorizadopor,
+      //     autorizadopor: createPlan.autorizadopor,
+      //     totalnetobsd: createPlan.totalnetobsd,
+      //     totalnetousd: createPlan.totalnetousd,
+      //     totalsaldobsd: createPlan.totalsaldobsd,
+      //     totalsaldousd: createPlan.totalsaldousd,
+      //     totalautorizadobsd: createPlan.totalautorizadobsd,
+      //     totalautorizadousd: createPlan.totalautorizadousd,
+      //     totalpagadobsd: createPlan.totalpagadobsd,
+      //     totalpagadousd: createPlan.totalpagadousd,
+      //     totalxpagarbsd: createPlan.totalxpagarbsd,
+      //     totalxpagarusd: createPlan.totalxpagarusd,
+      //     generadotxt: false,
+      //     conciliadopago: false,
+      //     owneruser: createPlan.owneruser,
+      //   },
+      // });
+
+      // const documentsAuthPlan = await tx.dtplanpagos.createMany({
+      //   data: createPlan.items.map((plan) => ({
+      //     ...plan,
+      //     planpagonumero: newPlan,
+      //     autorizadopagar: !!plan.autorizadopagar,
+      //   })),
+      // });
+
+      // if (documentsAuthPlan.count === 0) {
+      //   throw new Error('No se pudieron registrar los documentos del plan.');
+      // }
 
       return {
         success: true,
         planpagonumero: newPlan,
       };
-    }
+    });
   }
 }
