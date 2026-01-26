@@ -15,7 +15,8 @@ export class PaysService {
   ) {}
 
   async getPendingDocs() {
-    const resultSQL = await this.getDocumentsInProfitSQL();
+    //const resultSQL = await this.getDocumentsInProfitSQL();
+    const resultSQL = [];
     const resultHsPlanPagos = await this.getDocumentsInHsPlanPago();
     const resultMvPlanPagos = await this.getDocumentsInMemoryMvPlanPagos();
 
@@ -24,6 +25,7 @@ export class PaysService {
       resultHsPlanPagos,
       resultMvPlanPagos,
     );
+
 
     const docsToExclude = await this.getDocumentstoFilterDtPlanPagos(merge);
 
@@ -85,7 +87,7 @@ export class PaysService {
     return result;
   }
 
-  async getDocumentsInHsPlanPago(): Promise<PlanPagosBase[]> {
+  async  getDocumentsInHsPlanPago(): Promise<PlanPagosBase[]> {
     const hsplanpagos = await this.mysql.hsplanpagos.findMany({
       where: {
         montosaldo: { gt: 0 },
@@ -157,7 +159,7 @@ export class PaysService {
     return result;
   }
 
-  async getDocumentstoFilterDtPlanPagos(
+  async  getDocumentstoFilterDtPlanPagos(
     listDocuments: PlanPagosBase[],
   ): Promise<{ tipodocumento: string; numerodocumento: number }[]> {
     if (!listDocuments || listDocuments.length === 0) return [];

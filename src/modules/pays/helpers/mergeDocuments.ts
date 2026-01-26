@@ -8,7 +8,7 @@ export function mergeDocuments(
   const map = new Map<string, PlanPagosBase>();
 
   const makeKey = (item: PlanPagosBase) =>
-    `${item.tipodocumento}-${item.numerodocumento}-${item.codigobeneficiario ?? ''}`;
+    `${item.tipodocumento}-${item.numerodocumento}`;
 
   for (const item of sqlList) {
     map.set(makeKey(item), item);
@@ -22,6 +22,7 @@ export function mergeDocuments(
   }
 
   for (const item of mysqlListMv) {
+
     const key = makeKey(item);
     if (map.has(key)) {
       map.set(key, item);
