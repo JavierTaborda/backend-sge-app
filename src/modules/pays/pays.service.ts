@@ -4,6 +4,7 @@ import { MySQLPrismaService } from 'src/database/mysql.service';
 import { SQLServerPrismaService } from 'src/database/sqlserver.service';
 import { MethodPayDto } from './dto/method.pay.dto';
 import { mergeDocuments } from './helpers/mergeDocuments';
+import { ExcludeDocuments } from './interfaces/ExcludeDocuments';
 import { PlanPagosBase } from './interfaces/PlanPasgosBase';
 import { PlanifcacionPagos } from './interfaces/PlanificacionPagos';
 
@@ -12,11 +13,10 @@ export class PaysService {
   constructor(
     private readonly sql: SQLServerPrismaService,
     private readonly mysql: MySQLPrismaService,
-  ) {}
+  ) { }
 
   async getPendingDocs() {
-    //const resultSQL = await this.getDocumentsInProfitSQL();
-    const resultSQL = [];
+    const resultSQL = await this.getDocumentsInProfitSQL();
     const resultHsPlanPagos = await this.getDocumentsInHsPlanPago();
     const resultMvPlanPagos = await this.getDocumentsInMemoryMvPlanPagos();
 
@@ -27,14 +27,16 @@ export class PaysService {
     );
 
 
-    const docsToExclude = await this.getDocumentstoFilterDtPlanPagos(merge);
+    const docsToExclude: ExcludeDocuments[] = await this.getDocumentstoFilterDtPlanPagos(merge);
 
     const filteredMerge = merge.filter(
       (doc) =>
-        !docsToExclude.some( 
+        !docsToExclude.some(
           (ex) =>
             ex.tipodocumento === doc.tipodocumento &&
-            ex.numerodocumento === Number(doc.numerodocumento),
+            ex.numerodocumento === Number(doc.numerodocumento) &&
+            ex.empresa === doc.empresa &&
+            ex.unidad === doc.unidad
         ),
     );
 
@@ -42,6 +44,7 @@ export class PaysService {
   }
 
   async getDocumentsInProfitSQL(): Promise<PlanPagosBase[]> {
+    const db = process.env.SQLSERVER_DATABASE;
     const result = await this.sql.$queryRawUnsafe<PlanPagosBase[]>(`
       SELECT 
         'FRIGILUX' AS unidad,
@@ -75,11 +78,11 @@ export class PaysService {
         null AS linkproforma,
         40 AS owneruser,
         0 AS keyfile
-      FROM PASSVE_A.dbo.docum_cp a
-      LEFT JOIN PASSVE_A.dbo.prov b ON b.co_prov = a.co_cli
+      FROM ${db}.dbo.docum_cp a
+      LEFT JOIN ${db}.dbo.prov b ON b.co_prov = a.co_cli
       LEFT JOIN MasterProfit.dbo.employee c ON c.employee_i = a.co_us_in
-      LEFT JOIN PASSVE_A.dbo.tipo_pro d ON d.tip_pro = b.tipo
-      LEFT JOIN PASSVE_A.dbo.segmento m ON m.co_seg = b.co_seg
+      LEFT JOIN ${db}.dbo.tipo_pro d ON d.tip_pro = b.tipo
+      LEFT JOIN ${db}.dbo.segmento m ON m.co_seg = b.co_seg
       WHERE anulado = 0 
         AND tipo_doc IN ('AJPM','FACT','N/DB') 
         AND a.saldo > 0
@@ -87,7 +90,7 @@ export class PaysService {
     return result;
   }
 
-  async  getDocumentsInHsPlanPago(): Promise<PlanPagosBase[]> {
+  async getDocumentsInHsPlanPago(): Promise<PlanPagosBase[]> {
     const hsplanpagos = await this.mysql.hsplanpagos.findMany({
       where: {
         montosaldo: { gt: 0 },
@@ -159,14 +162,17 @@ export class PaysService {
     return result;
   }
 
-  async  getDocumentstoFilterDtPlanPagos(
+  async getDocumentstoFilterDtPlanPagos(
     listDocuments: PlanPagosBase[],
-  ): Promise<{ tipodocumento: string; numerodocumento: number }[]> {
+  ): Promise<ExcludeDocuments[]> {
     if (!listDocuments || listDocuments.length === 0) return [];
 
     const compositeKeys = listDocuments.map((doc) => ({
       tipodocumento: doc.tipodocumento,
       numerodocumento: Number(doc.numerodocumento),
+      unidad: doc.unidad,
+      empresa: doc.empresa,
+
     }));
 
     const result = await this.mysql.dtplanpagos.findMany({
@@ -174,17 +180,24 @@ export class PaysService {
         OR: compositeKeys.map((key) => ({
           tipodocumento: key.tipodocumento,
           numerodocumento: key.numerodocumento,
+          unidad: key.unidad,
+          empresa: key.empresa,
+          conciliadopago: false
         })),
       },
       select: {
         tipodocumento: true,
         numerodocumento: true,
+        empresa: true,
+        unidad: true
       },
     });
 
     return result.map((doc) => ({
       tipodocumento: doc.tipodocumento,
       numerodocumento: Number(doc.numerodocumento),
+      empresa: doc.empresa,
+      unidad: doc.unidad
     }));
   }
 
@@ -204,7 +217,7 @@ export class PaysService {
       enableImplicitConversion: true,
     });
   }
-  async authorizedDocuments(docs: PlanPagosBase[]): Promise<{success: boolean;total: number;}> {
+  async authorizedDocuments(docs: PlanPagosBase[]): Promise<{ success: boolean; total: number; }> {
     if (!docs || docs.length === 0) {
       throw new Error('No hay documentos a autorizar.');
     }
@@ -265,7 +278,7 @@ export class PaysService {
       const lastPlan = maxPlanPago._max.planpagonumero ?? 0;
       const newPlan = lastPlan + 1;
 
-  
+
       // await tx.cbplanpagos.create({
       //   data: {
       //     planpagonumero: newPlan,
