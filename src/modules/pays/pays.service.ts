@@ -31,7 +31,7 @@ export class PaysService {
 
     const filteredMerge = merge.filter(
       (doc) =>
-        !docsToExclude.some(
+        !docsToExclude.some( 
           (ex) =>
             ex.tipodocumento === doc.tipodocumento &&
             ex.numerodocumento === Number(doc.numerodocumento),
@@ -189,7 +189,7 @@ export class PaysService {
   }
 
   async findMethodPay() {
-    const methods = await this.mysql.clbancopago.findMany({
+    const methods = await this.mysql.clmetodopago.findMany({
       select: {
         codigounico: true,
         textList: true,
