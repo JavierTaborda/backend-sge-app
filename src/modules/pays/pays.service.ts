@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
+import dayjs from "dayjs";
 import { SQLServerPrismaService } from 'src/database/sqlserver.service';
 import { TestMySQLPrismaService } from 'src/database/testmysql.service';
 import { MethodPayDto } from './dto/method.pay.dto';
@@ -278,6 +279,10 @@ export class PaysService {
 
       const lastPlan = maxPlanPago._max.planpagonumero ?? 0;
       const newPlan = lastPlan + 1;
+      const date = dayjs().format();
+
+      let validEmpresaUnidad = true;
+
 
       const totals = createPlan.items.reduce(
         (acc, item) => {
@@ -287,6 +292,12 @@ export class PaysService {
           const saldo = Number(item.montosaldo) || 0;
           const auth = Number(item.montoautorizado) || 0;
           const xpagado = Number(item.montoautorizado) || 0;
+          
+
+          if (createPlan.items[0].empresa != item.empresa || createPlan.items[0].unidad != item.unidad) {
+            validEmpresaUnidad = false;
+          }
+
 
           if (isUSD) {
             acc.totalnetousd += neto;
@@ -324,14 +335,18 @@ export class PaysService {
         },
       );
 
+
+   
+
+
       await tx.cbplanpagos.create({
         data: {
           planpagonumero: newPlan,
-          unidad: createPlan.unidad,
-          empresa: createPlan.empresa,
+          unidad: validEmpresaUnidad ? createPlan.items[0].unidad : "CORPORATIVO" ,
+          empresa: validEmpresaUnidad ? createPlan.items[0].empresa : "CORPORATIVO",
           fechapagoautorizada: createPlan.fechapagoautorizada,
           descripcionplan: createPlan.descripcionplan,
-          fechaautorizadopor: createPlan.fechaautorizadopor,
+          fechaautorizadopor: new Date(date),
           autorizadopor: createPlan.autorizadopor,
           generadotxt: false,
           conciliadopago: false,
@@ -342,7 +357,7 @@ export class PaysService {
 
       const documentsAuthPlan = await tx.dtplanpagos.createMany({
         data: createPlan.items.map((plan) => ({
-          ...plan,    
+          ...plan,
           planpagonumero: newPlan,
           autorizadopagar: !!plan.autorizadopagar,
         })),
