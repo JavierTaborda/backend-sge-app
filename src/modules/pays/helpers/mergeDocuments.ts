@@ -1,14 +1,14 @@
 import { PlanPagosBase } from '../interfaces/PlanPasgosBase';
 
 export function mergeDocuments(
-  sqlList: PlanPagosBase[],
+  sqlList: PlanPagosBase[] ,
   mysqlListHs: PlanPagosBase[],
   mysqlListMv: PlanPagosBase[],
 ): PlanPagosBase[] {
   const map = new Map<string, PlanPagosBase>();
 
   const makeKey = (item: PlanPagosBase) =>
-    `${item.tipodocumento}-${item.numerodocumento}`;
+    `${item.tipodocumento}-${item.numerodocumento}-${item.unidad}-${item.empresa}`;
 
   for (const item of sqlList) {
     map.set(makeKey(item), item);
@@ -29,6 +29,6 @@ export function mergeDocuments(
     }
   }
   return Array.from(map.values()).sort(
-    (a, b) => +new Date(a.fechavencimiento) - +new Date(b.fechavencimiento),
+    (a, b) => +new Date(a.fechaemision) - +new Date(b.fechaemision),
   );
 }

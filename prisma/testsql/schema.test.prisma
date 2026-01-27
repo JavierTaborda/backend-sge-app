@@ -1,0 +1,341 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../../src/prisma-clients/testsql"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider ="mysql"
+}
+
+//prisma generate --schema=prisma/testsql/schema.test.prisma
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model cbcajachica {
+  unidad    String    @default("CYBERLUX") @db.VarChar(10)
+  numcaja   Int
+  descaja   String    @db.VarChar(100)
+  fecregis  DateTime  @default(now()) @db.Date
+  fecinicio DateTime  @db.Date
+  fecfinal  DateTime  @db.Date
+  feccierre DateTime? @db.Date
+  montoini  Decimal   @default(0.00) @db.Decimal(15, 2)
+  montoing  Decimal   @default(0.00) @db.Decimal(15, 2)
+  montoegr  Decimal   @default(0.00) @db.Decimal(15, 2)
+  montofin  Decimal   @default(0.00) @db.Decimal(15, 2)
+  montocie  Decimal   @default(0.00) @db.Decimal(15, 2)
+  moneda    String    @db.VarChar(4)
+  montolim  Decimal   @default(0.00) @db.Decimal(15, 2)
+  cerrada   Boolean   @default(false)
+  anulada   Boolean   @default(false)
+  proceso   Boolean   @default(false)
+  cajamayor Boolean   @default(false)
+  owneruser Int       @default(1)
+
+  @@ignore
+}
+
+model cbdevoluciones {
+  devonum Int      @id @default(autoincrement())
+  fecha   DateTime @db.DateTime(0)
+  estatus Int      @db.TinyInt
+  codcli  String   @db.VarChar(6)
+  motivo  String   @db.VarChar(255)
+  tipo    Int      @db.TinyInt
+  chofer  String   @db.VarChar(255)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model cbefectivo {
+  unidad  String  @default("CYBERLUX") @db.VarChar(10)
+  numcaja Int
+  numitem Int
+  moneda  String  @db.VarChar(4)
+  tipo    String  @db.VarChar(10)
+  valor   Decimal @db.Decimal(11, 2)
+  cantini Int     @default(0)
+  canting Int     @default(0)
+  cantegr Int     @default(0)
+  cantfin Int     @default(0)
+  monto   Decimal @default(0.00) @db.Decimal(15, 2)
+
+  @@ignore
+}
+
+model cbplanpagos {
+  planpagonumero      Int       @id @db.SmallInt
+  unidad              String    @db.VarChar(11)
+  empresa             String    @db.VarChar(40)
+  fechapagoautorizada DateTime  @db.Date
+  descripcionplan     String    @db.VarChar(255)
+  fechaautorizadopor  DateTime? @db.DateTime
+  autorizadopor       String?   @db.Char(30)
+  totalnetobsd        Decimal   @db.Decimal(18, 2)
+  totalnetousd        Decimal   @db.Decimal(18, 2)
+  totalsaldobsd       Decimal   @db.Decimal(18, 2)
+  totalsaldousd       Decimal   @db.Decimal(18, 2)
+  totalautorizadobsd  Decimal   @db.Decimal(18, 2)
+  totalautorizadousd  Decimal   @db.Decimal(18, 2)
+  totalpagadobsd      Decimal   @db.Decimal(18, 2)
+  totalpagadousd      Decimal   @db.Decimal(18, 2)
+  totalxpagarbsd      Decimal   @db.Decimal(18, 2)
+  totalxpagarusd      Decimal   @db.Decimal(18, 2)
+  generadotxt         Boolean   @db.TinyInt
+  conciliadopago      Boolean   @db.TinyInt
+  owneruser           Int       @db.Int
+}
+
+
+
+
+model clbancopago {
+  codigobanco       String  @default("0") @db.VarChar(4)
+  bancopago         String? @db.VarChar(40)
+  empresapagadora   String  @db.VarChar(40)
+  rifpagadora       String? @db.VarChar(20)
+  titularcuenta     String  @db.VarChar(40)
+  numerocuenta      String? @db.VarChar(20)
+  numeronegociacion String? @db.VarChar(8)
+  ultimonumerolote  String? @db.VarChar(8)
+  orden             Int     @db.SmallInt
+  pagoporbanco      Boolean @default(false)
+  esavanti          Boolean @default(false)
+  monedapago        String? @default("VED") @db.VarChar(4)
+  codigounico       Int     @id @default(0)
+  textList          String? @db.VarChar(40)
+  pordefecto        Boolean @default(false) @db.TinyInt
+}
+
+
+
+model clbancoswift {
+  codigobanco String @id @db.VarChar(4)
+  codigoswift String @db.VarChar(8)
+  nombrecorto String @db.VarChar(20)
+  tipocuenta  String @default("00") @db.Char(2)
+}
+
+
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model clformapago {
+  codigoforma      Int     @default(0) @db.SmallInt
+  formapago        String  @db.VarChar(40)
+  monedaautorizada String  @db.VarChar(4)
+  pordefecto       Boolean @default(false)
+  pagoporbanco     Boolean @default(true)
+  esavanti         Boolean @default(false)
+
+  @@ignore
+}
+
+model clmetodopago {
+  codigounico Int @id @db.SmallInt
+
+  codigoforma      Int    @db.SmallInt
+  formapago        String @db.VarChar(40)
+  monedaautorizada String @db.VarChar(4)
+
+  pordefecto   Boolean @default(false)
+  pagoporbanco Boolean @default(false)
+
+  empresapagadora String @db.VarChar(40)
+
+  rifpagadora  String? @db.VarChar(20)
+  bancopago    String? @db.VarChar(40)
+  numerocuenta String? @db.VarChar(20)
+
+  ultimonumerolote  String? @db.VarChar(8)
+  numeronegociacion String? @db.VarChar(8)
+
+  codigobanco String @db.VarChar(4)
+
+  textList      String? @db.VarChar(40)
+  titularcuenta String? @db.VarChar(40)
+
+  orden Int @db.SmallInt
+
+  esavanti Boolean @default(false)
+
+  monedapago String? @db.VarChar(4)
+}
+
+
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model cpproveedor {
+  codprov Int    @default(0) @db.SmallInt
+  desprov String @db.VarChar(40)
+  rifoced String @db.VarChar(20)
+  unidad  String @default("CYBERLUX") @db.VarChar(11)
+
+  @@ignore
+}
+
+
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model dtplanpagos {
+  planpagonumero     Int       @db.SmallInt
+  autorizadonumero   Int
+  unidad             String    @db.VarChar(11)
+  empresa            String    @db.VarChar(40)
+  tipodocumento      String    @db.VarChar(10)
+  numerodocumento    Int
+  codigobeneficiario String?   @db.VarChar(10)
+  beneficiario       String    @db.VarChar(100)
+  titularcuenta      String?   @db.VarChar(100)
+  cuentabanco        String?   @db.VarChar(60)
+  banco              String?   @db.Char(18)
+  codigobanco        String?   @db.VarChar(4)
+  codigoswift        String?   @db.VarChar(8)
+  tipocuenta         String    @db.Char(2)
+  tipoproveedor      String    @db.VarChar(60)
+  rifproveedor       String    @db.Char(18)
+  monedaproveedor    String?   @db.VarChar(60)
+  autorizadopagar    Boolean   @db.TinyInt
+  registradopor      String    @db.Char(30)
+  fechaemision       DateTime  @db.Date
+  fechavencimiento   DateTime  @db.Date
+  fecharegistro      DateTime  @db.Date
+  numerofactura      Int
+  observacion        String?   @db.VarChar(120)
+  tasacambio         Decimal   @db.Decimal(18, 2)
+  moneda             String    @db.VarChar(6)
+  montoneto          Decimal   @db.Decimal(18, 2)
+  montosaldo         Decimal   @db.Decimal(18, 2)
+  metodopago         String?   @db.VarChar(40)
+  fechaautorizadopor DateTime? @db.DateTime
+  autorizadopor      String?   @db.Char(30)
+  tasaautorizada     Decimal?  @db.Decimal(18, 2)
+  montoautorizado    Decimal?  @db.Decimal(18, 2)
+  monedaautorizada   String?   @db.VarChar(6)
+  empresapagadora    String?   @db.VarChar(40)
+  pagado             Boolean   @db.TinyInt
+  fechapagado        DateTime? @db.Date
+  clasegasto         String?   @db.VarChar(60)
+  bancopagador       String    @db.VarChar(40)
+  codigounico        Int       @db.SmallInt
+  origenhes          Boolean   @db.TinyInt
+  generadotxt        Boolean   @db.TinyInt
+  enviadocajachica   Boolean   @db.TinyInt
+  conciliadopago     Boolean   @db.TinyInt
+  cob_num            Int
+  moneda_pago        String?   @db.VarChar(6)
+  monto_pago         Decimal   @db.Decimal(18, 2)
+  cantidadSKU        Int?      @db.Int
+  unidades           Int?      @db.Int
+  origen             String?   @db.Char(20)
+  numeroPOOdoo       String?   @db.VarChar(10)
+  linkproforma       String?   @db.VarChar(60)
+  linkseleccion      String?   @db.VarChar(60)
+  categoria          String?   @db.VarChar(20)
+  temporada          String?   @db.VarChar(20)
+  estatuscompras     String?   @db.VarChar(20)
+  fechacompras       DateTime? @db.Date
+  estatuslogistico   String?   @db.VarChar(20)
+  fechalogistico     DateTime? @db.Date
+  owneruser          Int
+
+  @@id([numerodocumento, fechaemision])
+}
+
+
+model hsplanpagos {
+  unidad             String   @db.VarChar(11)
+  empresa            String   @db.VarChar(40)
+  tipodocumento      String   @db.VarChar(10)
+  numerodocumento    Int      @id @default(autoincrement())
+  codigobeneficiario String?  @db.VarChar(10)
+  beneficiario       String   @db.VarChar(100)
+  cuentabanco        String?  @db.VarChar(60)
+  banco              String?  @db.Char(18)
+  rifproveedor       String?  @db.Char(18)
+  tipoproveedor      String   @db.VarChar(60)
+  monedaproveedor    String?  @db.VarChar(60)
+  autorizadopagar    Boolean  @default(false)
+  fechaemision       DateTime @db.Date
+  fechavencimiento   DateTime @db.Date
+  fecharegistro      DateTime @db.Date
+  registradopor      String   @db.Char(30)
+  numerofactura      Int      @default(0)
+  observacion        String?  @db.VarChar(120)
+  tasacambio         Decimal  @default(1.00) @db.Decimal(18, 2)
+  moneda             String   @db.VarChar(6)
+  montoneto          Decimal  @default(0.00) @db.Decimal(18, 2)
+  montosaldo         Decimal  @default(0.00) @db.Decimal(18, 2)
+  clasegasto         String?  @db.VarChar(60)
+
+  cantidadSKU      Int?      @db.Int
+  unidades         Int?      @db.Int
+  origen           String?   @db.Char(20)
+  numeroPOOdoo     String?   @db.VarChar(10)
+  linkproforma     String?   @db.VarChar(60)
+  linkseleccion    String?   @db.VarChar(60)
+  categoria        String?   @db.VarChar(20)
+  temporada        String?   @db.VarChar(20)
+  estatuscompras   String?   @db.VarChar(20)
+  fechacompras     DateTime? @db.Date
+  estatuslogistico String?   @db.VarChar(20)
+  fechalogistico   DateTime? @db.Date
+
+  owneruser Int @default(1)
+}
+
+
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model mvplanpagos {
+  planpagonumero     Int       @default(0) @db.SmallInt
+  autorizadonumero   Int
+  unidad             String    @db.VarChar(10)
+  empresa            String    @db.VarChar(40)
+  tipodocumento      String    @db.VarChar(10)
+  numerodocumento    Int       @id @default(0)
+  codigobeneficiario String?   @db.VarChar(10)
+  beneficiario       String    @db.VarChar(100)
+  titularcuenta      String?   @db.VarChar(100)
+  cuentabanco        String?   @db.VarChar(60)
+  banco              String?   @db.Char(18)
+  codigobanco        String?   @db.VarChar(4)
+  codigoswift        String?   @db.VarChar(8)
+  tipocuenta         String?   @db.Char(2)
+  tipoproveedor      String    @db.VarChar(60)
+  rifproveedor       String    @db.Char(18)
+  monedaproveedor    String?   @db.VarChar(60)
+  autorizadopagar    Boolean   @default(true)
+  registradopor      String    @db.Char(30)
+  fechaemision       DateTime  @db.Date
+  fechavencimiento   DateTime  @db.Date
+  fecharegistro      DateTime  @db.Date
+  numerofactura      Int       @default(0)
+  observacion        String?   @db.VarChar(120)
+  tasacambio         Decimal   @default(1.00) @db.Decimal(18, 2)
+  moneda             String    @db.VarChar(6)
+  montoneto          Decimal   @default(0.00) @db.Decimal(18, 2)
+  montosaldo         Decimal   @default(0.00) @db.Decimal(18, 2)
+  metodopago         String?   @db.VarChar(40)
+  fechaautorizadopor DateTime? @default(now()) @db.Date
+  autorizadopor      String?   @db.Char(30)
+  tasaautorizada     Decimal?  @db.Decimal(18, 2)
+  montoautorizado    Decimal?  @db.Decimal(18, 2)
+  monedaautorizada   String?   @db.VarChar(6)
+  empresapagadora    String?   @db.VarChar(40)
+  clasegasto         String?   @db.VarChar(60)
+  bancopagador       String    @db.VarChar(40)
+  codigounico        Int       @default(0) @db.SmallInt
+  origenhes          Boolean   @default(false)
+  owneruser          Int       @default(1)
+  cantidadSKU        Int?      @db.Int
+  unidades           Int?      @db.Int
+  origen             String?   @db.Char(20)
+  numeroPOOdoo       String?   @db.VarChar(10)
+  linkproforma       String?   @db.VarChar(60)
+  linkseleccion      String?   @db.VarChar(60)
+  categoria          String?   @db.VarChar(20)
+  temporada          String?   @db.VarChar(20)
+  estatuscompras     String?   @db.VarChar(20)
+  fechacompras       DateTime? @db.Date
+  estatuslogistico   String?   @db.VarChar(20)
+  fechalogistico     DateTime? @db.Date
+}

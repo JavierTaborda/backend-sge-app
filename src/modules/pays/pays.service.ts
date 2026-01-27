@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
-import { MySQLPrismaService } from 'src/database/mysql.service';
 import { SQLServerPrismaService } from 'src/database/sqlserver.service';
+import { TestMySQLPrismaService } from 'src/database/testmysql.service';
 import { MethodPayDto } from './dto/method.pay.dto';
 import { mergeDocuments } from './helpers/mergeDocuments';
 import { ExcludeDocuments } from './interfaces/ExcludeDocuments';
@@ -12,11 +12,12 @@ import { PlanifcacionPagos } from './interfaces/PlanificacionPagos';
 export class PaysService {
   constructor(
     private readonly sql: SQLServerPrismaService,
-    private readonly mysql: MySQLPrismaService,
+    private readonly mysql: TestMySQLPrismaService, //TODO:ChangetoMySql when the test end
   ) { }
 
   async getPendingDocs() {
-    const resultSQL = await this.getDocumentsInProfitSQL();
+    //const resultSQL = await this.getDocumentsInProfitSQL();
+    const resultSQL = [];
     const resultHsPlanPagos = await this.getDocumentsInHsPlanPago();
     const resultMvPlanPagos = await this.getDocumentsInMemoryMvPlanPagos();
 
@@ -278,43 +279,78 @@ export class PaysService {
       const lastPlan = maxPlanPago._max.planpagonumero ?? 0;
       const newPlan = lastPlan + 1;
 
+      const totals = createPlan.items.reduce(
+        (acc, item) => {
+          const isUSD = item.moneda?.startsWith("USD");
 
-      // await tx.cbplanpagos.create({
-      //   data: {
-      //     planpagonumero: newPlan,
-      //     unidad: createPlan.unidad,
-      //     empresa: createPlan.empresa,
-      //     fechapagoautorizada: createPlan.fechapagoautorizada,
-      //     descripcionplan: createPlan.descripcionplan,
-      //     fechaautorizadopor: createPlan.fechaautorizadopor,
-      //     autorizadopor: createPlan.autorizadopor,
-      //     totalnetobsd: createPlan.totalnetobsd,
-      //     totalnetousd: createPlan.totalnetousd,
-      //     totalsaldobsd: createPlan.totalsaldobsd,
-      //     totalsaldousd: createPlan.totalsaldousd,
-      //     totalautorizadobsd: createPlan.totalautorizadobsd,
-      //     totalautorizadousd: createPlan.totalautorizadousd,
-      //     totalpagadobsd: createPlan.totalpagadobsd,
-      //     totalpagadousd: createPlan.totalpagadousd,
-      //     totalxpagarbsd: createPlan.totalxpagarbsd,
-      //     totalxpagarusd: createPlan.totalxpagarusd,
-      //     generadotxt: false,
-      //     conciliadopago: false,
-      //     owneruser: createPlan.owneruser,
-      //   },
-      // });
+          const neto = Number(item.montoneto) || 0;
+          const saldo = Number(item.montosaldo) || 0;
+          const auth = Number(item.montoautorizado) || 0;
+          const xpagado = Number(item.montoautorizado) || 0;
 
-      // const documentsAuthPlan = await tx.dtplanpagos.createMany({
-      //   data: createPlan.items.map((plan) => ({
-      //     ...plan,
-      //     planpagonumero: newPlan,
-      //     autorizadopagar: !!plan.autorizadopagar,
-      //   })),
-      // });
+          if (isUSD) {
+            acc.totalnetousd += neto;
+            acc.totalsaldousd += saldo;
+            acc.totalautorizadousd += auth;
+            if (item.pagado) {
+              acc.totalpagadousd += xpagado;
+            } else {
+              acc.totalxpagarusd += xpagado;
+            }
+          } else {
+            acc.totalnetobsd += neto;
+            acc.totalsaldobsd += saldo;
+            acc.totalautorizadobsd += auth;
+            if (item.pagado) {
+              acc.totalpagadobsd += xpagado;
+            } else {
+              acc.totalxpagarbsd += xpagado;
+            }
+          }
 
-      // if (documentsAuthPlan.count === 0) {
-      //   throw new Error('No se pudieron registrar los documentos del plan.');
-      // }
+          return acc;
+        },
+        {
+          totalnetobsd: 0,
+          totalnetousd: 0,
+          totalsaldobsd: 0,
+          totalsaldousd: 0,
+          totalautorizadobsd: 0,
+          totalautorizadousd: 0,
+          totalpagadobsd: 0,
+          totalpagadousd: 0,
+          totalxpagarbsd: 0,
+          totalxpagarusd: 0,
+        },
+      );
+
+      await tx.cbplanpagos.create({
+        data: {
+          planpagonumero: newPlan,
+          unidad: createPlan.unidad,
+          empresa: createPlan.empresa,
+          fechapagoautorizada: createPlan.fechapagoautorizada,
+          descripcionplan: createPlan.descripcionplan,
+          fechaautorizadopor: createPlan.fechaautorizadopor,
+          autorizadopor: createPlan.autorizadopor,
+          generadotxt: false,
+          conciliadopago: false,
+          owneruser: createPlan.owneruser,
+          ...totals,
+        },
+      });
+
+      const documentsAuthPlan = await tx.dtplanpagos.createMany({
+        data: createPlan.items.map((plan) => ({
+          ...plan,    
+          planpagonumero: newPlan,
+          autorizadopagar: !!plan.autorizadopagar,
+        })),
+      });
+
+      if (documentsAuthPlan.count === 0) {
+        throw new Error('No se pudieron registrar los documentos del plan.');
+      }
 
       return {
         success: true,

@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Change ouput from `"../../prisma-clients/"` to `"../../src/prisma-clients/"`
 - Add env to use connection in mysql.service.ts and sqlserver.service.ts
 - Add bodyParser in main.ts to handle json up to 1 mb
+- Add test db with prisma
 
 ### Fixed
 
