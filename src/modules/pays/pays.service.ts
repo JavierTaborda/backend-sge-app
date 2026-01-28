@@ -1,13 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
-import dayjs from "dayjs";
 import { SQLServerPrismaService } from 'src/database/sqlserver.service';
 import { TestMySQLPrismaService } from 'src/database/testmysql.service';
+import { getVzlaDateForDB } from 'src/utils/date.venezuela.db';
 import { MethodPayDto } from './dto/method.pay.dto';
+import { CodeSwiftDto } from './dto/swift.dto';
 import { mergeDocuments } from './helpers/mergeDocuments';
 import { ExcludeDocuments } from './interfaces/ExcludeDocuments';
 import { PlanPagosBase } from './interfaces/PlanPasgosBase';
 import { PlanifcacionPagos } from './interfaces/PlanificacionPagos';
+
 
 @Injectable()
 export class PaysService {
@@ -107,7 +109,7 @@ export class PaysService {
       tasacambio: Number(item.tasacambio),
       montoneto: Number(item.montoneto),
       montosaldo: Number(item.montosaldo),
-      origenhes: false,
+      origenhes: true,
       planpagonumero: 0,
       autorizadonumero: 0,
       pagado: false,
@@ -219,6 +221,17 @@ export class PaysService {
       enableImplicitConversion: true,
     });
   }
+
+  async findCodesSwift()
+  {
+    const codesSwift= await this.mysql.clbancoswift.findMany()
+    return plainToInstance(CodeSwiftDto, codesSwift, {
+      enableImplicitConversion: true,
+    });
+  }
+
+
+
   async authorizedDocuments(docs: PlanPagosBase[]): Promise<{ success: boolean; total: number; }> {
     if (!docs || docs.length === 0) {
       throw new Error('No hay documentos a autorizar.');
@@ -279,7 +292,9 @@ export class PaysService {
 
       const lastPlan = maxPlanPago._max.planpagonumero ?? 0;
       const newPlan = lastPlan + 1;
-      const date = dayjs().format();
+
+
+      const datevzlaAdjusted = getVzlaDateForDB();
 
       let validEmpresaUnidad = true;
 
@@ -292,7 +307,7 @@ export class PaysService {
           const saldo = Number(item.montosaldo) || 0;
           const auth = Number(item.montoautorizado) || 0;
           const xpagado = Number(item.montoautorizado) || 0;
-          
+
 
           if (createPlan.items[0].empresa != item.empresa || createPlan.items[0].unidad != item.unidad) {
             validEmpresaUnidad = false;
@@ -336,17 +351,17 @@ export class PaysService {
       );
 
 
-   
+
 
 
       await tx.cbplanpagos.create({
         data: {
           planpagonumero: newPlan,
-          unidad: validEmpresaUnidad ? createPlan.items[0].unidad : "CORPORATIVO" ,
+          unidad: validEmpresaUnidad ? createPlan.items[0].unidad : "CORPORATIVO",
           empresa: validEmpresaUnidad ? createPlan.items[0].empresa : "CORPORATIVO",
           fechapagoautorizada: createPlan.fechapagoautorizada,
           descripcionplan: createPlan.descripcionplan,
-          fechaautorizadopor: new Date(date),
+          fechaautorizadopor: datevzlaAdjusted,
           autorizadopor: createPlan.autorizadopor,
           generadotxt: false,
           conciliadopago: false,
@@ -359,6 +374,7 @@ export class PaysService {
         data: createPlan.items.map((plan) => ({
           ...plan,
           planpagonumero: newPlan,
+          fechaautorizadopor: getVzlaDateForDB(plan.fechaautorizadopor ?? undefined),
           autorizadopagar: !!plan.autorizadopagar,
         })),
       });

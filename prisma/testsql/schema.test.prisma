@@ -198,7 +198,7 @@ model dtplanpagos {
   fechaemision       DateTime  @db.Date
   fechavencimiento   DateTime  @db.Date
   fecharegistro      DateTime  @db.Date
-  numerofactura      Int
+  numerofactura      String    @default("0") @db.VarChar(11)
   observacion        String?   @db.VarChar(120)
   tasacambio         Decimal   @db.Decimal(18, 2)
   moneda             String    @db.VarChar(6)
@@ -258,7 +258,7 @@ model hsplanpagos {
   fechavencimiento   DateTime @db.Date
   fecharegistro      DateTime @db.Date
   registradopor      String   @db.Char(30)
-  numerofactura      Int      @default(0)
+  numerofactura      String    @default("0") @db.VarChar(11)
   observacion        String?  @db.VarChar(120)
   tasacambio         Decimal  @default(1.00) @db.Decimal(18, 2)
   moneda             String   @db.VarChar(6)
@@ -308,7 +308,7 @@ model mvplanpagos {
   fechaemision       DateTime  @db.Date
   fechavencimiento   DateTime  @db.Date
   fecharegistro      DateTime  @db.Date
-  numerofactura      Int       @default(0)
+  numerofactura      String    @default("0") @db.VarChar(11)
   observacion        String?   @db.VarChar(120)
   tasacambio         Decimal   @default(1.00) @db.Decimal(18, 2)
   moneda             String    @db.VarChar(6)

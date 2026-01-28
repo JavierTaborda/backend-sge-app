@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 -Exchange Rate endpoint
+-Add date calculate for venezuela by UTC in prisma and mysql
 
 ### Changed
 

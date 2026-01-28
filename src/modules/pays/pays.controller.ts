@@ -6,11 +6,16 @@ import { PaysService } from './pays.service';
 @UseGuards(JwtAuthGuard)
 @Controller('pays')
 export class PaysController {
-  constructor(private readonly paysService: PaysService) {}
+  constructor(private readonly paysService: PaysService) { }
 
   @Get('methods')
   findMethodPay() {
     return this.paysService.findMethodPay();
+  }
+
+  @Get('swift')
+  findSwift() {
+    return this.paysService.findCodesSwift();
   }
 
   @Get('documents')
