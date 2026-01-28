@@ -301,7 +301,7 @@ export class PaysService {
 
       const totals = createPlan.items.reduce(
         (acc, item) => {
-          const isUSD = item.moneda?.startsWith("USD");
+          const isUSD = item.monedaautorizada?.startsWith("USD");
 
           const neto = Number(item.montoneto) || 0;
           const saldo = Number(item.montosaldo) || 0;
