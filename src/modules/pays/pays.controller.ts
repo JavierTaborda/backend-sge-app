@@ -18,7 +18,7 @@ export class PaysController {
     return this.paysService.findCodesSwift();
   }
 
-  @Get('documents')
+  @Get()
   getPendingDocs() {
     return this.paysService.getPendingDocs();
   }

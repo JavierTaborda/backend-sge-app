@@ -159,8 +159,7 @@ export class PaysService {
       cob_num: 0,
       monto_pago: 0,
       tipocuenta: item.tipocuenta ? item.tipocuenta : '00',
-      //origenhes: 0,
-      //planpagonumero: 0,
+
     }));
 
     return result;
@@ -222,9 +221,8 @@ export class PaysService {
     });
   }
 
-  async findCodesSwift()
-  {
-    const codesSwift= await this.mysql.clbancoswift.findMany()
+  async findCodesSwift() {
+    const codesSwift = await this.mysql.clbancoswift.findMany()
     return plainToInstance(CodeSwiftDto, codesSwift, {
       enableImplicitConversion: true,
     });
@@ -237,33 +235,38 @@ export class PaysService {
       throw new Error('No hay documentos a autorizar.');
     }
 
-    const operations = docs.map((doc) =>
-      this.mysql.mvplanpagos.upsert({
+    const operations = docs.map((doc) => {
+      //exclude fields 
+      const { pagado,
+        fechapagado,
+        generadotxt,
+        enviadocajachica,
+        conciliadopago,
+        cob_num,
+        moneda_pago,
+        monto_pago,
+
+        ...safeDoc } = doc;
+
+      return this.mysql.mvplanpagos.upsert({
         where: {
-          numerodocumento: doc.numerodocumento,
-          unidad: doc.unidad,
-          empresa: doc.empresa,
-          tipodocumento: doc.tipodocumento,
+          numerodocumento: safeDoc.numerodocumento,
+          unidad: safeDoc.unidad,
+          empresa: safeDoc.empresa,
+          tipodocumento: safeDoc.tipodocumento,
         },
         update: {
-          autorizadopagar: true,
-          fechaautorizadopor: new Date(),
-          montoautorizado: Number(doc.montoneto),
-          monedaautorizada: doc.moneda,
-          tasaautorizada: Number(doc.tasacambio),
-          empresapagadora: doc.empresa,
+          ...safeDoc,
+          autorizadopagar: !!safeDoc.autorizadopagar,
+          fechaautorizadopor: getVzlaDateForDB(safeDoc.fechaautorizadopor ?? undefined),
         },
         create: {
-          ...doc,
-          autorizadopagar: true,
-          fechaautorizadopor: new Date(),
-          montoautorizado: Number(doc.montoneto),
-          monedaautorizada: doc.moneda,
-          tasaautorizada: Number(doc.tasacambio),
-          empresapagadora: doc.empresa,
+          ...safeDoc,
+          autorizadopagar: !!safeDoc.autorizadopagar,
+          fechaautorizadopor: getVzlaDateForDB(safeDoc.fechaautorizadopor ?? undefined),
         },
-      }),
-    );
+      });
+    });
 
     try {
       await this.mysql.$transaction(operations);
@@ -379,10 +382,22 @@ export class PaysService {
         })),
       });
 
+
       if (documentsAuthPlan.count === 0) {
         throw new Error('No se pudieron registrar los documentos del plan.');
       }
 
+      await tx.mvplanpagos.deleteMany({
+        where: {
+          OR: createPlan.items.map((plan) => ({
+            numerodocumento: plan.numerodocumento,
+            unidad: plan.unidad,
+            empresa: plan.empresa,
+            tipodocumento: plan.tipodocumento,
+          })),
+        },
+      });
+      
       return {
         success: true,
         planpagonumero: newPlan,
