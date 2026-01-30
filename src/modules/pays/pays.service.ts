@@ -248,6 +248,12 @@ export class PaysService {
 
         ...safeDoc } = doc;
 
+      console.log('fechaVzlaAdjusted en service', doc.fechaautorizadopor);
+      const date = doc.fechaautorizadopor ? new Date(doc.fechaautorizadopor) : new Date();
+      const fechaVzlaAdjusted = getVzlaDateForDB(date);
+
+      console.log('fechaVzlaAdjusted en service', fechaVzlaAdjusted);
+
       return this.mysql.mvplanpagos.upsert({
         where: {
           numerodocumento: safeDoc.numerodocumento,
@@ -258,12 +264,12 @@ export class PaysService {
         update: {
           ...safeDoc,
           autorizadopagar: !!safeDoc.autorizadopagar,
-          fechaautorizadopor: getVzlaDateForDB(safeDoc.fechaautorizadopor ?? undefined),
+          fechaautorizadopor: fechaVzlaAdjusted,
         },
         create: {
           ...safeDoc,
           autorizadopagar: !!safeDoc.autorizadopagar,
-          fechaautorizadopor: getVzlaDateForDB(safeDoc.fechaautorizadopor ?? undefined),
+          fechaautorizadopor: fechaVzlaAdjusted,
         },
       });
     });
@@ -397,7 +403,7 @@ export class PaysService {
           })),
         },
       });
-      
+
       return {
         success: true,
         planpagonumero: newPlan,

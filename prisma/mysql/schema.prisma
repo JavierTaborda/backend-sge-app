@@ -518,7 +518,7 @@ model hsplanpagos {
   fechavencimiento   DateTime @db.Date
   fecharegistro      DateTime @db.Date
   registradopor      String   @db.Char(30)
-  numerofactura      String    @default("0") @db.VarChar(11)
+  numerofactura      String   @default("0") @db.VarChar(11)
   observacion        String?  @db.VarChar(120)
   tasacambio         Decimal  @default(1.00) @db.Decimal(18, 2)
   moneda             String   @db.VarChar(6)
@@ -865,7 +865,7 @@ model mvplanpagos {
   montoneto          Decimal   @default(0.00) @db.Decimal(18, 2)
   montosaldo         Decimal   @default(0.00) @db.Decimal(18, 2)
   metodopago         String?   @db.VarChar(40)
-  fechaautorizadopor DateTime? @default(now()) @db.Date
+  fechaautorizadopor DateTime? @db.DateTime
   autorizadopor      String?   @db.Char(30)
   tasaautorizada     Decimal?  @db.Decimal(18, 2)
   montoautorizado    Decimal?  @db.Decimal(18, 2)

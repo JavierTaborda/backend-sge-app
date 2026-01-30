@@ -8,7 +8,7 @@ datasource db {
   provider ="mysql"
 }
 
-//prisma generate --schema=prisma/testsql/schema.test.prisma
+//npx prisma generate --schema=prisma/testsql/schema.test.prisma
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model cbcajachica {
@@ -315,7 +315,7 @@ model mvplanpagos {
   montoneto          Decimal   @default(0.00) @db.Decimal(18, 2)
   montosaldo         Decimal   @default(0.00) @db.Decimal(18, 2)
   metodopago         String?   @db.VarChar(40)
-  fechaautorizadopor DateTime? @default(now()) @db.Date
+  fechaautorizadopor DateTime? @db.DateTime
   autorizadopor      String?   @db.Char(30)
   tasaautorizada     Decimal?  @db.Decimal(18, 2)
   montoautorizado    Decimal?  @db.Decimal(18, 2)
