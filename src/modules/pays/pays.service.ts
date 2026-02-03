@@ -229,15 +229,16 @@ export class PaysService {
   }
 
 
-
-  async authorizedDocuments(docs: PlanPagosBase[]): Promise<{ success: boolean; total: number; }> {
+  async authorizedDocuments(
+    docs: PlanPagosBase[],
+  ): Promise<{ success: boolean; total: number }> {
     if (!docs || docs.length === 0) {
-      throw new Error('No hay documentos a autorizar.');
+      throw new Error("No hay documentos a autorizar.");
     }
 
     const operations = docs.map((doc) => {
-      //exclude fields 
-      const { pagado,
+      const {
+        pagado,
         fechapagado,
         generadotxt,
         enviadocajachica,
@@ -245,30 +246,40 @@ export class PaysService {
         cob_num,
         moneda_pago,
         monto_pago,
+        ...safeDoc
+      } = doc;
 
-        ...safeDoc } = doc;
+      const whereClause = {
+        numerodocumento: safeDoc.numerodocumento,
+        unidad: safeDoc.unidad,
+        empresa: safeDoc.empresa,
+        tipodocumento: safeDoc.tipodocumento,
+      };
 
-      console.log('fechaVzlaAdjusted en service', doc.fechaautorizadopor);
-      const date = doc.fechaautorizadopor ? new Date(doc.fechaautorizadopor) : new Date();
+     
+      if (!safeDoc.autorizadopagar) {
+        return this.mysql.mvplanpagos.deleteMany({
+          where: whereClause,
+        });
+      }
+
+    
+      const date = doc.fechaautorizadopor
+        ? new Date(doc.fechaautorizadopor)
+        : new Date();
+
       const fechaVzlaAdjusted = getVzlaDateForDB(date);
 
-      console.log('fechaVzlaAdjusted en service', fechaVzlaAdjusted);
-
       return this.mysql.mvplanpagos.upsert({
-        where: {
-          numerodocumento: safeDoc.numerodocumento,
-          unidad: safeDoc.unidad,
-          empresa: safeDoc.empresa,
-          tipodocumento: safeDoc.tipodocumento,
-        },
+        where: whereClause,
         update: {
           ...safeDoc,
-          autorizadopagar: !!safeDoc.autorizadopagar,
-          fechaautorizadopor: fechaVzlaAdjusted,
+          autorizadopagar: true,
+          fechaautorizadopor: fechaVzlaAdjusted,  
         },
         create: {
           ...safeDoc,
-          autorizadopagar: !!safeDoc.autorizadopagar,
+          autorizadopagar: true,
           fechaautorizadopor: fechaVzlaAdjusted,
         },
       });
@@ -282,10 +293,11 @@ export class PaysService {
         total: docs.length,
       };
     } catch (error) {
-      console.error('Error autorizando documentos:', error);
-      throw new Error('No se pudieron autorizar los documentos.');
+      console.error("Error autorizando documentos:", error);
+      throw new Error("No se pudieron autorizar los documentos.");
     }
   }
+
 
   async createPlanPagos(
     createPlan: PlanifcacionPagos,
@@ -305,12 +317,14 @@ export class PaysService {
 
       const datevzlaAdjusted = getVzlaDateForDB();
 
-      let validEmpresaUnidad = true;
+      let validEmpresa = true;
+      let validUnidad = true;
 
 
       const totals = createPlan.items.reduce(
         (acc, item) => {
           const isUSD = item.monedaautorizada?.startsWith("USD");
+          const isUSDSaldo = item.moneda?.startsWith("USD");
 
           const neto = Number(item.montoneto) || 0;
           const saldo = Number(item.montosaldo) || 0;
@@ -319,13 +333,15 @@ export class PaysService {
 
 
           if (createPlan.items[0].empresa != item.empresa || createPlan.items[0].unidad != item.unidad) {
-            validEmpresaUnidad = false;
+            validEmpresa = false;
+          }
+          if ( createPlan.items[0].unidad != item.unidad) {
+            validUnidad = false;
           }
 
 
           if (isUSD) {
-            acc.totalnetousd += neto;
-            acc.totalsaldousd += saldo;
+         
             acc.totalautorizadousd += auth;
             if (item.pagado) {
               acc.totalpagadousd += xpagado;
@@ -333,14 +349,23 @@ export class PaysService {
               acc.totalxpagarusd += xpagado;
             }
           } else {
-            acc.totalnetobsd += neto;
-            acc.totalsaldobsd += saldo;
+       
             acc.totalautorizadobsd += auth;
             if (item.pagado) {
               acc.totalpagadobsd += xpagado;
             } else {
               acc.totalxpagarbsd += xpagado;
             }
+          }
+
+          if (isUSDSaldo) {
+            acc.totalnetousd += neto;
+            acc.totalsaldousd += saldo;
+
+          } else {
+            acc.totalnetobsd += neto;
+            acc.totalsaldobsd += saldo;
+
           }
 
           return acc;
@@ -359,15 +384,11 @@ export class PaysService {
         },
       );
 
-
-
-
-
       await tx.cbplanpagos.create({
         data: {
           planpagonumero: newPlan,
-          unidad: validEmpresaUnidad ? createPlan.items[0].unidad : "CORPORATIVO",
-          empresa: validEmpresaUnidad ? createPlan.items[0].empresa : "CORPORATIVO",
+          unidad: validUnidad ? createPlan.items[0].unidad : "CORPORATIVO",
+          empresa: validEmpresa ? createPlan.items[0].empresa : "CORPORATIVO",
           fechapagoautorizada: createPlan.fechapagoautorizada,
           descripcionplan: createPlan.descripcionplan,
           fechaautorizadopor: datevzlaAdjusted,
