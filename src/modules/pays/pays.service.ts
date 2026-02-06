@@ -6,6 +6,7 @@ import { getVzlaDateForDB } from 'src/utils/date.venezuela.db';
 import { MethodPayDto } from './dto/method.pay.dto';
 import { CodeSwiftDto } from './dto/swift.dto';
 import { mergeDocuments } from './helpers/mergeDocuments';
+import { CommpanySummary } from './interfaces/CommpanySummary';
 import { ExcludeDocuments } from './interfaces/ExcludeDocuments';
 import { PlanPagosBase } from './interfaces/PlanPasgosBase';
 import { PlanifcacionPagos } from './interfaces/PlanificacionPagos';
@@ -430,5 +431,49 @@ export class PaysService {
         planpagonumero: newPlan,
       };
     });
+  }
+
+
+  async getSummaryByCompany() {
+
+    const docs = await this.getPendingDocs();
+
+
+ 
+    const summary = docs.reduce<Record<string, CommpanySummary>>((acc, doc) => {
+      const empresa = doc.empresa || 'SIN EMPRESA';
+
+      if (!acc[empresa]) {
+        acc[empresa] = {
+          empresa,
+          cantidadDocs: 0,
+          totalNetoUSD: 0,
+          totalSaldoUSD: 0,
+          totalNetoVED: 0,
+          totalSaldoVED: 0,
+        };
+      }
+
+      const isUSD = doc.moneda === 'USD';
+
+      if (isUSD) {
+        acc[empresa].totalNetoUSD += Number(doc.montoneto);
+        acc[empresa].totalSaldoUSD += Number(doc.montosaldo);
+      } else {
+        acc[empresa].totalNetoVED += Number(doc.montoneto);
+        acc[empresa].totalSaldoVED += Number(doc.montosaldo);
+      }
+
+      acc[empresa].cantidadDocs += 1;
+
+      return acc;
+    }, {})
+
+    const result = Object.values(summary).sort(
+      (a: CommpanySummary, b: CommpanySummary) => b.totalSaldoUSD - a.totalSaldoUSD
+    );
+    console.table(result);
+
+    return result;
   }
 }

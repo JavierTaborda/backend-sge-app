@@ -8,6 +8,11 @@ import { PaysService } from './pays.service';
 export class PaysController {
   constructor(private readonly paysService: PaysService) { }
 
+
+  @Get('sumary')
+  getSummaryByCompany() {
+    return this.paysService.getSummaryByCompany ();
+  }
   @Get('methods')
   findMethodPay() {
     return this.paysService.findMethodPay();
