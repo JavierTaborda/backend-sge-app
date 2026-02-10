@@ -472,7 +472,7 @@ export class PaysService {
     const result = Object.values(summary).sort(
       (a: CommpanySummary, b: CommpanySummary) => b.totalSaldoUSD - a.totalSaldoUSD
     );
-    console.table(result);
+   
 
     return result;
   }
