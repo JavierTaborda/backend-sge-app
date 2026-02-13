@@ -16,7 +16,7 @@ export interface PlanPagosBase {
   fechaemision: string | Date;
   fechavencimiento: string | Date;
   fecharegistro: string | Date;
-  numerofactura: string;
+  numerofactura: number ;
   observacion?: string | null;
   tasacambio: string | number;
   moneda: string;
