@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
+import { MySQLPrismaService } from 'src/database/mysql.service';
 import { SQLServerPrismaService } from 'src/database/sqlserver.service';
-import { TestMySQLPrismaService } from 'src/database/testmysql.service';
 import { getVzlaDateForDB } from 'src/utils/date.venezuela.db';
 import { MethodPayDto } from './dto/method.pay.dto';
 import { CodeSwiftDto } from './dto/swift.dto';
@@ -16,7 +16,9 @@ import { PlanifcacionPagos } from './interfaces/PlanificacionPagos';
 export class PaysService {
   constructor(
     private readonly sql: SQLServerPrismaService,
-    private readonly mysql: TestMySQLPrismaService, //TODO:ChangetoMySql when the test end
+    private readonly mysql: MySQLPrismaService,
+
+    //private readonly mysql: TestMySQLPrismaService, //TODO:ChangetoMySql when the test end
   ) { }
 
   async getPendingDocs() {
