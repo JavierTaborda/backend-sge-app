@@ -3,8 +3,10 @@ import { plainToInstance } from 'class-transformer';
 import { MySQLPrismaService } from 'src/database/mysql.service';
 import { SQLServerPrismaService } from 'src/database/sqlserver.service';
 import { DateUtils } from 'src/utils/date.utils';
+import { getVzlaDateForDB } from 'src/utils/date.venezuela.db';
 import { CondicionDto } from './dtos/condicion.dto';
 import { IVADto } from './dtos/iva.dto';
+import { PedidoDTO } from './dtos/pedido.dto';
 import { TasaDto } from './dtos/tasa.dto';
 @Injectable()
 export class CreateOrdersService {
@@ -37,6 +39,11 @@ export class CreateOrdersService {
                 codart: true,
                 artdes: true,
                 precvta1: true,
+                cosproun:true,
+                ultcosun: true,
+                ultcosunom: true,
+                cosprounom:true
+                  
             },
             where: { codart: { in: codarts } },
         });
@@ -127,4 +134,137 @@ export class CreateOrdersService {
         });
     }
 
+    async GetNextOrderNumber() {
+        // const lastOrder = await this.sql.par_emp.findFirst({
+        //     orderBy: {
+        //         orderNumber: 'desc',
+        //     },
+        // });
+
+        // return lastOrder ? lastOrder.orderNumber + 1 : 1;
+        return 1;
+    }
+    async InsertOrder(pedido: PedidoDTO) {
+        const {
+            fact_num,
+            nombre,
+            rif,
+            descrip,
+            status,
+            comentario,
+            saldo,
+            fec_emis,
+            fec_venc,
+            co_cli,
+            co_ven,
+            co_tran,
+            revisado,
+            dir_ent,
+            forma_pag,
+            tot_bruto,
+            tot_neto,
+            glob_desc,
+            tot_reca,
+            porc_gdesc,
+            porc_reca,
+            iva,
+            tasa,
+            moneda,
+            tasag,
+            telefono,
+            serialp,
+            reng_ped
+        } = pedido;
+
+        const date = pedido.fec_emis
+            ? new Date(pedido.fec_emis)
+            : new Date();
+        const date2 = pedido.fec_venc
+            ? new Date(pedido.fec_venc)
+            : new Date();
+
+        const fecEmi = getVzlaDateForDB(date);
+        const fecVen = getVzlaDateForDB(date2);
+
+        return this.sql.$transaction(async (tx) => {
+            // 1️⃣ INSERT pedido
+            await tx.$executeRaw`
+        INSERT INTO passve.dbo.pedidos (
+          fact_num, contrib, nombre, rif, descrip, status, comentario,
+          saldo, fec_emis, fec_venc, co_cli, co_ven, co_tran, revisado,
+          dir_ent, forma_pag, tot_bruto, tot_neto, glob_desc, tot_reca,
+          porc_gdesc, porc_reca, iva, tasa, moneda, tasag,
+          co_us_in, co_sucu, telefono, serialp
+        ) VALUES (
+          ${fact_num},
+          1,
+          ${nombre},
+          ${rif},
+          ${descrip},
+          ${status},
+          ${comentario},
+          ${saldo},
+          ${fecEmi},
+          ${fecVen},
+          ${co_cli},
+          ${co_ven},
+          ${co_tran},
+          ${revisado},
+          ${dir_ent},
+          ${forma_pag},
+          ${tot_bruto},
+          ${tot_neto},
+          ${glob_desc},
+          ${tot_reca},
+          ${porc_gdesc},
+          ${porc_reca},
+          ${iva},
+          ${tasa},
+          ${moneda},
+          ${tasag},
+          ${'911'},
+          ${'0001'},
+          ${telefono},
+          ${serialp}
+        )
+      `;
+
+            // 2️INSERT 
+            for (const reng of reng_ped) {
+                await tx.$executeRaw`
+          INSERT INTO passve.dbo.reng_ped (
+            fact_num, reng_num, co_art, co_alma,
+            total_art, pendiente, uni_venta,
+            prec_vta, prec_vta2, reng_neto,
+            porc_desc, cos_pro_un,
+            ult_cos_un, ult_cos_om, cos_pro_om,
+            tipo_imp, fec_lote
+          ) VALUES (
+            ${fact_num},
+            ${reng.reng_num},
+            ${reng.co_art},
+            ${reng.co_alma},
+            ${reng.total_art},
+            ${reng.pendiente},
+            ${reng.uni_venta},
+            ${reng.prec_vta},
+            ${reng.prec_vta2},
+            ${reng.reng_neto},
+            ${reng.porc_desc},
+            ${reng.cos_pro_un},
+            ${reng.ult_cos_un},
+            ${reng.ult_cos_om},
+            ${reng.cos_pro_om},
+            ${reng.tipo_imp},
+            ${reng.fec_lote ? new Date(reng.fec_lote) : null}
+          )
+        `;
+            }
+
+            return {
+                ok: true,
+                fact_num
+            };
+        });
+    }
 }

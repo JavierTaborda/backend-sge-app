@@ -576,3 +576,116 @@ model zona {
   co_sucu  String?   @db.Char(6)
   rowguid  String?   @db.UniqueIdentifier
 }
+model par_emp {
+  cod_emp String @id @db.Char(8)
+
+  emp_imp String @db.VarChar(60)
+  temp_num Int
+  cfxg_num Int
+  ccxg_num Int
+  fact_num Int
+  giro_num Int
+  girocppnum Int
+  nota_num Int
+  ped_num Int
+  ord_num Int
+  cotc_num Int
+  cotp_num Int
+  nde_num Int
+  cb_num Int
+  pg_num Int
+  nd_num Int
+  ndcpp_num Int
+  nc_num Int
+  nccpp_num Int
+  chdv_num Int
+  chdvcppnum Int
+  comp_num Int
+  devp_num Int
+  devc_num Int
+  ajus_num Int
+  depc_num Int
+  tras_num Int
+  genk_num Int
+  ords_num Int
+  ordp_num Int
+  ejep_num Int
+  inte_num Int
+
+  porc_db Decimal @db.Decimal(18, 2)
+
+  p_comv_vol Boolean
+  p_comv_klu Boolean
+  p_comv_ven Boolean
+  p_comv_con Boolean
+  p_comv_r_c Boolean
+  p_comv_r_p Boolean
+  p_comv_tip Boolean
+
+  p_desc_art Boolean
+  p_desc_cat Boolean
+  p_desc_glo Boolean
+  p_desc_ofe Boolean
+  p_desc_lin Boolean
+
+  p_prec_isv Boolean
+  p_prec1_isv Boolean
+  p_prec2_isv Boolean
+  p_prec3_isv Boolean
+  p_prec4_isv Boolean
+  p_prec5_isv Boolean
+
+  p_roundfac Boolean
+  p_roundinf Boolean
+  p_roundequ Boolean
+  p_roundsup Boolean
+
+  p_stock_neg Boolean
+  p_ent_new Boolean
+  p_com_auto Boolean
+  p_pront_pg Boolean
+  p_grab_ren Boolean
+
+  mone_art String @db.Char(6)
+
+  fecha_res DateTime @db.SmallDateTime
+  fecha_fisi DateTime @db.SmallDateTime
+  fec_inte DateTime @db.SmallDateTime
+  temp_fech DateTime @db.SmallDateTime
+
+  open_fisi Boolean
+
+  serial String @db.Char(4)
+  cadena String @db.VarChar(60)
+  inv_emp String @db.VarChar(250)
+
+  co_us_in String @db.Char(6)
+  fe_us_in DateTime @db.DateTime
+  co_us_mo String @db.Char(6)
+  fe_us_mo DateTime @db.DateTime
+
+  revisado String @db.Char(1)
+  trasnfe String @db.Char(1)
+
+  rowguid String @unique @db.UniqueIdentifier
+
+  logo Bytes? @db.Image
+
+  moneda String @db.Char(6)
+
+  tipo_inve Decimal @db.Decimal(1, 0)
+
+  idioma String @db.Char(1)
+  serie Boolean
+
+  pais String @db.Char(6)
+
+  server String @db.Char(32)
+  namedb String @db.Char(32)
+  login String @db.Char(32)
+  password String @db.Char(32)
+
+  eprofit Boolean
+
+  @@map("par_emp")
+}
