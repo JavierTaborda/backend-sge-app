@@ -15,8 +15,9 @@ export default class GoalsService {
             'anulada = 0',
             'YEAR(fec_emis) = YEAR(GETDATE())',
             'MONTH(fec_emis) = MONTH(GETDATE())',
-           
+
         ];
+        const db = process.env.SQLSERVER_DATABASE;   
 
         if (codven) {
             if (codven.includes(',')) {
@@ -31,7 +32,7 @@ export default class GoalsService {
             } else {
                 whereClause.push(`(co_ven) = '${codven}'`);
             }
-        } else{
+        } else {
             whereClause.push(`co_ven <>'00001'`)
         }
 
@@ -45,15 +46,15 @@ export default class GoalsService {
             co_ven,
             
             SUM(total_art) AS totalart
-        FROM TECH_A.dbo.reng_ped rp
-        INNER JOIN TECH_A.dbo.pedidos p ON p.fact_num = rp.fact_num
+        FROM ${db}.dbo.reng_ped rp
+        INNER JOIN ${db}.dbo.pedidos p ON p.fact_num = rp.fact_num
         WHERE ${whereClause.join(' AND ')}
         GROUP BY YEAR(fec_emis), MONTH(fec_emis), co_art, co_ven
         ORDER BY co_art
         `;
 
         const pedidos = await this.sql.$queryRawUnsafe(query) as DataGoalsProfit[];
-
+       
         const result = pedidos.map((d) => ({
             year: d.eanio.toString(),
             month: d.emes.toString(),
@@ -65,7 +66,7 @@ export default class GoalsService {
         return result;
     }
 
-
+    //Not Used
     async resetUtilizado(codven?: string): Promise<boolean> {
 
         //UPDATE metas SET utilizado = 0 WHERE anio = EXTRACT(YEAR FROM NOW()) AND mes = EXTRACT(MONTH FROM NOW()) AND codven = '$coven';");
@@ -84,19 +85,7 @@ export default class GoalsService {
         return result.count >= 0;
     }
 
-
-    async GetGoals(codven?: string): Promise<GoalsDto[]> {
-
-        // SELECT...      FROM TECH_A.dbo.reng_ped... GROUP BY YEAR(fec_emis)...;
-        const dataGoals = await this.DataGoals(codven);
-
-        //UPDATE metas SET utilizado = 0 
-        //const resetUtilizado: boolean = await this.setUtilizado(codven);
-
-
-        //UPDATE metas SET utilizado = $totalart WHERE anio = '$eanio' AND mes = '$emes' AND codven = '$coven' AND codart = '$co_art';
-
-
+    async updateGoals(dataGoals: DataGoals[]): Promise<boolean> {
         try {
             await this.mysql.$transaction(async (tx) => {
                 await Promise.all(
@@ -115,8 +104,23 @@ export default class GoalsService {
                 );
             });
         } catch (error) {
-           // console.log('fail to update *metas*:', error);
+            throw error
+
         }
+        return true;
+    }
+
+    async GetGoals(codven?: string): Promise<GoalsDto[]> {
+
+        // SELECT... 
+        const dataGoals = await this.DataGoals(codven);
+
+        //UPDATE metas SET utilizado = 0 
+        //const resetUtilizado: boolean = await this.setUtilizado(codven);
+
+        //UPDATE
+       
+        await this.updateGoals(dataGoals);
 
 
 
@@ -172,7 +176,7 @@ export default class GoalsService {
                     utilizado: item.utilizado,
                     vendes: vendedores.find(v => v.codven.startsWith(item.codven))?.vendes ?? '',
                     catdes: item.articulo?.categoria?.codcat ?? '',
-                 
+
                 }))
                 .sort((a, b) => a.codart.localeCompare(b.codart))
             return result;
@@ -224,7 +228,7 @@ export default class GoalsService {
                 catdes: art?.categoria?.codcat ?? '',
             };
         }).sort((a, b) => a.codart.localeCompare(b.codart));
-        
+
     }
 
     //filter data

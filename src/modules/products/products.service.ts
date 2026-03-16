@@ -56,6 +56,7 @@ export class ProductsService {
       lastPage: Math.ceil(total / limit),
     };
   }
+  
   async getProductsWithBarcode() {
 
     const products = await

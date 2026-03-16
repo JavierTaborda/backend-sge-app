@@ -54,19 +54,19 @@ export class RenglonPedidoDTO {
     tipo_imp?: string;
 
     @IsOptional()
-    @IsString()
+    @IsNumber()
     cos_pro_un?: number;
 
     @IsOptional()
-    @IsString() 
+    @IsNumber() 
     ult_cos_un?: number;
 
     @IsOptional()
-    @IsString() 
+    @IsNumber() 
     ult_cos_om?: number;
 
     @IsOptional()
-    @IsString() 
+    @IsNumber() 
     cos_pro_om?: number;
     
     @IsOptional()

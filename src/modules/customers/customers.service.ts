@@ -17,7 +17,8 @@ export class CustomersService {
         co_zon:true,
         rif:true,
         telefonos:true,
-        email:true
+        email:true,
+
          
       }, where:{
         inactivo:false, 

@@ -1,18 +1,33 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
+import { throwError } from 'rxjs';
 import { MySQLPrismaService } from 'src/database/mysql.service';
 import { SQLServerPrismaService } from 'src/database/sqlserver.service';
 import { DateUtils } from 'src/utils/date.utils';
 import { getVzlaDateForDB } from 'src/utils/date.venezuela.db';
+import GoalsService from '../goals/goals.service';
 import { CondicionDto } from './dtos/condicion.dto';
 import { IVADto } from './dtos/iva.dto';
 import { PedidoDTO } from './dtos/pedido.dto';
 import { TasaDto } from './dtos/tasa.dto';
 @Injectable()
 export class CreateOrdersService {
-    constructor(private readonly sql: SQLServerPrismaService, private readonly mysql: MySQLPrismaService) { }
+    constructor(
+        private readonly sql: SQLServerPrismaService,
+        private readonly mysql: MySQLPrismaService,
+        private readonly goalsService: GoalsService
+    ) { }
 
     async GetProductsOrders(codven?: string) {
+   
+        //Update Goals
+        const codVen = codven!= "N/A" ? codven : undefined
+        const dataGoals = await this.goalsService.DataGoals(codVen);
+  
+        const isUpdate = await this.goalsService.updateGoals(dataGoals)
+
+        //get Goals 
         const year = DateUtils.GetYear();
         const month = DateUtils.GetMonthMM();
 
@@ -22,7 +37,7 @@ export class CreateOrdersService {
                 anio: year,
                 mes: month,
                 asignado: { gt: 0 },
-                ...(codven ? { codven } : {}),
+                ...(codVen ? { codVen } : {}),
 
             },
         });
@@ -30,38 +45,74 @@ export class CreateOrdersService {
             (m) => m.asignado - m.utilizado > 0
         );
 
-
-
         // get info
         const codarts = available.map((m) => m.codart);
-        const arts = await this.mysql.mtprofitart.findMany({
+        const arts = await this.sql.art.findMany({
             select: {
-                codart: true,
-                artdes: true,
-                precvta1: true,
-                cosproun:true,
-                ultcosun: true,
-                ultcosunom: true,
-                cosprounom:true
-                  
+                co_art: true,
+                art_des: true,
+                prec_vta1: true,
+                prec_vta2: true,
+                cos_pro_un: true,
+                ult_cos_un: true,
+                ult_cos_om: true,
+                cos_pro_om: true,
+                tipo_imp: true,
+                co_cat: true,
+                cat_art: {
+                    select: {
+                        cat_des: true,
+                    }
+                }
+
+
             },
-            where: { codart: { in: codarts } },
+            where: { co_art: { in: codarts } },
         });
 
-        // group data
-        return available.map((m) => {
-            const art = arts.find((a) => a.codart === m.codart);
-            return {
 
-                codven: m.codven,
-                codart: m.codart,
-                artdes: art?.artdes.trimEnd() ?? '',
-                asignado: m.asignado ?? 0,
-                utilizado: m.utilizado ?? 0,
-                price: art?.precvta1,
-                available: m.asignado - m.utilizado,
-            };
-        }).sort((a, b) => a.codart.localeCompare(b.codart));
+        
+        const groupedData = available.reduce((acc, m) => {
+            //  codven is undefined, group by codart 
+            // codven, group by key 
+            const key = codVen ? `${m.codven}-${m.codart}` : m.codart;
+
+            if (!acc[key]) {
+                const art = arts.find((a) => a.co_art.trim() === m.codart.trim());
+                acc[key] = {
+                    codven: codVen ? m.codven : "TODOS",
+                    codart: m.codart,
+                    artdes: art?.art_des?.trimEnd() ?? '',
+                    asignado: 0,
+                    utilizado: 0,
+                    price: art?.prec_vta1,
+                    price2: art?.prec_vta2,
+                    cos_pro_un: art?.cos_pro_un ?? 0,
+                    ult_cos_un: art?.ult_cos_un ?? 0,
+                    ult_cos_om: art?.ult_cos_om ?? 0,
+                    cos_pro_om: art?.cos_pro_om ?? 0,
+                    tip_imp: art?.tipo_imp,
+                    co_cat: art?.co_cat,
+                    cat_art: {
+                        cat_des: art?.cat_art?.cat_des?.trimEnd()
+                    }
+                };
+            }
+
+            // Sum all values 
+            acc[key].asignado += m.asignado ?? 0;
+            acc[key].utilizado += m.utilizado ?? 0;
+            acc[key].available = acc[key].asignado - acc[key].utilizado;
+
+            return acc;
+        }, {} as Record<string, any>);
+       
+        const result = Object.values(groupedData).sort((a: any, b: any) =>
+            a.codart.localeCompare(b.codart)
+        );
+
+        return result;
+        
     }
 
     async GetConditions(): Promise<CondicionDto[]> {
@@ -101,6 +152,7 @@ export class CreateOrdersService {
             fecha: tasa?.fecha ?? new Date(),
             co_mone: tasa?.co_mone ?? 'USD',
             tasa_v: Number(tasa?.tasa_v)
+         
         };
 
         return result;
@@ -110,12 +162,7 @@ export class CreateOrdersService {
         const iva = await this.sql.tab_enc.findFirst({
             select: {
                 tasa: true,
-                //fecha: true,
-                // tasa3: true,
-                // tasa4: true,
-                // tasa5: true,
-                // tasag10: true,
-                // tasag20: true,
+
             },
             orderBy: {
                 fecha: 'desc',
@@ -135,136 +182,160 @@ export class CreateOrdersService {
     }
 
     async GetNextOrderNumber() {
-        // const lastOrder = await this.sql.par_emp.findFirst({
-        //     orderBy: {
-        //         orderNumber: 'desc',
-        //     },
-        // });
+        const lastOrder = await this.sql.par_emp.findFirst({
+            select: {
+                ped_num: true,
+            },
+        });
 
-        // return lastOrder ? lastOrder.orderNumber + 1 : 1;
-        return 1;
+        if (!lastOrder) {
+            throwError(() => new Error('No se pudo obtener el número de pedido'));
+        }
+        else {
+            return (lastOrder.ped_num + 1)
+        }
+
     }
-    async InsertOrder(pedido: PedidoDTO) {
+
+    // async InsertOrder2(pedido: PedidoDTO, codven?: string): Promise<number | undefined> {
+
+    //    return await this.GetNextOrderNumber();
+    // }
+
+    async InsertOrder(pedido: PedidoDTO, codven?: string): Promise<number | undefined> {
+        
+        if (!codven) {
+            throw new BadRequestException('El código de vendedor (codven) es obligatorio para procesar el pedido.');
+        }
+        const db = process.env.SQLSERVER_DATABASE;   
+
         const {
-            fact_num,
-            nombre,
-            rif,
-            descrip,
-            status,
-            comentario,
-            saldo,
-            fec_emis,
-            fec_venc,
-            co_cli,
-            co_ven,
-            co_tran,
-            revisado,
-            dir_ent,
-            forma_pag,
-            tot_bruto,
-            tot_neto,
-            glob_desc,
-            tot_reca,
-            porc_gdesc,
-            porc_reca,
-            iva,
-            tasa,
-            moneda,
-            tasag,
-            telefono,
-            serialp,
-            reng_ped
+            nombre, rif, status, comentario, saldo,
+            co_cli, dir_ent, forma_pag, tot_bruto, tot_neto,
+            iva, tasa, tasag, telefono, reng_ped
         } = pedido;
 
-        const date = pedido.fec_emis
-            ? new Date(pedido.fec_emis)
-            : new Date();
-        const date2 = pedido.fec_venc
-            ? new Date(pedido.fec_venc)
-            : new Date();
+        const factNumber = await this.GetNextOrderNumber();
+        const date = pedido.fec_emis ? new Date(pedido.fec_emis) : new Date();
+        const date2 = pedido.fec_venc ? new Date(pedido.fec_venc) : new Date();
 
+        const moneda = pedido.moneda === 'USD' ? 'US$   ' : 'VES   ';
         const fecEmi = getVzlaDateForDB(date);
         const fecVen = getVzlaDateForDB(date2);
 
-        return this.sql.$transaction(async (tx) => {
-            // 1️⃣ INSERT pedido
-            await tx.$executeRaw`
-        INSERT INTO passve.dbo.pedidos (
-          fact_num, contrib, nombre, rif, descrip, status, comentario,
-          saldo, fec_emis, fec_venc, co_cli, co_ven, co_tran, revisado,
-          dir_ent, forma_pag, tot_bruto, tot_neto, glob_desc, tot_reca,
-          porc_gdesc, porc_reca, iva, tasa, moneda, tasag,
-          co_us_in, co_sucu, telefono, serialp
-        ) VALUES (
-          ${fact_num},
-          1,
-          ${nombre},
-          ${rif},
-          ${descrip},
-          ${status},
-          ${comentario},
-          ${saldo},
-          ${fecEmi},
-          ${fecVen},
-          ${co_cli},
-          ${co_ven},
-          ${co_tran},
-          ${revisado},
-          ${dir_ent},
-          ${forma_pag},
-          ${tot_bruto},
-          ${tot_neto},
-          ${glob_desc},
-          ${tot_reca},
-          ${porc_gdesc},
-          ${porc_reca},
-          ${iva},
-          ${tasa},
-          ${moneda},
-          ${tasag},
-          ${'911'},
-          ${'0001'},
-          ${telefono},
-          ${serialp}
-        )
-      `;
+        const co_tran = "0002  ";
+        const almacen = '0001  ';
+        const unit = '0001  ';
+        const globalDesc = 0.00;
+        const tot_reca = 0.00;
+        const porc_gdesc = 0;
+        const porc_reca = 0;
+        const revisado = " ";
+        const descrip = "";
+        const codVen =codven.padEnd(6, " ") 
+        const serialp = factNumber!.toString().padStart(8, '0');
 
-            // 2️INSERT 
-            for (const reng of reng_ped) {
-                await tx.$executeRaw`
-          INSERT INTO passve.dbo.reng_ped (
-            fact_num, reng_num, co_art, co_alma,
-            total_art, pendiente, uni_venta,
-            prec_vta, prec_vta2, reng_neto,
-            porc_desc, cos_pro_un,
-            ult_cos_un, ult_cos_om, cos_pro_om,
-            tipo_imp, fec_lote
-          ) VALUES (
-            ${fact_num},
-            ${reng.reng_num},
-            ${reng.co_art},
-            ${reng.co_alma},
-            ${reng.total_art},
-            ${reng.pendiente},
-            ${reng.uni_venta},
-            ${reng.prec_vta},
-            ${reng.prec_vta2},
-            ${reng.reng_neto},
-            ${reng.porc_desc},
-            ${reng.cos_pro_un},
-            ${reng.ult_cos_un},
-            ${reng.ult_cos_om},
-            ${reng.cos_pro_om},
-            ${reng.tipo_imp},
-            ${reng.fec_lote ? new Date(reng.fec_lote) : null}
-          )
-        `;
+        //REG
+        const rows = reng_ped.map(r => Prisma.sql`
+            (
+                ${factNumber},
+                ${r.reng_num},
+                ${r.co_art},
+                ${almacen},
+                ${r.total_art},
+                ${r.total_art},
+                ${unit},
+                ${r.prec_vta},
+                ${r.prec_vta2},
+                ${r.reng_neto},
+                ${r.porc_desc || ''},
+                ${r.cos_pro_un},
+                ${r.ult_cos_un},
+                ${r.ult_cos_om},
+                ${r.cos_pro_om},
+                ${r.tipo_imp},
+                ${fecEmi}
+            )
+            `);
+        // VALIDAR METAS ANTES DE INSERTAR
+        const year = DateUtils.GetYear();
+        const month = DateUtils.GetMonthMM();
+
+        for (const r of reng_ped) {
+
+            const meta = await this.mysql.metas.findFirst({
+                where: {
+                    anio: year,
+                    mes: month,
+                    codart: r.co_art,
+                    ...(codven ? { codven } : {})
+                }
+            });
+
+            if (!meta) {
+                throw new Error(`No existe meta para el artículo ${r.co_art}`);
             }
 
-            return {
-                ok: true,
-                fact_num
-            };
+            const disponible = meta.asignado - meta.utilizado;
+
+            if (r.total_art! > disponible) {
+                const mssg = disponible > 0 ? `${disponible} Unidad(es) disponible(s)`:" Sin unidades disponibles"
+                throw new Error(
+                    `Meta insuficiente para ${r.co_art?.trim()}. ${mssg}`
+                );
+            }
+        }
+        // UPDATES STOCK
+        const updateStockQueries = reng_ped.map(r => `
+                UPDATE ${db}.dbo.art SET stock_com = stock_com + ${r.total_art} WHERE co_art='${r.co_art}'
+                
+                UPDATE ${db}.dbo.st_almac SET stock_com = stock_com + ${r.total_art} 
+                WHERE co_art='${r.co_art}' AND co_alma='${almacen}'
+            `).join("");
+
+        return this.sql.$transaction(async (tx) => {
+            //INSERT Pedido  
+            await tx.$executeRaw`
+            INSERT INTO ${Prisma.raw(`${db}.dbo.pedidos`)} ( 
+                fact_num, contrib,nombre, rif, descrip, status, comentario,saldo,fec_emis,
+                fec_venc,co_cli, co_ven, co_tran,  revisado, dir_ent,forma_pag,tot_bruto, tot_neto, 
+                glob_desc, tot_reca, porc_gdesc, porc_reca, iva,tasa, moneda, tasag,  
+                co_us_in,  co_sucu, telefono, serialp, origen, origen_d
+            ) VALUES (
+                ${factNumber}, 1, ${nombre}, ${rif}, ${descrip}, ${status}, ${comentario || ''}, ${saldo},
+                ${fecEmi}, ${fecVen}, ${co_cli}, ${codVen},${co_tran},${revisado}, ${dir_ent}, ${forma_pag},
+                ${tot_bruto}, ${tot_neto}, ${globalDesc}, ${tot_reca}, ${porc_gdesc}, ${porc_reca},
+                ${iva}, ${tasa}, ${moneda}, ${tasag}, '911', '0001', '', ${serialp}, 'M', 'frigiluxappsge'
+            )
+        `;
+
+            //INSERT REG
+
+            await tx.$executeRaw(
+                Prisma.sql`
+                INSERT INTO ${Prisma.raw(`${db}.dbo.reng_ped`)}
+                (
+                    fact_num, reng_num, co_art, co_alma, total_art, pendiente,
+                     uni_venta, prec_vta, prec_vta2, reng_neto, porc_desc,
+                    cos_pro_un, ult_cos_un, ult_cos_om, cos_pro_om, tipo_imp, fec_lote
+                )
+                VALUES ${Prisma.join(rows)}
+                `
+            );
+
+            //UPDATE STOCK
+
+            await tx.$executeRawUnsafe(updateStockQueries);
+
+            //UPDATE PED_NUM
+            await tx.$executeRaw(
+                Prisma.sql`UPDATE ${Prisma.raw(`${db}.dbo.par_emp`)} SET ped_num = ${factNumber}`
+            );
+
+            return factNumber;
         });
     }
+
+   
+
 }

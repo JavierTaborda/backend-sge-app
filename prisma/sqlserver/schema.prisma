@@ -230,7 +230,36 @@ model art {
   movil      Boolean?
 
   //manual 
+  cat_art  cat_art?   @relation(fields: [co_cat], references: [co_cat])
   reng_ped reng_ped[]
+}
+model cat_art {
+  co_cat    String   @id @db.Char(6)
+  cat_des   String   @default(dbgenerated("space(1)")) @db.VarChar(60)
+  dis_cen   String   @default(dbgenerated("space(1)")) @db.Text
+  campo1    String   @default(dbgenerated("space(1)")) @db.VarChar(60)
+  campo2    String   @default(dbgenerated("space(1)")) @db.VarChar(60)
+  campo3    String   @default(dbgenerated("space(1)")) @db.VarChar(60)
+  campo4    String   @default(dbgenerated("space(1)")) @db.VarChar(60)
+  co_us_in  String   @default(dbgenerated("space(1)")) @db.Char(6)
+  fe_us_in  DateTime @default(now()) @db.DateTime
+  co_us_mo  String   @default(dbgenerated("space(1)")) @db.Char(6)
+  fe_us_mo  DateTime @default(now()) @db.DateTime
+  co_us_el  String   @default(dbgenerated("space(1)")) @db.Char(6)
+  fe_us_el  DateTime @default(now()) @db.DateTime
+  revisado  String   @default(dbgenerated("space(1)")) @db.Char(1)
+  trasnfe   String   @default(dbgenerated("space(1)")) @db.Char(1)
+  co_sucu   String   @default(dbgenerated("space(1)")) @db.Char(6)
+  rowguid   String   @unique(map: "index_384056454") @default(dbgenerated("newid()")) @db.UniqueIdentifier
+  co_imun   String   @default(dbgenerated("space(1)")) @db.Char(15)
+  co_reten  String   @default(dbgenerated("space(1)")) @db.Char(6)
+    row_id     Unsupported("timestamp")
+  movil     Boolean  @default(false)
+
+  art art[]
+
+  @@index([cat_des], map: "icat_des")
+
 }
 
 model clientes {

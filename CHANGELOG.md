@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.5] - 2026-03-16
+
+### Added
+
+- Create Orders controller with operations in SQL tables in `pedidos`, `reng_ped`, `cat_art`,`st_almac` and `par_emp`.
+- cat_art table in sql prisma
+
+### Changed
+
+- updateGoals method in goals service module
+
+### Fixed
+
+- Use `db = process.env.SQLSERVER_DATABASE;` in goals service for sql queries.
+
+### Removed
+
+- N/A
+
 ## [1.0.4] - 2026-02-13
 
 ### Added
