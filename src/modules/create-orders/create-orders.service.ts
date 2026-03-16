@@ -22,7 +22,9 @@ export class CreateOrdersService {
     async GetProductsOrders(codven?: string) {
    
         //Update Goals
+       
         const codVen = codven!= "N/A" ? codven : undefined
+    
         const dataGoals = await this.goalsService.DataGoals(codVen);
   
         const isUpdate = await this.goalsService.updateGoals(dataGoals)
@@ -37,7 +39,7 @@ export class CreateOrdersService {
                 anio: year,
                 mes: month,
                 asignado: { gt: 0 },
-                ...(codVen ? { codVen } : {}),
+                ...(codVen ? { codven } : {}),
 
             },
         });
@@ -202,7 +204,7 @@ export class CreateOrdersService {
     //    return await this.GetNextOrderNumber();
     // }
 
-    async InsertOrder(pedido: PedidoDTO, codven?: string): Promise<number | undefined> {
+    async InsertOrder2(pedido: PedidoDTO, codven?: string): Promise<number | undefined> {
         
         if (!codven) {
             throw new BadRequestException('El código de vendedor (codven) es obligatorio para procesar el pedido.');
@@ -336,6 +338,124 @@ export class CreateOrdersService {
         });
     }
 
-   
+    async InsertOrder(pedido: PedidoDTO, codven?: string): Promise<number | undefined> {
+        if (!codven) {
+            throw new BadRequestException('El código de vendedor (codven) es obligatorio para procesar el pedido.');
+        }
+
+        const db = process.env.SQLSERVER_DATABASE;
+
+        const {
+            nombre, rif, status, comentario, saldo,
+            co_cli, dir_ent, forma_pag, tot_bruto, tot_neto,
+            iva, tasa, tasag, reng_ped,
+        } = pedido;
+
+        const factNumber = await this.GetNextOrderNumber();
+        const date = pedido.fec_emis ? new Date(pedido.fec_emis) : new Date();
+        const date2 = pedido.fec_venc ? new Date(pedido.fec_venc) : new Date();
+
+        const moneda = pedido.moneda === 'USD' ? 'US$   ' : 'VES   ';
+        const fecEmi = getVzlaDateForDB(date);
+        const fecVen = getVzlaDateForDB(date2);
+        const co_tran = '0002  ';
+        const almacen = '0001  ';
+        const unit = '0001  ';
+        const globalDesc = 0.00;
+        const tot_reca = 0.00;
+        const porc_gdesc = 0;
+        const porc_reca = 0;
+        const revisado = ' ';
+        const descrip = '';
+        const codVen = codven.padEnd(6, ' ');
+        const serialp = factNumber!.toString().padStart(8, '0');
+
+
+        const year = DateUtils.GetYear();
+        const month = DateUtils.GetMonthMM();
+
+        for (const r of reng_ped) {
+            const meta = await this.mysql.metas.findFirst({
+                where: {
+                    anio: year,
+                    mes: month,
+                    codart: r.co_art,
+                    ...(codven ? { codven } : {}),
+                },
+            });
+
+            if (!meta) throw new Error(`No existe meta para el artículo ${r.co_art}`);
+
+            const disponible = meta.asignado - meta.utilizado;
+            if (r.total_art! > disponible) {
+                const mssg = disponible > 0
+                    ? `${disponible} Unidad(es) disponible(s)`
+                    : 'Sin unidades disponibles';
+                throw new Error(`Meta insuficiente para ${r.co_art?.trim()}. ${mssg}`);
+            }
+        }
+
+        // INSERT pedidos
+        const insertPedidoSQL = `
+            INSERT INTO ${db}.dbo.pedidos (
+                fact_num, contrib, nombre, rif, descrip, status, comentario, saldo, fec_emis,
+                fec_venc, co_cli, co_ven, co_tran, revisado, dir_ent, forma_pag, tot_bruto, tot_neto,
+                glob_desc, tot_reca, porc_gdesc, porc_reca, iva, tasa, moneda, tasag,
+                co_us_in, co_sucu, telefono, serialp, origen, origen_d
+            ) VALUES (
+                @P1,1,@P2,@P3,@P4,@P5,@P6,@P7,@P8,
+                @P9,@P10,@P11,@P12,@P13,@P14,@P15,@P16,@P17,
+                @P18,@P19,@P20,@P21,@P22,@P23,@P24,@P25,'911','0001','',@P26,'M','frigiluxappsge'
+            )
+        `;
+        const insertPedidoParams = [
+            factNumber, nombre, rif, descrip, status, comentario || '', saldo, fecEmi,
+            fecVen, co_cli, codVen, co_tran, revisado, dir_ent, forma_pag, tot_bruto, tot_neto,
+            globalDesc, tot_reca, porc_gdesc, porc_reca, iva, tasa, moneda, tasag, serialp,
+        ];
+
+
+        const insertRengSQL = `
+            INSERT INTO ${db}.dbo.reng_ped (
+                fact_num, reng_num, co_art, co_alma, total_art, pendiente,
+                uni_venta, prec_vta, prec_vta2, reng_neto, porc_desc,
+                cos_pro_un, ult_cos_un, ult_cos_om, cos_pro_om, tipo_imp, fec_lote
+            ) VALUES (@P1,@P2,@P3,@P4,@P5,@P6,@P7,@P8,@P9,@P10,@P11,@P12,@P13,@P14,@P15,@P16,@P17)
+        `;
+
+
+        const updateStockSQL = reng_ped.map(r => `
+            UPDATE ${db}.dbo.art
+                SET stock_com = stock_com + ${Number(r.total_art)}
+                WHERE co_art = '${r.co_art}';
+
+            UPDATE ${db}.dbo.st_almac
+                SET stock_com = stock_com + ${Number(r.total_art)}
+                WHERE co_art = '${r.co_art}' AND co_alma = '${almacen}';
+        `).join('');
+
+        // UPDATE par_emp
+        const updateParEmpSQL = `UPDATE ${db}.dbo.par_emp SET ped_num = @P1`;
+
+        //  transaction
+        return this.sql.$transaction(async (tx) => {
+            await tx.$executeRawUnsafe(insertPedidoSQL, ...insertPedidoParams);
+
+            for (const r of reng_ped) {
+                await tx.$executeRawUnsafe(insertRengSQL,
+                    factNumber, r.reng_num, r.co_art, almacen,
+                    r.total_art, r.total_art, unit,
+                    r.prec_vta, r.prec_vta2, r.reng_neto, r.porc_desc || '',
+                    r.cos_pro_un, r.ult_cos_un, r.ult_cos_om, r.cos_pro_om,
+                    r.tipo_imp, fecEmi,
+                );
+            }
+
+            await tx.$executeRawUnsafe(updateStockSQL);
+            await tx.$executeRawUnsafe(updateParEmpSQL, factNumber);
+
+            return factNumber;
+        });
+    }
 
 }
