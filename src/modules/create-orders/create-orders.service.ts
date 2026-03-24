@@ -394,6 +394,7 @@ export class CreateOrdersService {
                 throw new Error(`Meta insuficiente para ${r.co_art?.trim()}. ${mssg}`);
             }
         }
+        console.log(comentario)
 
         // INSERT pedidos
         const insertPedidoSQL = `
@@ -409,7 +410,7 @@ export class CreateOrdersService {
             )
         `;
         const insertPedidoParams = [
-            factNumber, nombre, rif, descrip, status, comentario || '', saldo, fecEmi,
+            factNumber, nombre, rif, descrip, status, comentario, saldo, fecEmi,
             fecVen, co_cli, codVen, co_tran, revisado, dir_ent, forma_pag, tot_bruto, tot_neto,
             globalDesc, tot_reca, porc_gdesc, porc_reca, iva, tasa, moneda, tasag, serialp,
         ];
