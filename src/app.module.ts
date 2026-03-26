@@ -6,14 +6,14 @@ import { CustomersModule } from './modules/customers/customers.module';
 import { GoalsModule } from './modules/goals/goals.module';
 import { IsOnlineModule } from './modules/isonline/isonline.module';
 import { OrdersModule } from './modules/orders/orders.module';
+import { PaysModule } from './modules/pays/pays.module';
 import { ProductsModule } from './modules/products/products.module';
 import { ReturnsModule } from './modules/returns/returns.module';
 import { VendorsModule } from './modules/vendors/vendors.module';
 import { WarehousesModule } from './modules/warehouses/warehouses.module';
 import { ZonesModule } from './modules/zones/zones.module';
-import { PaysModule } from './modules/pays/pays.module';
 
-
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -27,7 +27,7 @@ import { PaysModule } from './modules/pays/pays.module';
       rootPath: join(__dirname, '..', 'public'),
       serveRoot: '/',
     }),
-
+    EmailModule,
     VendorsModule, OrdersModule, ZonesModule, CustomersModule, ProductsModule, IsOnlineModule, WarehousesModule, GoalsModule, CreateOrdersModule, ReturnsModule, PaysModule],
 
 

@@ -42,9 +42,10 @@ export class CreateOrdersController {
     @Post()
     async CreateOrder(
         @Body() createOrder: PedidoDTO,
-        @CurrentUser('codven') codven: string,) {
+        @CurrentUser('codven') codven: string,
+        @CurrentUser('nameUser') nameUser: string,) {
 
-        const factNumber = await this.CreateOrderService.InsertOrder(createOrder, codven);
+        const factNumber = await this.CreateOrderService.InsertOrder(createOrder, codven, nameUser);
         return { factNumber };
 
     }

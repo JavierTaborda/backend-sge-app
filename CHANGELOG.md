@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.6] - 2026-03-DD
+
+### Added
+
+- Add email module
+- Add `resend` to send email
+- Add nodemailer to use SMTP
+- Add name user in JWT strategy
+
+### Changed
+
+- updateGoals method in goals service module
+- update prisma and adapters to 7.5.0
+
+### Fixed
+
+- N/A
+
+### Removed
+
+- N/A
+
 ## [1.0.5] - 2026-03-16
 
 ### Added

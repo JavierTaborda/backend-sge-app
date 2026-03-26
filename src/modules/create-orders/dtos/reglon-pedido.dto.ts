@@ -54,6 +54,10 @@ export class RenglonPedidoDTO {
     tipo_imp?: string;
 
     @IsOptional()
+    @IsString()
+    des_art?: string;
+
+    @IsOptional()
     @IsNumber()
     cos_pro_un?: number;
 

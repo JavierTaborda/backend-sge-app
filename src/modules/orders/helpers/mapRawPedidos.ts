@@ -1,21 +1,22 @@
 import { plainToInstance } from 'class-transformer';
+import { CalculateDesc } from 'src/utils/discount.utils';
 import { AprobacionPedidoDto } from '../dtos/aprobacion.pedido.dto';
 import { RengPedDto } from '../dtos/reng_ped.dto';
 import { RawPedidoRow } from '../types/RawPedidoRow';
 
 // Funcion para aplicar descuentos
 
-const CalculateDesc = (amount: number, desc: string): number => {
-  if (!desc) return amount;
+// const CalculateDesc = (amount: number, desc: string): number => {
+//   if (!desc) return amount;
 
-  const discounts = desc.trim().split('+').map(Number); //  [N, N] array split
+//   const discounts = desc.trim().split('+').map(Number); //  [N, N] array split
 
-  let finalAmount = amount;
-  for (const d of discounts) {
-    finalAmount -= finalAmount * (d / 100); // aplica cada descuento
-  }
-  return finalAmount;
-};
+//   let finalAmount = amount;
+//   for (const d of discounts) {
+//     finalAmount -= finalAmount * (d / 100); // aplica cada descuento
+//   }
+//   return finalAmount;
+// };
 
 // Función segura para convertir a número
 const safeNumber = (value: any, defaultValue = 0): number => {

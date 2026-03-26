@@ -122,6 +122,18 @@ export class PedidoDTO {
     @IsString()
     serialp?: string;
 
+    @IsOptional()
+    @IsString()
+    condicion?: string;
+
+    @IsOptional()
+    @IsString()
+    email?: string;
+
+    @IsOptional()
+    @IsBoolean()
+    update_email?: boolean;
+
     // Relation
     @IsArray()
     @ValidateNested({ each: true })

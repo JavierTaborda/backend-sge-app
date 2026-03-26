@@ -3,29 +3,33 @@ import { plainToInstance } from 'class-transformer';
 import { throwError } from 'rxjs';
 import { MySQLPrismaService } from 'src/database/mysql.service';
 import { SQLServerPrismaService } from 'src/database/sqlserver.service';
+import { EmailService } from 'src/email/email.service';
 import { DateUtils } from 'src/utils/date.utils';
 import { getVzlaDateForDB } from 'src/utils/date.venezuela.db';
+import { CalculateDesc } from 'src/utils/discount.utils';
 import GoalsService from '../goals/goals.service';
 import { CondicionDto } from './dtos/condicion.dto';
 import { IVADto } from './dtos/iva.dto';
 import { PedidoDTO } from './dtos/pedido.dto';
+import { RenglonPedidoDTO } from './dtos/reglon-pedido.dto';
 import { TasaDto } from './dtos/tasa.dto';
 @Injectable()
 export class CreateOrdersService {
     constructor(
         private readonly sql: SQLServerPrismaService,
         private readonly mysql: MySQLPrismaService,
-        private readonly goalsService: GoalsService
+        private readonly goalsService: GoalsService,
+        private readonly emailService: EmailService,
     ) { }
 
     async GetProductsOrders(codven?: string) {
-   
+
         //Update Goals
-       
-        const codVen = codven!= "N/A" ? codven : undefined
-    
+
+        const codVen = codven != "N/A" ? codven : undefined
+
         const dataGoals = await this.goalsService.DataGoals(codVen);
-  
+
         const isUpdate = await this.goalsService.updateGoals(dataGoals)
 
         //get Goals 
@@ -72,7 +76,7 @@ export class CreateOrdersService {
         });
 
 
-        
+
         const groupedData = available.reduce((acc, m) => {
             //  codven is undefined, group by codart 
             // codven, group by key 
@@ -107,13 +111,13 @@ export class CreateOrdersService {
 
             return acc;
         }, {} as Record<string, any>);
-       
+
         const result = Object.values(groupedData).sort((a: any, b: any) =>
             a.codart.localeCompare(b.codart)
         );
 
         return result;
-        
+
     }
 
     async GetConditions(): Promise<CondicionDto[]> {
@@ -153,7 +157,7 @@ export class CreateOrdersService {
             fecha: tasa?.fecha ?? new Date(),
             co_mone: tasa?.co_mone ?? 'USD',
             tasa_v: Number(tasa?.tasa_v)
-         
+
         };
 
         return result;
@@ -198,16 +202,14 @@ export class CreateOrdersService {
 
     }
 
-    // async InsertOrder2(pedido: PedidoDTO, codven?: string): Promise<number | undefined> {
+   
 
-    //    return await this.GetNextOrderNumber();
-    // }
-
-    async InsertOrder(pedido: PedidoDTO, codven?: string): Promise<number | undefined> {
+    async InsertOrder(pedido: PedidoDTO, codven?: string, userName?: string): Promise<number | undefined> {
         if (!codven) {
             throw new BadRequestException('El código de vendedor (codven) es obligatorio para procesar el pedido.');
         }
 
+        //const db = 'passve_A';
         const db = process.env.SQLSERVER_DATABASE;
 
         const {
@@ -221,6 +223,7 @@ export class CreateOrdersService {
         const date2 = pedido.fec_venc ? new Date(pedido.fec_venc) : new Date();
 
         const moneda = pedido.moneda === 'USD' ? 'US$   ' : 'VES   ';
+        const name = '';
         const fecEmi = getVzlaDateForDB(date);
         const fecVen = getVzlaDateForDB(date2);
         const co_tran = '0002  ';
@@ -232,12 +235,12 @@ export class CreateOrdersService {
         const porc_reca = 0;
         const revisado = ' ';
         const descrip = '';
-        const codVen = codven.padEnd(6, ' ');
+        const codVen =codven.padEnd(6, ' ');
         const serialp = factNumber!.toString().padStart(8, '0');
 
 
         const year = DateUtils.GetYear();
-        const month = DateUtils.GetMonthMM();
+        const month = DateUtils.GetMonthMM(); 
 
         for (const r of reng_ped) {
             const meta = await this.mysql.metas.findFirst({
@@ -249,9 +252,11 @@ export class CreateOrdersService {
                 },
             });
 
+            console.log(meta)
             if (!meta) throw new Error(`No existe meta para el artículo ${r.co_art}`);
 
             const disponible = meta.asignado - meta.utilizado;
+         
             if (r.total_art! > disponible) {
                 const mssg = disponible > 0
                     ? `${disponible} Unidad(es) disponible(s)`
@@ -259,7 +264,6 @@ export class CreateOrdersService {
                 throw new Error(`Meta insuficiente para ${r.co_art?.trim()}. ${mssg}`);
             }
         }
-        console.log(comentario)
 
         // INSERT pedidos
         const insertPedidoSQL = `
@@ -275,7 +279,7 @@ export class CreateOrdersService {
             )
         `;
         const insertPedidoParams = [
-            factNumber, nombre, rif, descrip, status, comentario, saldo, fecEmi,
+            factNumber, name, rif, descrip, status, comentario, saldo, fecEmi,
             fecVen, co_cli, codVen, co_tran, revisado, dir_ent, forma_pag, tot_bruto, tot_neto,
             globalDesc, tot_reca, porc_gdesc, porc_reca, iva, tasa, moneda, tasag, serialp,
         ];
@@ -303,8 +307,9 @@ export class CreateOrdersService {
         // UPDATE par_emp
         const updateParEmpSQL = `UPDATE ${db}.dbo.par_emp SET ped_num = @P1`;
 
+ 
         //  transaction
-        return this.sql.$transaction(async (tx) => {
+        const result = await this.sql.$transaction(async (tx) => {
             await tx.$executeRawUnsafe(insertPedidoSQL, ...insertPedidoParams);
 
             for (const r of reng_ped) {
@@ -319,9 +324,127 @@ export class CreateOrdersService {
 
             await tx.$executeRawUnsafe(updateStockSQL);
             await tx.$executeRawUnsafe(updateParEmpSQL, factNumber);
+            
+            if (pedido.update_email && pedido.email?.trim()) {
+                await tx.clientes.update({
+                    where: { co_cli: pedido.co_cli },
+                    data: {
+                        email: pedido.email.trim().toLowerCase() 
+                    },
+                });
+            }
+
 
             return factNumber;
         });
+
+        if (pedido.email) {
+            const to = pedido.email.trim();
+
+            if (to.includes('@')) {
+                // Non-blocking email (fire-and-forget). Runs after response and won’t break request on failure.
+                setImmediate(async () => {
+                    try {
+                        const body = await this.sendOrderSummaryEmail(
+                            userName ?? "",
+                            pedido.nombre ?? "",
+                            pedido.dir_ent ?? '',
+                            pedido.condicion ?? '',
+                            pedido.comentario ?? '',
+                            pedido.reng_ped,
+                            pedido.saldo ?? 0,
+                            pedido.tasa ?? 0,
+                            pedido.tasag ?? 0
+                        );
+
+                        await this.emailService.sendEmail(
+                            to,
+                            `EMDOM II Resumen de Pedido con fecha: ${new Date(pedido.fec_emis ?? Date.now()).toLocaleDateString()}`,
+                            body
+                        );
+
+                    } catch (err) {
+                        //console.error(`Email failed for ${to}:`, err);
+                    }
+                });
+            }
+        }
+
+        return result;
     }
+
+    async sendOrderSummaryEmail(
+        sellerDescription: string,
+        client: string,
+        direc1: string,
+        conditionDescription: string,
+        comment: string,
+        validArticles: RenglonPedidoDTO[],
+        totalSummary: number,
+        exchangerate: number,
+        ivarate: number
+    ): Promise<string> {
+
+        const format = (num: number = 0) =>
+            num.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const rate = exchangerate || 1;
+        const ivaMultiplier = 1 + (ivarate || 0) / 100;
+        const total = totalSummary / rate;
+
+        //  map + join 
+        const rows = validArticles.map(article => {
+
+            const priceBase = article.prec_vta2 ?? 0;
+            const qty = article.total_art ?? 0;
+            const percentDesc = article.porc_desc ?? "0";
+            // price + IVA
+            const priceWithIVA = priceBase * ivaMultiplier;
+            // final price + IVA
+            const priceFinal = CalculateDesc(priceWithIVA, percentDesc);
+            // final price without iva + discount
+            const priceFinalNoIVA = CalculateDesc(priceBase, percentDesc);
+            //  total discount
+            const discountAmount = (priceBase - priceFinalNoIVA) * qty;
+            // Total order
+            const renglonNeto = ((article.reng_neto ?? 0) / rate) * ivaMultiplier;
+            return `
+         <tr>
+           <td>${article.co_art?.trim() ?? ''} - ${article.des_art ?? ''}</td>
+           <td align="center">${qty}</td>
+           <td align="center">${format(priceFinal)}</td>
+           <td align="center">${percentDesc}</td>
+           <td align="center">${format(discountAmount)}</td>
+           <td align="center">${format(renglonNeto)}</td>
+         </tr>
+      `;
+        }).join('');
+
+        return `
+        <p>Estimado Cliente <b>${client}</b>, hemos registrado un pedido:</p>
+
+       <table border="1" style="border-collapse: collapse;">
+         <tr style="background-color: #ccc;">
+           <th>Producto</th>
+           <th>Cantidad</th>
+           <th>Precio</th>
+           <th>% Desc</th>
+           <th>Descuento</th>
+           <th>Total</th>
+         </tr>
+         ${rows}
+       </table>
+
+       <p><b>Dirección de Entrega:</b> ${direc1}</p>
+       <p><b>Condición:</b> ${conditionDescription}</p>
+       <p><b>Comentario:</b> ${comment}</p>
+       <p>Total del pedido: <b>${format(total)} $</b></p>
+
+       <p>
+         En caso de no estar conforme, comuníquese con el vendedor 
+         <b>${sellerDescription}</b>
+       </p>
+  `;
+    }
+  
 
 }
