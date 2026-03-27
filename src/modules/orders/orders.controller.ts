@@ -39,7 +39,7 @@ export class OrdersController {
     );
   }
   // PATCH /orders/:factNum
-  @Role('1', '2')
+  @Role( '2')
   @Patch(':factNum/')
   async updateRevisadoPedido(
     @Param('factNum', ParseIntPipe) factNum: number,
@@ -47,14 +47,15 @@ export class OrdersController {
   ) {
     return this.orderService.UpdateRevisadoPedido(factNum, status);
   }
-  // PATCH /orders/comment/:factNum
-  @Role('4', '5')
-  @Patch('/comment/:factNum/')
-  async updatecommentFact(
+  // PATCH /orders/cancel/:factNum
+  @Role('1','2', '4', '5')
+  @Patch('/cancel/:factNum/')
+  async cancelPedido(
     @Param('factNum', ParseIntPipe) factNum: number,
-    @Body('newcomment') newcomment: string,
+   
   ) {
-    return this.orderService.UpdateComment(factNum, newcomment);
+    return true
+    //return this.orderService.CancelPedido(factNum);
   }
 }
 
