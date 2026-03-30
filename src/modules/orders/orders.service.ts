@@ -111,7 +111,7 @@ export class OrdersService {
   }
 
 
-  async GetPedidosFilters(filters: PedidoFilterDto, role?: string, codven?: string): Promise<AprobacionPedidoDto[]> {
+  async GetPedidosFilters(filters: PedidoFilterDto, role?: string, codven?: string, forCancel?: boolean): Promise<AprobacionPedidoDto[]> {
     const { dateIni, dateEnd, revisado, procesado, cancelled, vendor, zone } = filters;
 
     // Validacion de fechas
@@ -165,7 +165,9 @@ export class OrdersService {
     if (role === '2') {
       conditions.push(` p.co_ven != '00001'`)
     }
-   
+   if (forCancel) {
+    conditions.push(`p.status = 0`); 
+   }
 
     const whereClause = `WHERE ${conditions.join(' AND ')}`;
 

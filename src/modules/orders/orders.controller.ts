@@ -38,6 +38,18 @@ export class OrdersController {
       codven
     );
   }
+  @Get('filters/cancel')
+  async GetFiltersCancel(
+    @Query() filters: PedidoFilterDto,
+    @CurrentUser('role') role: string, @CurrentUser('codven') codven: string) {
+
+    return this.orderService.GetPedidosFilters(
+      filters,
+      role, 
+      codven,
+      true
+    );
+  }
   // PATCH /orders/:factNum
   @Role( '2')
   @Patch(':factNum/')
@@ -47,6 +59,7 @@ export class OrdersController {
   ) {
     return this.orderService.UpdateRevisadoPedido(factNum, status);
   }
+
   // PATCH /orders/cancel/:factNum
   @Role('1','2', '4', '5')
   @Patch('/cancel/:factNum/')
