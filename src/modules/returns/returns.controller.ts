@@ -1,7 +1,8 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { CreateDevolucionDto } from './dtos/create-devolucion.dto';
+
+import { DtDevolucionDto } from './dtos/create-devolucion.dto';
 import { ReturnsService } from './returns.service';
 
 @UseGuards(JwtAuthGuard)
@@ -34,7 +35,7 @@ export class ReturnsController {
     @Post()
     async createReturn(
         @CurrentUser('codven') codven: string,
-        @Body() createDevolucionDto: CreateDevolucionDto
+        @Body() createDevolucionDto: DtDevolucionDto
     ) {
 
         return this.returnsService.createReturn(createDevolucionDto, codven);

@@ -1,6 +1,6 @@
 import { IsDateString, IsOptional, IsString, MaxLength } from 'class-validator';
 
-export class CreateDevolucionDto {
+export class DtDevolucionDto {
     @IsDateString()
     fecemis: string;
 
@@ -59,7 +59,6 @@ export class CreateDevolucionDto {
     @IsOptional()
     obsvendedor: string;
 
-
     @IsString()
     @MaxLength(30)
     registradopor: string;
@@ -71,5 +70,4 @@ export class CreateDevolucionDto {
     @MaxLength(255)
     @IsOptional()
     imgart: string;
-
 }

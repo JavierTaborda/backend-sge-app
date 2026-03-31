@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { MySQLPrismaService } from 'src/database/mysql.service';
 import { SQLServerPrismaService } from 'src/database/sqlserver.service';
-import { CreateDevolucionDto } from './dtos/create-devolucion.dto';
+
+import { DtDevolucionDto } from './dtos/create-devolucion.dto';
 import { MotiveItemDto } from './dtos/motive.dto';
 import { ReturnByFactDto } from './dtos/returnbyfact.dts';
 import { CodMotives } from './types/CodMotives';
@@ -146,7 +147,7 @@ export class ReturnsService {
 
         return data
     }
-    async createReturn(createDevolucionDto: CreateDevolucionDto, codven?: string) {
+    async createReturn(createDevolucionDto: DtDevolucionDto, codven?: string) {
 
         if (!createDevolucionDto) {
             throw new Error("Datos de devolución no proporcionados.");
@@ -165,8 +166,11 @@ export class ReturnsService {
             createDevolucionDto.vendes = vendedor?.ven_des ?? 'Sin descripción';
         }
 
-        const nuevaDevolucion = await this.mysql.mvdevolucion.create({
-            data: createDevolucionDto
+        const nuevaDevolucion = await this.mysql.dtdevolucion.create({
+            data: {
+                ...createDevolucionDto,
+                cbdevolucion: (createDevolucionDto as any).cbdevolucion ?? '', // Provide a default or required value here
+            }
         });
 
         return nuevaDevolucion;
@@ -174,12 +178,12 @@ export class ReturnsService {
     }
 
     async getDevolveds(serial: string) {
-        const devolveds = await this.mysql.mvdevolucion.findMany({
-            where: {
-                serial1: {
-                    startsWith: serial
-                },
-            }
+        const devolveds = await this.mysql.dtdevolucion.findMany({
+            // where: {
+            //     serial: {
+            //         startsWith: serial
+            //     },
+            // }
         });
         return devolveds;
     }
