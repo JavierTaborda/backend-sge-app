@@ -372,52 +372,7 @@ export class CreateOrdersService {
 
         return result;
     } 
-    /**
-     * Cancels an order: sets the order as canceled and restores the committed stock.
-     * @param factNumber Order number to cancel
-     * @returns true if the process was successful
-     */
-    async CancelOrder(factNumber: number): Promise<boolean> {
-        //const db = 'passve_A';
-        const db = process.env.SQLSERVER_DATABASE;
-        const warehouse = '0001  ';
-        // 1. Get the order and its lines
-        const order = await this.sql.pedidos.findUnique({
-            where: { fact_num: factNumber },
-            select: {
-                status: true,
-                anulada: true,
-                fact_num: true,
-                reng_ped: {
-                    select: {
-                        reng_num: true,
-                        co_art: true,
-                        co_alma: true,
-                        total_art: true,
-                    }
-                }
-            }
-        });
-        if (!order) throw new Error('Order not found');
-        if (order.anulada) throw new Error('Order is already canceled');
-
-        const updateOrderSQL = `UPDATE ${db}.dbo.pedidos SET anulada = 1 WHERE fact_num = @P1`;
-
-        let updateStockSQL = '';
-        for (const r of order.reng_ped) {
-            const coAlma = r.co_alma || warehouse;
-            updateStockSQL += `\nUPDATE ${db}.dbo.art SET stock_com = stock_com - ${Number(r.total_art)} WHERE co_art = '${r.co_art}';`;
-            updateStockSQL += `\nUPDATE ${db}.dbo.st_almac SET stock_com = stock_com - ${Number(r.total_art)} WHERE co_art = '${r.co_art}' AND co_alma = '${coAlma}';`;
-        }
-
-        await this.sql.$transaction(async (tx) => {
-            await tx.$executeRawUnsafe(updateOrderSQL, factNumber);
-            if (updateStockSQL) {
-                await tx.$executeRawUnsafe(updateStockSQL);
-            }
-        });
-        return true;
-    }
+  
 
     async sendOrderSummaryEmail(
         sellerDescription: string,

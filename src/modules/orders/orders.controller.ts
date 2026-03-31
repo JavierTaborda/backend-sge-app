@@ -34,7 +34,7 @@ export class OrdersController {
 
     return this.orderService.GetPedidosFilters(
       filters,
-      role, 
+      role,
       codven
     );
   }
@@ -45,13 +45,13 @@ export class OrdersController {
 
     return this.orderService.GetPedidosFilters(
       filters,
-      role, 
+      role,
       codven,
       true
     );
   }
   // PATCH /orders/:factNum
-  @Role( '2')
+  @Role('2')
   @Patch(':factNum/')
   async updateRevisadoPedido(
     @Param('factNum', ParseIntPipe) factNum: number,
@@ -61,14 +61,14 @@ export class OrdersController {
   }
 
   // PATCH /orders/cancel/:factNum
-  @Role('1','2', '4', '5')
+  @Role('1', '2', '4', '5')
   @Patch('/cancel/:factNum/')
   async cancelPedido(
     @Param('factNum', ParseIntPipe) factNum: number,
-   
+
   ) {
-    return true
-    //return this.orderService.CancelPedido(factNum);
+
+    return this.orderService.CancelOrder(factNum);
   }
 }
 
