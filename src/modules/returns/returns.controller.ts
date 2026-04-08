@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
-import { DtDevolucionDto } from './dtos/create-devolucion.dto';
+import { CbDevolucionDto } from './dtos/create-devolucion.dto';
 import { ReturnsService } from './returns.service';
 
 @UseGuards(JwtAuthGuard)
@@ -35,9 +35,11 @@ export class ReturnsController {
     @Post()
     async createReturn(
         @CurrentUser('codven') codven: string,
-        @Body() createDevolucionDto: DtDevolucionDto
+        @CurrentUser('nameUser') nameUser: string,
+        @Body() createDevolucionDto: CbDevolucionDto
     ) {
-
-        return this.returnsService.createReturn(createDevolucionDto, codven);
+        console.log(createDevolucionDto);
+        //throw new Error("Error de prueba para verificar el manejo de errores en el frontend.");
+        return this.returnsService.createReturn(createDevolucionDto, codven, nameUser);
     }
 }

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { MySQLPrismaService } from 'src/database/mysql.service';
 import { SQLServerPrismaService } from 'src/database/sqlserver.service';
 
-import { DtDevolucionDto } from './dtos/create-devolucion.dto';
+import { CbDevolucionDto } from './dtos/create-devolucion.dto';
 import { MotiveItemDto } from './dtos/motive.dto';
 import { ReturnByFactDto } from './dtos/returnbyfact.dts';
 import { CodMotives } from './types/CodMotives';
@@ -147,34 +147,58 @@ export class ReturnsService {
 
         return data
     }
-    async createReturn(createDevolucionDto: DtDevolucionDto, codven?: string) {
 
+
+    async createReturn(createDevolucionDto: CbDevolucionDto, codven?: string, nameUser?: string) {
         if (!createDevolucionDto) {
-            throw new Error("Datos de devolución no proporcionados.");
+            throw new Error("Return data not provided.");
         }
 
-        if (!createDevolucionDto.codven || createDevolucionDto.codven.trim().length === 0) {
-            if (!codven || codven.trim().length === 0) {
-                throw new Error("Código de vendedor no proporcionado.");
-            }
+        // Get seller data (Outside the transaction to avoid locking tables)
+         const finalCodVen = codven ? codven :''
+        //const finalCodVen = '00006';
+        const vendedor = await this.sql.vendedor.findFirst({
+            select: { ven_des: true },
+            where: { co_ven: finalCodVen ? { startsWith: finalCodVen } : undefined }
+        });
+        const vendesValue = vendedor?.ven_des ?? '';
 
-            const vendedor = await this.sql.vendedor.findFirst({
-                select: { ven_des: true },
-                where: { co_ven: { startsWith: codven } }
+  
+        return await this.mysql.$transaction(async (tx) => {
+
+            // Separate header from detail
+            const { dtdevolucion, ...cabeceraData } = createDevolucionDto;
+
+            //  Create Header
+            const nuevaDevolucion = await tx.cbdevolucion.create({
+                data: { ...cabeceraData }
             });
 
-            createDevolucionDto.vendes = vendedor?.ven_des ?? 'Sin descripción';
-        }
+            //  Create Detail and Photos (if they exist)
+            if (dtdevolucion) {
+                const { ftdevolucion, devonum, pednum, ...datosRestantes } = dtdevolucion;
 
-        const nuevaDevolucion = await this.mysql.dtdevolucion.create({
-            data: {
-                ...createDevolucionDto,
-                cbdevolucion: (createDevolucionDto as any).cbdevolucion ?? '', // Provide a default or required value here
+                await tx.dtdevolucion.create({
+                    data: {
+                        ...datosRestantes,
+                        devonum: nuevaDevolucion.devonum, // Relation with newly created ID
+                        pednum: pednum || 0,             // Ensure numerical value
+                        vendes: vendesValue,
+                        codven: finalCodVen,
+
+                        
+                        ftdevolucion: ftdevolucion ? {
+                            create: {
+                                // Clean up any junk fields or previous IDs from the DTO
+                                ...(({ devonum, ...validFields }) => validFields)(ftdevolucion),
+                            }
+                        } : undefined,
+                    }
+                });
             }
+
+            return nuevaDevolucion;
         });
-
-        return nuevaDevolucion;
-
     }
 
     async getDevolveds(serial: string) {
@@ -187,6 +211,7 @@ export class ReturnsService {
         });
         return devolveds;
     }
+    
     async getMotives() {
 
         const codmotives: CodMotives[] = [

@@ -1,8 +1,20 @@
-import { IsDateString, IsOptional, IsString, MaxLength } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+    IsDate,
+    IsInt,
+    IsOptional,
+    IsString,
+    MaxLength,
+    Min
+} from 'class-validator';
+//import type { ftdevolucion } from '../types/ftdevolucion';
+import type { dtdevolucion } from '../types/dtdevolucion';
 
-export class DtDevolucionDto {
-    @IsDateString()
-    fecemis: string;
+export class CbDevolucionDto {
+
+    @IsString()
+    @MaxLength(40)
+    motivo: string;
 
     @IsString()
     @MaxLength(1)
@@ -25,49 +37,48 @@ export class DtDevolucionDto {
     clides: string;
 
     @IsString()
-    @MaxLength(6)
-    codven: string;
-
-    @IsString()
-    @MaxLength(60)
-    vendes: string;
-
-    @IsString()
     @MaxLength(30)
     codart: string;
-
-    @IsString()
-    @MaxLength(20)
-    @IsOptional()
-    codbarra: string;
 
     @IsString()
     @MaxLength(120)
     artdes: string;
 
     @IsString()
+    @IsOptional()
+    @MaxLength(30) // Ajustado a VarChar(30)
+    codbarra?: string;
+
+    @IsString()
     @MaxLength(40)
     serial1: string;
 
-    @IsString()
-    @MaxLength(255)
-    @IsOptional()
-    motivo: string;
-
-    @IsString()
-    @MaxLength(255)
-    @IsOptional()
-    obsvendedor: string;
+    @IsInt()
+    @Min(0)
+    factnum: number;
 
     @IsString()
     @MaxLength(30)
     registradopor: string;
 
-    @IsDateString()
-    fecharegistro: string;
-    
+    @Type(() => Date)
+    @IsDate()
+    fecharegistro: Date;
+
     @IsString()
-    @MaxLength(255)
     @IsOptional()
-    imgart: string;
-}
+    @MaxLength(255)
+    obsregistro?: string; 
+
+    @IsString()
+    @IsOptional()
+    @MaxLength(60)
+    linkproforma?: string;
+
+    @IsInt()
+    @IsOptional()
+    owneruser: number;
+
+    @IsOptional()
+    dtdevolucion: dtdevolucion;
+}       
