@@ -38,7 +38,7 @@ export class ReturnsController {
         @CurrentUser('nameUser') nameUser: string,
         @Body() createDevolucionDto: CbDevolucionDto
     ) {
-        console.log(createDevolucionDto);
+        
         //throw new Error("Error de prueba para verificar el manejo de errores en el frontend.");
         return this.returnsService.createReturn(createDevolucionDto, codven, nameUser);
     }

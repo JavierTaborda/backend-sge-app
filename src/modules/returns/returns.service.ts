@@ -1,4 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { mkdir, writeFile } from 'fs/promises';
+import os from 'os';
+import path from 'path';
 import { MySQLPrismaService } from 'src/database/mysql.service';
 import { SQLServerPrismaService } from 'src/database/sqlserver.service';
 
@@ -11,7 +14,32 @@ import { DtPredes } from './types/dtpredes';
 
 @Injectable()
 export class ReturnsService {
-    constructor(private readonly sql: SQLServerPrismaService, private readonly mysql: MySQLPrismaService) { }
+    private readonly baseDir: string;
+
+    constructor(private readonly sql: SQLServerPrismaService, private readonly mysql: MySQLPrismaService) {
+        // Detectar SO y asignar  
+        this.baseDir = this.getBaseDirectory();
+    }
+
+    private getBaseDirectory(): string {
+        const platform = os.platform();
+        const homeDir = os.homedir();
+
+        if (platform === 'darwin') {
+            // macOS
+            
+            return process.env.IMAGES_ROUTE_DEVOLUCION || '';
+        } else if (platform === 'win32') {
+            // Windows
+           
+            return process.env.IMAGES_ROUTE_DEVOLUCION || '';
+        } else {
+                 
+            // Linux u otros
+            return process.env.IMAGES_ROUTE_DEVOLUCION || '' ;
+        }
+    }
+
     async getOrderByFactNumber(fact_number?: number) {
 
         if (!fact_number) {
@@ -155,15 +183,16 @@ export class ReturnsService {
         }
 
         // Get seller data (Outside the transaction to avoid locking tables)
-         const finalCodVen = codven ? codven :''
-        //const finalCodVen = '00006';
+        const finalCodVen = codven ? codven : ''   
         const vendedor = await this.sql.vendedor.findFirst({
             select: { ven_des: true },
             where: { co_ven: finalCodVen ? { startsWith: finalCodVen } : undefined }
         });
         const vendesValue = vendedor?.ven_des ?? '';
 
-  
+
+
+
         return await this.mysql.$transaction(async (tx) => {
 
             // Separate header from detail
@@ -176,6 +205,26 @@ export class ReturnsService {
 
             //  Create Detail and Photos (if they exist)
             if (dtdevolucion) {
+               
+                //Only if dont use supabase storage, if use supabase storage, the url is the same and not need to download the image
+                if (dtdevolucion.ftdevolucion) {
+                    for (let i = 1; i <= 15; i++) {
+                        const field = `namefoto${i}` as keyof typeof dtdevolucion.ftdevolucion;
+                        if (!Object.prototype.hasOwnProperty.call(dtdevolucion.ftdevolucion, field)) continue;
+                        const url = dtdevolucion.ftdevolucion[field];
+                        if (!url) continue;
+                        try {
+                            
+                            const originalFilename = (cabeceraData.serial1 ? cabeceraData.serial1 : 'foto') + i + '.webp';
+                            const filename =  originalFilename;
+                            const savedPath = await this.downloadWebpImage(url, filename);
+                            dtdevolucion.ftdevolucion[field] = filename;
+                        } catch (error) {
+                            console.error(`Error downloading ${field}:`, error);
+                        }
+                    }
+                }
+
                 const { ftdevolucion, devonum, pednum, ...datosRestantes } = dtdevolucion;
 
                 await tx.dtdevolucion.create({
@@ -186,7 +235,7 @@ export class ReturnsService {
                         vendes: vendesValue,
                         codven: finalCodVen,
 
-                        
+
                         ftdevolucion: ftdevolucion ? {
                             create: {
                                 // Clean up any junk fields or previous IDs from the DTO
@@ -211,7 +260,36 @@ export class ReturnsService {
         });
         return devolveds;
     }
-    
+
+    private async ensureDirectoryExists(directory: string) {
+        await mkdir(directory, { recursive: true });
+    }
+
+    async downloadWebpImage(url: string, filename: string, customDirectory?: string): Promise<string> {
+        if (!url) {
+            throw new Error('Image URL not provided.');
+        }
+
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Failed to download image ${url}: ${response.status} ${response.statusText}`);
+        }
+
+        const buffer = Buffer.from(await response.arrayBuffer());
+
+
+        const directory = customDirectory || this.baseDir;
+        await this.ensureDirectoryExists(directory);
+
+        const safeFilename = filename.endsWith('.webp') ? filename : `${filename}.webp`;
+        const filePath = path.join(directory, safeFilename);
+
+        await writeFile(filePath, buffer);
+        return filePath;
+    }
+
+  
+
     async getMotives() {
 
         const codmotives: CodMotives[] = [
@@ -228,8 +306,6 @@ export class ReturnsService {
             id: index + 1,
             codmotive
         }));
-
-
 
         return motives;
     }
