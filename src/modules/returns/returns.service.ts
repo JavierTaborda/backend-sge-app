@@ -4,6 +4,7 @@ import os from 'os';
 import path from 'path';
 import { MySQLPrismaService } from 'src/database/mysql.service';
 import { SQLServerPrismaService } from 'src/database/sqlserver.service';
+import { EmailService } from 'src/email/email.service';
 
 import { CbDevolucionDto } from './dtos/create-devolucion.dto';
 import { MotiveItemDto } from './dtos/motive.dto';
@@ -16,10 +17,14 @@ import { DtPredes } from './types/dtpredes';
 export class ReturnsService {
     private readonly baseDir: string;
 
-    constructor(private readonly sql: SQLServerPrismaService, private readonly mysql: MySQLPrismaService) {
-        // Detectar SO y asignar  
+    constructor(
+        private readonly sql: SQLServerPrismaService,
+        private readonly mysql: MySQLPrismaService,
+        private readonly emailService: EmailService,
+    ) {
         this.baseDir = this.getBaseDirectory();
     }
+
 
     private getBaseDirectory(): string {
         const platform = os.platform();
@@ -27,16 +32,16 @@ export class ReturnsService {
 
         if (platform === 'darwin') {
             // macOS
-            
+
             return process.env.IMAGES_ROUTE_DEVOLUCION || '';
         } else if (platform === 'win32') {
             // Windows
-           
+
             return process.env.IMAGES_ROUTE_DEVOLUCION || '';
         } else {
-                 
-            // Linux u otros
-            return process.env.IMAGES_ROUTE_DEVOLUCION || '' ;
+
+            // Linux 
+            return process.env.IMAGES_ROUTE_DEVOLUCION || '';
         }
     }
 
@@ -148,7 +153,11 @@ export class ReturnsService {
                 },
                 cliente: {
                     select: {
-                        cli_des: true
+                        cli_des: true,
+                        dir_ent2: true,
+                        telefonos: true,
+                        email: true,
+                        rif: true
                     }
                 },
                 vendedor: {
@@ -170,7 +179,12 @@ export class ReturnsService {
             codart: predes.codart,
             artdes: order?.reng_ped.find(c => c.art?.art_des)?.art?.art_des,
             codbarra: predes?.codbarra,
-            serial: predes.serial1
+            serial: predes.serial1,
+            rif: order?.cliente?.rif,
+            telefonos: order?.cliente?.telefonos,
+            email: order?.cliente?.email,
+            dir_ent2: order?.cliente?.dir_ent2
+
         }
 
         return data
@@ -183,12 +197,14 @@ export class ReturnsService {
         }
 
         // Get seller data (Outside the transaction to avoid locking tables)
-        const finalCodVen = codven ? codven : ''   
+        const finalCodVen = codven ? codven : ''
         const vendedor = await this.sql.vendedor.findFirst({
             select: { ven_des: true },
             where: { co_ven: finalCodVen ? { startsWith: finalCodVen } : undefined }
         });
         const vendesValue = vendedor?.ven_des ?? '';
+
+        let images: string[] = [];
 
 
 
@@ -196,7 +212,7 @@ export class ReturnsService {
         return await this.mysql.$transaction(async (tx) => {
 
             // Separate header from detail
-            const { dtdevolucion, ...cabeceraData } = createDevolucionDto;
+            const { dtdevolucion, rif, telefono, dirretiro, ...cabeceraData } = createDevolucionDto;
 
             //  Create Header
             const nuevaDevolucion = await tx.cbdevolucion.create({
@@ -205,22 +221,24 @@ export class ReturnsService {
 
             //  Create Detail and Photos (if they exist)
             if (dtdevolucion) {
-               
+
                 //Only if dont use supabase storage, if use supabase storage, the url is the same and not need to download the image
                 if (dtdevolucion.ftdevolucion) {
-                    for (let i = 1; i <= 15; i++) {
+
+
+                    for (let i = 1; i <= 5; i++) {
+                        images.push(dtdevolucion.ftdevolucion[`namefoto${i}`] || '');
                         const field = `namefoto${i}` as keyof typeof dtdevolucion.ftdevolucion;
                         if (!Object.prototype.hasOwnProperty.call(dtdevolucion.ftdevolucion, field)) continue;
                         const url = dtdevolucion.ftdevolucion[field];
                         if (!url) continue;
                         try {
-                            
-                            const originalFilename = (cabeceraData.serial1 ? cabeceraData.serial1 : 'foto') + i + '.webp';
-                            const filename =  originalFilename;
-                            const savedPath = await this.downloadWebpImage(url, filename);
-                            dtdevolucion.ftdevolucion[field] = filename;
+
+
+                            const savedPath = await this.downloadWebpImage(url);
+                            dtdevolucion.ftdevolucion[field] = savedPath;
                         } catch (error) {
-                            console.error(`Error downloading ${field}:`, error);
+                            throw new Error(`Failed to process image for ${field}: ${error instanceof Error ? error.message : String(error)}`);
                         }
                     }
                 }
@@ -245,6 +263,25 @@ export class ReturnsService {
                     }
                 });
             }
+            setImmediate(async () => {
+                try {
+                    const body = await this.buildCollectionNoteEmail(
+                        nuevaDevolucion,
+                        images,
+                        rif || '',
+                        dirretiro || '',
+                        telefono || ''
+
+                    );
+
+                    const to = ['jtaborda@cyberlux.com.ve','sgoldcheidt@cyberlux.com.ve'];
+                    const subject = `solicitud #${nuevaDevolucion.devonum} Orden de retiro ${createDevolucionDto?.artdes} >>> ${createDevolucionDto?.clides}`;
+
+                    await this.emailService.sendEmail(to, subject, body);
+                } catch (err) {
+                    console.error(`Fallo al enviar correo`, err);
+                }
+            });
 
             return nuevaDevolucion;
         });
@@ -265,7 +302,7 @@ export class ReturnsService {
         await mkdir(directory, { recursive: true });
     }
 
-    async downloadWebpImage(url: string, filename: string, customDirectory?: string): Promise<string> {
+    async downloadWebpImage(url: string, customDirectory?: string): Promise<string> {
         if (!url) {
             throw new Error('Image URL not provided.');
         }
@@ -277,18 +314,21 @@ export class ReturnsService {
 
         const buffer = Buffer.from(await response.arrayBuffer());
 
-
-        const directory = customDirectory || this.baseDir;
+        const directory = this.baseDir;
         await this.ensureDirectoryExists(directory);
 
-        const safeFilename = filename.endsWith('.webp') ? filename : `${filename}.webp`;
-        const filePath = path.join(directory, safeFilename);
-
+        const urlObj = new URL(url);
+        const pathname = urlObj.pathname;
+        let filename = path.basename(pathname);
+        if (!filename.endsWith('.webp')) {
+            filename += '.webp';
+        }
+        const filePath = path.join(directory, filename);
         await writeFile(filePath, buffer);
-        return filePath;
+        return filename;
     }
 
-  
+
 
     async getMotives() {
 
@@ -308,6 +348,99 @@ export class ReturnsService {
         }));
 
         return motives;
+    }
+
+
+    /**
+         * Construye el cuerpo y los attachments para el correo de nota de retiro.
+         * @param devol Objeto con los datos de la devolución
+         * @param images Array con los nombres de las imágenes
+         * @param rif RIF del cliente
+         * @param dirretiro Dirección de retiro
+         * @param telefono Teléfono de contacto
+         */
+    async buildCollectionNoteEmail(
+        devol: any,
+        images: string[],
+        rif: string,
+        dirretiro: string,
+        telefono: string
+
+    ): Promise<string> {
+
+
+        const {
+            clides,
+            codart,
+            artdes,
+            serial1,
+            factnum,
+            motivo,
+            codcli,
+            obsregistro,
+            registradopor,
+            fecharegistro,
+
+        } = devol;
+
+
+
+        let body = `
+                    <hr>
+                    <p>Se requiere gestionar el retiro del siguiente art&iacute;culo en la tienda del cliente &nbsp;<b><i>${clides}</i></b></p>
+                    <p>RIF &nbsp;<b><i>${rif}</i></b></p>
+                    <p>C&Oacute;DIGO &nbsp;<b><i>${codcli}</i></b></p>
+                    <p>DIRECCI&Oacute;N &nbsp;<b><i>${dirretiro}</i></b></p>
+                    <p>TEL&Eacute;FONO &nbsp;<b><i>${telefono}</i></b></p>
+                    <br><br>
+
+
+
+                    <div style='text-align: center;'>
+                      <table style='margin: 0 auto; border-collapse: collapse; width: 90%; font-family: Arial, sans-serif;' border='1' cellpadding='5'>
+                        <thead style='background-color: #f2f2f2;'>
+                          <tr>
+                            <th style='width: 8%;'>CODIGO</th>
+                            <th style='width: 20%;word-wrap: break-word;'>DESCRIPCI&Oacute;N ART&iacute;CULO</th>
+                            <th style='width: 8%;'>No. FACTURA</th>
+                            <th style='width: 8%;'>CANTIDAD</th>
+                            <th style='width: 10%;'>SERIAL</th>
+                            <th style='width: 15%;'>MOTIVO</th>
+                            <th style='width: 15%;'>OBSERVACI&Oacute;N</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td align='center'>${codart}</td>
+                            <td align='left' style='word-wrap: break-word;'>${artdes}</td>
+                            <td align='center'>${factnum}</td>
+                            <td align='center'>1</td>
+                            <td align='center'>${serial1}</td>
+                            <td align='center'>${motivo}</td>
+                            <td style='word-wrap: break-word;'>${obsregistro}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div style='margin-top: 20px; text-align: center;'>
+                        <p><b>Evidencia Fotográfica:</b></p>
+                        ${images.length > 0
+                ? images
+                    .map(
+                        (url) =>
+                            `<img src="${url}" style="max-width: 200px; height: 200px; border: 1px solid #ccc; margin: 5px;" />`
+                    )
+                    .join('') : `<p></p>`}
+            
+                    </div>
+
+                <br><br>
+                <p>Registrado por: &nbsp;<b>${registradopor}</b><br>
+                Fecha registro: &nbsp;<b>${fecharegistro.toLocaleDateString()}</b></p>
+                `;
+
+        return body;
     }
 
 }

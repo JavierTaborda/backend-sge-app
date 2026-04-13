@@ -81,4 +81,13 @@ export class CbDevolucionDto {
 
     @IsOptional()
     dtdevolucion: dtdevolucion;
+
+    @IsOptional()
+    rif: string ;
+    @IsOptional()
+    telefono: string ;
+    @IsOptional()
+    dirretiro: string ;
+ 
+    
 }       
