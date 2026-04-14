@@ -6,6 +6,7 @@ import { MySQLPrismaService } from 'src/database/mysql.service';
 import { SQLServerPrismaService } from 'src/database/sqlserver.service';
 import { EmailService } from 'src/email/email.service';
 
+import { TestMySQLPrismaService } from 'src/database/testmysql.service';
 import { CbDevolucionDto } from './dtos/create-devolucion.dto';
 import { MotiveItemDto } from './dtos/motive.dto';
 import { ReturnByFactDto } from './dtos/returnbyfact.dts';
@@ -20,6 +21,7 @@ export class ReturnsService {
     constructor(
         private readonly sql: SQLServerPrismaService,
         private readonly mysql: MySQLPrismaService,
+        private readonly test: TestMySQLPrismaService,
         private readonly emailService: EmailService,
     ) {
         this.baseDir = this.getBaseDirectory();
@@ -208,8 +210,8 @@ export class ReturnsService {
 
 
 
-
-        return await this.mysql.$transaction(async (tx) => {
+        //TODO: change to mysql
+        return await this.test.$transaction(async (tx) => {
 
             // Separate header from detail
             const { dtdevolucion, rif, telefono, dirretiro, ...cabeceraData } = createDevolucionDto;
@@ -274,7 +276,7 @@ export class ReturnsService {
 
                     );
 
-                    const to = ['jtaborda@cyberlux.com.ve','sgoldcheidt@cyberlux.com.ve'];
+                    const to = ['jtaborda@cyberlux.com.ve'];
                     const subject = `solicitud #${nuevaDevolucion.devonum} Orden de retiro ${createDevolucionDto?.artdes} >>> ${createDevolucionDto?.clides}`;
 
                     await this.emailService.sendEmail(to, subject, body);

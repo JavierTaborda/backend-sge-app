@@ -339,3 +339,78 @@ model mvplanpagos {
   estatuslogistico   String?   @db.VarChar(20)
   fechalogistico     DateTime? @db.Date
 }
+model cbdevolucion {
+  devonum        Int      @id @default(autoincrement())
+  motivo         String   @db.VarChar(40)
+  estatus        String   @default("1") @db.Char(1)
+  anulada        String   @default("0") @db.Char(1)
+  cerrada        String   @default("0") @db.Char(1)
+  codcli         String   @db.VarChar(6)
+  clides         String   @db.VarChar(100)
+  codart         String   @db.Char(30)
+  artdes         String   @db.VarChar(120)
+  codbarra       String?  @db.VarChar(30)
+  serial1        String   @db.VarChar(40)
+  factnum        Int      @default(0)
+  registradopor  String   @db.Char(30)
+  fecharegistro  DateTime
+  obsregistro    String?  @db.VarChar(255)
+  linkproforma   String?  @db.VarChar(60)
+  owneruser      Int      @default(1)
+
+  dtdevolucion   dtdevolucion?
+}
+
+model dtdevolucion {
+  devonum        Int      @id
+
+  prednum        Int      @default(0)
+  fechadespacho  DateTime?
+  pednum         Int      @default(0)
+  codven         String   @db.VarChar(6)
+  vendes         String   @db.VarChar(60)
+  codzon         String?  @db.VarChar(6)
+  zondes         String?  @db.VarChar(60)
+  recibidopor    String?  @db.Char(30)
+  fecharecibido  DateTime?
+  obsrecibido    String?  @db.VarChar(255)
+  chofer         String?  @db.VarChar(40)
+  placa          String?  @db.VarChar(10)
+  revisionpor    String?  @db.Char(30)
+  fecharevision  DateTime?
+  obsrevision    String?  @db.VarChar(255)
+  enviorevision  String   @default("0") @db.Char(1)
+  tecnicopor     String?  @db.Char(30)
+  fechatecnico   DateTime?
+  obstecnico     String?  @db.VarChar(255)
+  enviotecnico   String   @default("0") @db.Char(1)
+  almacenpor     String?  @db.Char(30)
+  fechaalmacen   DateTime?
+  obsalmacen     String?  @db.VarChar(255)
+  envioalmacen   String   @default("0") @db.Char(1)
+  tiempofactura  String?  @db.VarChar(100)
+
+  cbdevolucion   cbdevolucion @relation(fields: [devonum], references: [devonum])
+  ftdevolucion   ftdevolucion?
+}
+
+model ftdevolucion {
+  devonum   Int   @id      
+  namefoto1  String? @db.VarChar(100)
+  namefoto2  String? @db.VarChar(100)
+  namefoto3  String? @db.VarChar(100)
+  namefoto4  String? @db.VarChar(100)
+  namefoto5  String? @db.VarChar(100)
+  namefoto6  String? @db.VarChar(100)
+  namefoto7  String? @db.VarChar(100)
+  namefoto8  String? @db.VarChar(100)
+  namefoto9  String? @db.VarChar(100)
+  namefoto10 String? @db.VarChar(100)
+  namefoto11 String? @db.VarChar(100)
+  namefoto12 String? @db.VarChar(100)
+  namefoto13 String? @db.VarChar(100)
+  namefoto14 String? @db.VarChar(100)
+  namefoto15 String? @db.VarChar(100)
+
+  dtdevolucion dtdevolucion @relation(fields: [devonum], references: [devonum])
+}

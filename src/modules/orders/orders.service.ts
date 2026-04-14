@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { EmailService } from 'src/email/email.service';
 import { DateUtils } from 'src/utils/date.utils';
 import { SQLServerPrismaService } from '../../database/sqlserver.service';
 import { AprobacionPedidoDto } from './dtos/aprobacion.pedido.dto';
@@ -6,30 +7,33 @@ import { PedidoFilterDto } from './dtos/pedidos-filters';
 import { mapRawPedidos } from './helpers/mapRawPedidos';
 import { RawPedidoRow } from './types/RawPedidoRow';
 
-
 @Injectable()
 export class OrdersService {
-  constructor(private readonly sql: SQLServerPrismaService) { }
+  constructor(
+    private readonly sql: SQLServerPrismaService,
+    private readonly emailService: EmailService
+  ) { }
+
   async GetPedidos(role: string, codven: string) {
     const { start, end } = DateUtils.getCurrentMonthRange();
 
     const pedidos = await this.sql.pedidos.findMany({
       where: {
-   
-        anulada:false,
+
+        anulada: false,
         fec_emis: {
           gte: start,
           lte: end,
         },
-       
-        ...((role === '5'|| role==='4') && codven ? { co_ven: codven } : {}),
-        ...(role === '2' ? { co_ven: { not: '00001' } }:{}),
+
+        ...((role === '5' || role === '4') && codven ? { co_ven: codven } : {}),
+        ...(role === '2' ? { co_ven: { not: '00001' } } : {}),
       },
       include: { reng_ped: true },
     });
 
 
-      const pedidosModificados = pedidos.map((pedido) => {
+    const pedidosModificados = pedidos.map((pedido) => {
       const totNetoOriginal = pedido.tot_neto?.toString() ?? '0';
       const tasa = pedido.tasa?.toString() ?? '1';
 
@@ -43,13 +47,13 @@ export class OrdersService {
 
     return pedidosModificados;
   }
-  
+
   async GetAprobacionPedidos(role?: string, codven?: string): Promise<AprobacionPedidoDto[]> {
     const conditions: string[] = [
       `p.status = 0`,
       `p.anulada = 0`,
       ...((role === '5' || role === '4') && codven ? [`p.co_ven LIKE '%${codven}%'`] : []),
-      ...(role === '2'  ? [`p.co_ven NOT LIKE '%00001%'`] : []),
+      ...(role === '2' ? [`p.co_ven NOT LIKE '%00001%'`] : []),
     ];
 
     const whereClause = `WHERE ${conditions.join(' AND ')}`;
@@ -141,11 +145,11 @@ export class OrdersService {
     if (procesado) {
       conditions.push(`p.status = ${procesado}`);
     }
-    
+
     // Filtro por anulada
     if (String(cancelled).toLowerCase() === "true") {
       conditions.push(`p.anulada = 1`);
-  
+
     } else {
       conditions.push(`p.anulada = 0`);
     }
@@ -159,15 +163,15 @@ export class OrdersService {
       conditions.push(`z.zon_des = '${zone}'`);
     }
     //filtro por rol y codigo de venbdedor
-    if ((role === '5' || role==='4') && codven) {
+    if ((role === '5' || role === '4') && codven) {
       conditions.push(` p.co_ven = '${codven}'`)
     }
     if (role === '2') {
       conditions.push(` p.co_ven != '00001'`)
     }
-   if (forCancel) {
-    conditions.push(`p.status = 0`); 
-   }
+    if (forCancel) {
+      conditions.push(`p.status = 0`);
+    }
 
     const whereClause = `WHERE ${conditions.join(' AND ')}`;
 
@@ -271,61 +275,104 @@ export class OrdersService {
     if (!pedido) {
       throw new Error(`Pedido con número de factura ${factNum} no encontrado`);
     }
-   
+
     const response = await this.sql.pedidos.update({
       where: { fact_num: factNum },
       data: { comentario: newcomment },
       //include: { reng_ped: true },
     });
     return response;
-  
+
   }
 
-    /**
-       * Cancels an order: sets the order as canceled and restores the committed stock.
-       * @param factNumber Order number to cancel
-       * @returns true if the process was successful
-       */
-      async CancelOrder(factNumber: number): Promise<boolean> {
-          //const db = 'passve_A';
-          const db = process.env.SQLSERVER_DATABASE;
-          const warehouse = '0001  ';
-        
-          const order = await this.sql.pedidos.findUnique({
-              where: { fact_num: factNumber },
-              select: {
-                  status: true,
-                  anulada: true,
-                  fact_num: true,
-                  reng_ped: {
-                      select: {
-                          reng_num: true,
-                          co_art: true,
-                          co_alma: true,
-                          total_art: true,
-                      }
-                  }
-              }
-          });
-          if (!order) throw new Error('Order not found');
-          if (order.anulada) throw new Error('Order is already canceled');
-  
-          const updateOrderSQL = `UPDATE ${db}.dbo.pedidos SET anulada = 1 WHERE fact_num = @P1`;
-  
-          let updateStockSQL = '';
-          for (const r of order.reng_ped) {
-              const coAlma = r.co_alma || warehouse;
-              updateStockSQL += `\nUPDATE ${db}.dbo.art SET stock_com = stock_com - ${Number(r.total_art)} WHERE co_art = '${r.co_art}';`;
-              updateStockSQL += `\nUPDATE ${db}.dbo.st_almac SET stock_com = stock_com - ${Number(r.total_art)} WHERE co_art = '${r.co_art}' AND co_alma = '${coAlma}';`;
+  /**
+     * Cancels an order: sets the order as canceled and restores the committed stock.
+     * @param factNumber Order number to cancel
+     * @returns true if the process was successful
+     */
+  async CancelOrder(factNumber: number): Promise<boolean> {
+    //const db = 'passve_A';
+    const db = process.env.SQLSERVER_DATABASE;
+    const warehouse = '0001  ';
+
+    const order = await this.sql.pedidos.findUnique({
+      where: { fact_num: factNumber },
+      select: {
+        status: true,
+        anulada: true,
+        fact_num: true,
+        co_ven: true,
+        reng_ped: {
+          select: {
+            reng_num: true,
+            co_art: true,
+            co_alma: true,
+            total_art: true,
           }
-          console.log('Generated SQL for canceling order:\n', updateOrderSQL, updateStockSQL);
-  
-          // await this.sql.$transaction(async (tx) => {
-          //     await tx.$executeRawUnsafe(updateOrderSQL, factNumber);
-          //     if (updateStockSQL) {
-          //         await tx.$executeRawUnsafe(updateStockSQL);
-          //     }
-          // });
-          return true;
+        }
       }
+    });
+    if (!order) throw new Error('Order not found');
+    if (order.anulada) throw new Error('Order is already canceled');
+
+    const seller = await this.sql.vendedor.findUnique({
+      where: { co_ven: order.co_ven! },
+      select: { ven_des: true },
+    });
+
+    const sellerName = seller?.ven_des || 'Desconocido';
+
+    const updateOrderSQL = `UPDATE ${db}.dbo.pedidos SET anulada = 1 WHERE fact_num = @P1`;
+
+    let updateStockSQL = '';
+    for (const r of order.reng_ped) {
+      const coAlma = r.co_alma || warehouse;
+      updateStockSQL += `\nUPDATE ${db}.dbo.art SET stock_com = stock_com - ${Number(r.total_art)} WHERE co_art = '${r.co_art}';`;
+      updateStockSQL += `\nUPDATE ${db}.dbo.st_almac SET stock_com = stock_com - ${Number(r.total_art)} WHERE co_art = '${r.co_art}' AND co_alma = '${coAlma}';`;
+    }
+    console.log('Generated SQL for canceling order:\n', updateOrderSQL, updateStockSQL);
+
+    await this.sql.$transaction(async (tx) => {
+      await tx.$executeRawUnsafe(updateOrderSQL, factNumber);
+      if (updateStockSQL) {
+        await tx.$executeRawUnsafe(updateStockSQL);
+      }
+    });
+
+
+    // Notify via email
+    // const to = [
+    //     'villegaszuleyma@gmail.com',
+    //     'martinezcrismary@gmail.com',
+    //     'marqzrebeca@gmail.com',
+    //     'neivymatie@gmail.com',
+    //     'sgoldcheidt@hotmail.com',
+    //     'raymondcast75@gmail.com',
+    // ];
+
+
+    setImmediate(async () => {
+      try {
+        await this.sendCancellationEmail(factNumber, sellerName);
+      } catch (error) {
+        console.error('Error sending cancellation email:', error);
+      }
+    }); 
+    return true;
+  }
+
+  async sendCancellationEmail(factNumber: number, sellerName: string) {
+    const to = ['jtaborda@cyberluxcom.ve'];
+    const subject = `El vendedor ${sellerName} ha anulado el pedido # ${factNumber}`;
+    const body = `
+          <p>Se ha anulado el pedido <strong>#${factNumber}</strong>.</p>
+          <p>Vendedor: <strong>${sellerName}</strong></p>
+        `;
+
+    
+        await this.emailService.sendEmail(to, subject, body);
+     
+  
+
+  }
 }

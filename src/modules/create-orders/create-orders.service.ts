@@ -336,7 +336,11 @@ export class CreateOrdersService {
 
 
             return factNumber;
-        });
+        },{
+            timeout: 30000, // 30 seconds timeout for the entire transaction    
+            maxWait: 10000, // 10 seconds max wait for acquiring locks
+        
+        }); 
 
         if (pedido.email) {
             const to = pedido.email.trim();
