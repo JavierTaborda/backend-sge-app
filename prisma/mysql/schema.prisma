@@ -109,8 +109,10 @@ model cbpredes {
   anulado   Boolean   @default(false)
   proceso   Boolean   @default(false)
   owneruser Int       @default(1)
+  dtpredes   dtpredes[]
 
-  @@ignore
+  @@id([prednum, pednum, fecdesp, codcli])
+  @@unique([prednum, pednum])
 }
 
 model cbsolicimat {
@@ -470,6 +472,8 @@ model dtpredes {
   serial1   String  @db.VarChar(40)
   refbarra  String? @db.VarChar(30)
   recouser  Int     @default(1)
+
+  cbpredes  cbpredes @relation(fields: [prednum, pednum], references: [prednum, pednum])
 
   @@id([pednum, serial1])
 }

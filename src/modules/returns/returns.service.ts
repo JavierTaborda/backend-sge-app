@@ -7,9 +7,12 @@ import { SQLServerPrismaService } from 'src/database/sqlserver.service';
 import { EmailService } from 'src/email/email.service';
 
 import { TestMySQLPrismaService } from 'src/database/testmysql.service';
+import { DateUtils } from 'src/utils/date.utils';
+import { getVzlaDateForDB } from 'src/utils/date.venezuela.db';
 import { CbDevolucionDto } from './dtos/create-devolucion.dto';
 import { MotiveItemDto } from './dtos/motive.dto';
 import { ReturnByFactDto } from './dtos/returnbyfact.dts';
+import { ReturnBySerialDto } from './dtos/returnbyserial.dto';
 import { CodMotives } from './types/CodMotives';
 import { DtPredes } from './types/dtpredes';
 
@@ -118,15 +121,11 @@ export class ReturnsService {
         return result;
 
     }
-    async getDataBySerial(serial: string) {
+    async getDataBySerial(serial: string): Promise<ReturnBySerialDto | null> {
 
-        const predes = await this.mysql.dtpredes.findFirst({
-            where: {
-                serial1: {
-                    startsWith: serial
-                }
-            }
-        }) as DtPredes;
+
+        const predes = await this.getPredesBySerial(serial);
+
 
         if (predes == null) {
             return null;
@@ -138,8 +137,7 @@ export class ReturnsService {
             select: {
                 fact_num: true,
                 fec_emis: true,
-                co_cli: true,
-                co_ven: true,
+
                 reng_ped: {
                     where: {
                         co_art: predes?.codart
@@ -166,26 +164,40 @@ export class ReturnsService {
                     select: {
                         ven_des: true
                     }
-                }
+                },
+
+            }
+        });
+        const zone = await this.mysql.clzonas.findFirst({
+            where: {
+                codzon: predes?.cbpredes?.codzon ?? ''
+            },
+            select: {
+                zondes: true
             }
         });
 
 
-        const data = {
-            fact_num: order?.fact_num,
+        const data: ReturnBySerialDto = {
+            fact_num: order?.fact_num ?? 0,
             fecemis: order?.fec_emis as Date,
-            codcli: order?.co_cli ?? '',
+            fecdesp: predes?.cbpredes?.fecdesp as Date,
+            codcli: predes.cbpredes?.codcli ?? '',
             clides: order?.cliente?.cli_des ?? '',
-            codven: order?.co_ven ?? '',
-            vendes: order?.vendedor?.ven_des,
+            codven: predes.cbpredes?.codven ?? '',
+            vendes: order?.vendedor?.ven_des ?? '',
             codart: predes.codart,
-            artdes: order?.reng_ped.find(c => c.art?.art_des)?.art?.art_des,
-            codbarra: predes?.codbarra,
-            serial: predes.serial1,
-            rif: order?.cliente?.rif,
-            telefonos: order?.cliente?.telefonos,
-            email: order?.cliente?.email,
-            dir_ent2: order?.cliente?.dir_ent2
+            artdes: order?.reng_ped.find(c => c.art?.art_des)?.art?.art_des ?? '',
+            codbarra: predes?.codbarra ?? '',
+            serial: predes.serial1 ?? '',
+            rif: order?.cliente?.rif ?? '',
+            telefonos: order?.cliente?.telefonos ?? '',
+            email: order?.cliente?.email ?? '',
+            dir_ent2: order?.cliente?.dir_ent2 ?? '',
+            prednum: predes.prednum,
+            pednum: predes.pednum,
+            zondes: zone?.zondes ?? '',
+            codzon: predes?.cbpredes?.codzon ?? ''
 
         }
 
@@ -198,13 +210,39 @@ export class ReturnsService {
             throw new Error("Return data not provided.");
         }
 
+        if (createDevolucionDto.serial1) {
+            const checkSerial = await this.mysql.cbdevolucion.findFirst({
+                where: {
+                    serial1: createDevolucionDto.serial1
+                }, select: { serial1: true, devonum: true }
+
+            });
+
+            if (checkSerial) {
+                throw new Error(`El serial ${createDevolucionDto.serial1} ya ha sido registrado en el sistema con la devolución número ${checkSerial.devonum}.`);
+            }
+
+        }
+
+
         // Get seller data (Outside the transaction to avoid locking tables)
-        const finalCodVen = codven ? codven : ''
-        const vendedor = await this.sql.vendedor.findFirst({
-            select: { ven_des: true },
-            where: { co_ven: finalCodVen ? { startsWith: finalCodVen } : undefined }
-        });
-        const vendesValue = vendedor?.ven_des ?? '';
+
+        let vendesValue = '', finalCodVen = '';
+
+        if (createDevolucionDto.dtdevolucion.codven && createDevolucionDto.dtdevolucion.vendes) {
+            finalCodVen = createDevolucionDto.dtdevolucion.codven.trim();
+            vendesValue = createDevolucionDto.dtdevolucion.vendes.trim();
+        }
+        else {
+            finalCodVen = codven ? codven : ''
+
+            const vendedor = await this.sql.vendedor.findFirst({
+                select: { ven_des: true },
+                where: { co_ven: finalCodVen ? { startsWith: finalCodVen } : undefined }
+            });
+            vendesValue = vendedor?.ven_des ?? '';
+        }
+
 
         let images: string[] = [];
 
@@ -218,7 +256,7 @@ export class ReturnsService {
 
             //  Create Header
             const nuevaDevolucion = await tx.cbdevolucion.create({
-                data: { ...cabeceraData }
+                data: { ...cabeceraData, fecharegistro: getVzlaDateForDB(cabeceraData.fecharegistro) }
             });
 
             //  Create Detail and Photos (if they exist)
@@ -254,6 +292,8 @@ export class ReturnsService {
                         pednum: pednum || 0,             // Ensure numerical value
                         vendes: vendesValue,
                         codven: finalCodVen,
+                        tiempofactura: DateUtils.getElapsedTimeText(datosRestantes.fechadespacho, new Date()),
+                        fechadespacho: getVzlaDateForDB(new Date(datosRestantes.fechadespacho)),
 
 
                         ftdevolucion: ftdevolucion ? {
@@ -285,19 +325,36 @@ export class ReturnsService {
                 }
             });
 
-            return nuevaDevolucion;
+            return;
         });
     }
 
-    async getDevolveds(serial: string) {
-        const devolveds = await this.mysql.dtdevolucion.findMany({
-            // where: {
-            //     serial: {
-            //         startsWith: serial
-            //     },
-            // }
-        });
-        return devolveds;
+
+
+    async getPredesBySerial(serial: string) {
+        const predes = await this.mysql.dtpredes.findFirst({
+            where: {
+                serial1: {
+                    startsWith: serial
+                }
+            },
+            include: {
+                cbpredes: {
+                    select: {
+                        prednum: true,
+                        pednum: true,
+                        fecemis: true,
+                        fecdesp: true,
+                        codzon: true,
+                        codcli: true,
+                        codven: true,
+
+                    }
+                }
+            }
+        }) as DtPredes;
+
+        return predes;
     }
 
     private async ensureDirectoryExists(directory: string) {

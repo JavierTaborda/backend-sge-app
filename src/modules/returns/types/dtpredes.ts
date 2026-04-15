@@ -11,4 +11,14 @@ export type DtPredes = {
     serial1?: string | null;
     refbarra?: string | null;
     recouser: number;
+    cbpredes?: {
+        prednum: number;
+        pednum: number;
+        fecemis: Date;
+        fecdesp: Date;
+        codzon: string;
+        codcli: string;
+        codven: string;
+    }; 
+    
 };

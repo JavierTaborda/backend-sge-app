@@ -43,4 +43,32 @@ export class DateUtils {
     const month = new Date().getMonth() + 1;
     return month.toString().padStart(2, '0');
   }
+
+  /**
+   * Retorna una diferencia de tiempo legible en español.
+   * Ejemplo: "hace 3 dias", "hace 2 meses", "hace 1 año".
+   */
+  static getElapsedTimeText(fromDate: Date | string | number, toDate: Date | string | number = new Date()): string {
+    const start = new Date(fromDate);
+    const end = new Date(toDate);
+
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      return 'hace 0 días';
+    }
+
+    const diffMs = Math.max(0, end.getTime() - start.getTime());
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 30) {
+      return `hace ${diffDays} ${diffDays === 1 ? 'día' : 'días'}`;
+    }
+
+    const diffMonths = Math.floor(diffDays / 30);
+    if (diffMonths < 12) {
+      return `hace ${diffMonths} ${diffMonths === 1 ? 'mes' : 'meses'}`;
+    }
+
+    const diffYears = Math.floor(diffMonths / 12);
+    return `hace ${diffYears} ${diffYears === 1 ? 'año' : 'años'}`;
+  }
 }
