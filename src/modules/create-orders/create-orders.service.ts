@@ -235,7 +235,7 @@ export class CreateOrdersService {
         const porc_reca = 0;
         const revisado = ' ';
         const descrip = '';
-        const codVen =codven.padEnd(6, ' ');
+        const codVen = codven.padEnd(6, ' ');
         const serialp = factNumber!.toString().padStart(8, '0');
 
 

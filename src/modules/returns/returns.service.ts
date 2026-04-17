@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { mkdir, writeFile } from 'fs/promises';
-import os from 'os';
 import path from 'path';
 import { MySQLPrismaService } from 'src/database/mysql.service';
 import { SQLServerPrismaService } from 'src/database/sqlserver.service';
@@ -32,22 +31,10 @@ export class ReturnsService {
 
 
     private getBaseDirectory(): string {
-        const platform = os.platform();
-        const homeDir = os.homedir();
-
-        if (platform === 'darwin') {
-            // macOS
-
-            return process.env.IMAGES_ROUTE_DEVOLUCION || '';
-        } else if (platform === 'win32') {
-            // Windows
-
-            return process.env.IMAGES_ROUTE_DEVOLUCION || '';
-        } else {
-
-            // Linux 
-            return process.env.IMAGES_ROUTE_DEVOLUCION || '';
-        }
+        // const platform = os.platform();
+        // const homeDir = os.homedir();
+        return process.env.IMAGES_ROUTE_DEVOLUCION || '';
+        
     }
 
     async getOrderByFactNumber(fact_number?: number) {
@@ -326,6 +313,9 @@ export class ReturnsService {
             });
 
             return;
+        },{
+            maxWait: 15000, //    
+            timeout: 10000, // 
         });
     }
 

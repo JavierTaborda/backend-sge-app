@@ -381,16 +381,6 @@ model ctdocumento {
 }
 
 
-model dtdevoluciones {
-  itemnum     Int    @default(autoincrement())
-  devonum     Int
-  codart      String @db.VarChar(30)
-  serial      String @db.VarChar(40)
-  descripcion String @db.VarChar(255)
-  cantidad    Int    @db.TinyInt
-
-  @@id([itemnum, devonum])
-}
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model dtplanpagos {
@@ -772,6 +762,8 @@ model dtdevolucion {
   obsrecibido    String?  @db.VarChar(255)
   chofer         String?  @db.VarChar(40)
   placa          String?  @db.VarChar(10)
+  chofer2         String?  @db.VarChar(40)
+  placa2          String?  @db.VarChar(10)
   revisionpor    String?  @db.Char(30)
   fecharevision  DateTime?
   obsrevision    String?  @db.VarChar(255)
@@ -843,33 +835,6 @@ model mvcajachica {
 
   @@ignore
 }
-
-/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
-model mvefectivo {
-  unidad        String  @default("CYBERLUX") @db.VarChar(10)
-  numcaja       Int     @default(0)
-  numitem       Int     @default(0)
-  tipodocu      String  @db.VarChar(10)
-  numdocu       Int     @default(0)
-  tipomov       String  @db.VarChar(10)
-  moneda        String  @db.VarChar(4)
-  tipo          String  @db.VarChar(10)
-  valor         Decimal @default(0.00) @db.Decimal(11, 2)
-  cantidad1     Int
-  montomov1     Decimal @default(0.00) @db.Decimal(15, 2)
-  tipodocu2     String? @db.VarChar(10)
-  tipomov2      String? @db.VarChar(10)
-  cantidad2     Int     @default(0)
-  montomov2     Decimal @default(0.00) @db.Decimal(15, 2)
-  totalcantidad Int     @default(0)
-  totalmonto    Decimal @default(0.00) @db.Decimal(15, 2)
-  anulado       Boolean @default(false)
-  recouser      Int     @default(0)
-
-  @@ignore
-}
-
-/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model mvplanpagos {
   planpagonumero     Int       @default(0) @db.SmallInt
   autorizadonumero   Int

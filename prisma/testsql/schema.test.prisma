@@ -376,6 +376,8 @@ model dtdevolucion {
   obsrecibido    String?  @db.VarChar(255)
   chofer         String?  @db.VarChar(40)
   placa          String?  @db.VarChar(10)
+  chofer2        String?  @db.VarChar(40)
+  placa2         String?  @db.VarChar(10)
   revisionpor    String?  @db.Char(30)
   fecharevision  DateTime?
   obsrevision    String?  @db.VarChar(255)

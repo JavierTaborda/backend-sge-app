@@ -123,6 +123,8 @@ export class OrdersService {
       throw new BadRequestException('La fecha inicial no puede ser mayor que la final');
     }
 
+    let db = process.env.SQLSERVER_DATABASE;
+
     const { start, end } = DateUtils.getCurrentMonthRange();
 
     const conditions: string[] = [];
@@ -171,6 +173,8 @@ export class OrdersService {
     }
     if (forCancel) {
       conditions.push(`p.status = 0`);
+      //TODO: delete this hardcoded db name and use the one from env variable, but first make sure to test it in a safe environment 
+      db = 'passve_A';
     }
 
     const whereClause = `WHERE ${conditions.join(' AND ')}`;
@@ -219,14 +223,14 @@ export class OrdersService {
       porc_desc,
       r.tipo_imp,
       al.des_sub
-    FROM pedidos p
-    LEFT JOIN clientes c ON p.co_cli = c.co_cli
-    LEFT JOIN zona z ON c.co_zon = z.co_zon
-    LEFT JOIN vendedor v ON p.co_ven = v.co_ven
-    LEFT JOIN reng_ped r ON p.fact_num = r.fact_num
-    LEFT JOIN art a ON r.co_art = a.co_art
-    LEFT JOIN condicio co ON p.forma_pag = co.co_cond
-    LEFT JOIN almacenes al ON r.co_alma = al.co_sub
+    FROM   ${db}.dbo.pedidos p
+    LEFT JOIN ${db}.dbo.clientes c ON p.co_cli = c.co_cli
+    LEFT JOIN ${db}.dbo.zona z ON c.co_zon = z.co_zon
+    LEFT JOIN ${db}.dbo.vendedor v ON p.co_ven = v.co_ven
+    LEFT JOIN ${db}.dbo.reng_ped r ON p.fact_num = r.fact_num
+    LEFT JOIN ${db}.dbo.art a ON r.co_art = a.co_art
+    LEFT JOIN ${db}.dbo.condicio co ON p.forma_pag = co.co_cond
+    LEFT JOIN ${db}.dbo.almacenes al ON r.co_alma = al.co_sub
     ${whereClause}
     ORDER BY p.fact_num DESC, r.reng_num
   `) as RawPedidoRow[];
