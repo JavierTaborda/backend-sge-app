@@ -416,3 +416,50 @@ model ftdevolucion {
 
   dtdevolucion dtdevolucion @relation(fields: [devonum], references: [devonum])
 }
+model dtpredes {
+  prednum   Int     @default(0)
+  itemnum   Int     @db.MediumInt
+  pednum    Int     @default(0)
+  rennum    Int     @default(0)
+  codart    String  @db.VarChar(30)
+  compuesto Boolean @default(false)
+  manjser   Boolean @default(true)
+  codalma   String  @db.VarChar(6)
+  codbarra  String? @db.VarChar(30)
+  serial1   String  @db.VarChar(40)
+  refbarra  String? @db.VarChar(30)
+  recouser  Int     @default(1)
+
+  cbpredes  cbpredes @relation(fields: [prednum, pednum], references: [prednum, pednum])
+
+  @@id([pednum, serial1])
+} model cbpredes {
+  prednum   Int       @default(0)
+  pednum    Int       @default(0)
+  profite   Boolean   @default(false)
+  estatus   Boolean   @default(false)
+  fecemis   DateTime  @db.DateTime(0)
+  fecdesp   DateTime  @db.DateTime(0)
+  fecfinal  DateTime? @db.DateTime(0)
+  codcli    String    @db.VarChar(10)
+  codzon    String    @db.VarChar(6)
+  codven    String    @db.VarChar(6)
+  cantped   Int       @default(1)
+  cantreng  Int       @default(0)
+  cantdesp  Int       @default(0)
+  cantcarga Int       @default(0)
+  totneto   Decimal   @default(0.00) @db.Decimal(18, 2)
+  parcial   Boolean   @default(false)
+  compuesto Boolean   @default(false)
+  codtrans  String?   @db.VarChar(6)
+  codchofer Int       @default(0) @db.SmallInt
+  placa     String    @db.VarChar(10)
+  cerrado   Boolean   @default(false)
+  anulado   Boolean   @default(false)
+  proceso   Boolean   @default(false)
+  owneruser Int       @default(1)
+  dtpredes   dtpredes[]
+
+  @@id([prednum, pednum, fecdesp, codcli])
+  @@unique([prednum, pednum])
+}

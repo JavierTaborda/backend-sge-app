@@ -34,7 +34,7 @@ export class ReturnsService {
         // const platform = os.platform();
         // const homeDir = os.homedir();
         return process.env.IMAGES_ROUTE_DEVOLUCION || '';
-        
+
     }
 
     async getOrderByFactNumber(fact_number?: number) {
@@ -110,13 +110,18 @@ export class ReturnsService {
     }
     async getDataBySerial(serial: string): Promise<ReturnBySerialDto | null> {
 
+        const checkSerial = await this.checkSerial(serial);
+        if (checkSerial) {
+            throw new Error(`El serial ${serial} ya ha sido registrado en el sistema con la devolución número ${checkSerial.devonum}.`);
+        }
 
         const predes = await this.getPredesBySerial(serial);
-
-
+        let db = process.env.SQLSERVER_DATABASE;
+      
         if (predes == null) {
             return null;
         }
+     
         const order = await this.sql.pedidos.findFirst({
             where: {
                 fact_num: predes?.pednum,
@@ -165,8 +170,23 @@ export class ReturnsService {
         });
 
 
+
+        const factNumQuery = `WITH BusquedaDocumentos AS (
+            SELECT rf.fact_num AS Document, 1 AS Prioridad FROM ${db}.dbo.reng_nde rn
+            INNER JOIN ${db}.dbo.reng_fac rf ON rn.fact_num = rf.num_doc
+            WHERE rn.num_doc = ${predes?.pednum}
+            UNION ALL
+            SELECT fact_num AS Document, 2 AS Prioridad FROM ${db}.dbo.reng_nde
+            WHERE num_doc = ${predes?.pednum})
+            SELECT TOP 1 Document FROM BusquedaDocumentos ORDER BY Prioridad ASC, Document ASC;`;
+
+
+        const factNum = await this.sql.$queryRawUnsafe<{ Document: number }[]>(factNumQuery);
+
+
+
         const data: ReturnBySerialDto = {
-            fact_num: order?.fact_num ?? 0,
+            fact_num: factNum.length > 0 ? factNum[0].Document : 0,
             fecemis: order?.fec_emis as Date,
             fecdesp: predes?.cbpredes?.fecdesp as Date,
             codcli: predes.cbpredes?.codcli ?? '',
@@ -198,12 +218,7 @@ export class ReturnsService {
         }
 
         if (createDevolucionDto.serial1) {
-            const checkSerial = await this.mysql.cbdevolucion.findFirst({
-                where: {
-                    serial1: createDevolucionDto.serial1
-                }, select: { serial1: true, devonum: true }
-
-            });
+            const checkSerial = await this.checkSerial(createDevolucionDto.serial1);
 
             if (checkSerial) {
                 throw new Error(`El serial ${createDevolucionDto.serial1} ya ha sido registrado en el sistema con la devolución número ${checkSerial.devonum}.`);
@@ -313,7 +328,7 @@ export class ReturnsService {
             });
 
             return;
-        },{
+        }, {
             maxWait: 15000, //    
             timeout: 10000, // 
         });
@@ -322,7 +337,7 @@ export class ReturnsService {
 
 
     async getPredesBySerial(serial: string) {
-        const predes = await this.mysql.dtpredes.findFirst({
+        const predes = await this.test.dtpredes.findFirst({
             where: {
                 serial1: {
                     startsWith: serial
@@ -345,6 +360,17 @@ export class ReturnsService {
         }) as DtPredes;
 
         return predes;
+    }
+
+    async checkSerial(serial: string): Promise<{ serial1: string; devonum: number } | null> {
+        //TODO: change to mysql
+        const checkSerial = await this.test.cbdevolucion.findFirst({
+            where: {
+                serial1: serial
+            }, select: { serial1: true, devonum: true }
+
+        });
+        return checkSerial;
     }
 
     private async ensureDirectoryExists(directory: string) {
