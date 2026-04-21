@@ -61,7 +61,7 @@ export class OrdersController {
   }
 
   // PATCH /orders/cancel/:factNum
-  @Role('1', '2', '4', '5')
+  @Role( '2', '4', '5')
   @Patch('/cancel/:factNum/')
   async cancelPedido(
     @Param('factNum', ParseIntPipe) factNum: number,
