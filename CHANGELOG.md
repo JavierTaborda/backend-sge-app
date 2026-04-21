@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.6] - 2026-03-DD
+## [1.0.6] - 2026-04-DD
 
 ### Added
 
@@ -14,7 +14,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - updateGoals method in goals service module
-- update prisma and adapters to 7.5.0
+- update prisma and adapters to 7.7.0
 
 ### Fixed
 
