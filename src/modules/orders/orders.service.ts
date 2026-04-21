@@ -175,6 +175,7 @@ export class OrdersService {
       conditions.push(`p.status = 0`);
       //TODO: delete this hardcoded db name and use the one from env variable, but first make sure to test it in a safe environment 
       db = 'passve_A';
+
     }
 
     const whereClause = `WHERE ${conditions.join(' AND ')}`;
@@ -334,7 +335,7 @@ export class OrdersService {
       updateStockSQL += `\nUPDATE ${db}.dbo.art SET stock_com = stock_com - ${Number(r.total_art)} WHERE co_art = '${r.co_art}';`;
       updateStockSQL += `\nUPDATE ${db}.dbo.st_almac SET stock_com = stock_com - ${Number(r.total_art)} WHERE co_art = '${r.co_art}' AND co_alma = '${coAlma}';`;
     }
-    console.log('Generated SQL for canceling order:\n', updateOrderSQL, updateStockSQL);
+    // console.log('Generated SQL for canceling order:\n', updateOrderSQL, updateStockSQL);
 
     await this.sql.$transaction(async (tx) => {
       await tx.$executeRawUnsafe(updateOrderSQL, factNumber);
@@ -366,7 +367,7 @@ export class OrdersService {
   }
 
   async sendCancellationEmail(factNumber: number, sellerName: string) {
-    const to = ['jtaborda@cyberluxcom.ve'];
+    const to = ['jtaborda@cyberlux .com.ve'];
     const subject = `El vendedor ${sellerName} ha anulado el pedido # ${factNumber}`;
     const body = `
           <p>Se ha anulado el pedido <strong>#${factNumber}</strong>.</p>
