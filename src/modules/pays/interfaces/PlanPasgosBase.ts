@@ -45,7 +45,7 @@ export interface PlanPagosBase {
   empresapagadora?: string | null;
   pagado: boolean;
   bancopagador: string;
-  //TODO: check
+
   fechapagado?: Date | null;
 
   codigounico: number;

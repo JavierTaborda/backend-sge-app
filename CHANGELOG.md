@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.6] - 2026-04-DD
+## [1.0.6] - 2026-04-21
 
 ### Added
 
@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Add `resend` to send email
 - Add nodemailer to use SMTP
 - Add name user in JWT strategy
+- Send email when add order, return and cacel one
 
 ### Changed
 

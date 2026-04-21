@@ -173,8 +173,8 @@ export class OrdersService {
     }
     if (forCancel) {
       conditions.push(`p.status = 0`);
-      //TODO: delete this hardcoded db name and use the one from env variable, but first make sure to test it in a safe environment 
-      db = 'passve_A';
+      
+      //db = 'passve_A';
 
     }
 
@@ -296,7 +296,7 @@ export class OrdersService {
      * @returns true if the process was successful
      */
   async CancelOrder(factNumber: number): Promise<boolean> {
-    //const db = 'passve_A';
+
     const db = process.env.SQLSERVER_DATABASE;
     const warehouse = '0001  ';
 
@@ -345,15 +345,6 @@ export class OrdersService {
     });
 
 
-    // Notify via email
-    // const to = [
-    //     'villegaszuleyma@gmail.com',
-    //     'martinezcrismary@gmail.com',
-    //     'marqzrebeca@gmail.com',
-    //     'neivymatie@gmail.com',
-    //     'sgoldcheidt@hotmail.com',
-    //     'raymondcast75@gmail.com',
-    // ];
 
 
     setImmediate(async () => {
@@ -367,7 +358,17 @@ export class OrdersService {
   }
 
   async sendCancellationEmail(factNumber: number, sellerName: string) {
-    const to = ['jtaborda@cyberlux .com.ve'];
+
+    // Notify via email
+    const to = [
+        'villegaszuleyma@gmail.com',
+        'martinezcrismary@gmail.com',
+        'marqzrebeca@gmail.com',
+        'neivymatie@gmail.com',
+        'sgoldcheidt@hotmail.com',
+        'raymondcast75@gmail.com',
+    ];
+    //const to = ['jtaborda@cyberlux.com.ve'];
     const subject = `El vendedor ${sellerName} ha anulado el pedido # ${factNumber}`;
     const body = `
           <p>Se ha anulado el pedido <strong>#${factNumber}</strong>.</p>

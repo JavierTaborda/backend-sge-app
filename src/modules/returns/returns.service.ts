@@ -249,9 +249,7 @@ export class ReturnsService {
         let images: string[] = [];
 
 
-
-        //TODO: change to mysql
-        return await this.test.$transaction(async (tx) => {
+        return await this.mysql.$transaction(async (tx) => {
 
             // Separate header from detail
             const { dtdevolucion, rif, telefono, dirretiro, ...cabeceraData } = createDevolucionDto;
@@ -337,7 +335,7 @@ export class ReturnsService {
 
 
     async getPredesBySerial(serial: string) {
-        const predes = await this.test.dtpredes.findFirst({
+        const predes = await this.mysql.dtpredes.findFirst({
             where: {
                 serial1: {
                     startsWith: serial
@@ -363,8 +361,8 @@ export class ReturnsService {
     }
 
     async checkSerial(serial: string): Promise<{ serial1: string; devonum: number } | null> {
-        //TODO: change to mysql
-        const checkSerial = await this.test.cbdevolucion.findFirst({
+
+        const checkSerial = await this.mysql.cbdevolucion.findFirst({
             where: {
                 serial1: serial
             }, select: { serial1: true, devonum: true }

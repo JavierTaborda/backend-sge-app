@@ -209,7 +209,6 @@ export class CreateOrdersService {
             throw new BadRequestException('El código de vendedor (codven) es obligatorio para procesar el pedido.');
         }
 
-        //const db = 'passve_A';
         const db = process.env.SQLSERVER_DATABASE;
 
         const {

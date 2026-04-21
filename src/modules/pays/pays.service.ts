@@ -17,8 +17,6 @@ export class PaysService {
   constructor(
     private readonly sql: SQLServerPrismaService,
     private readonly mysql: MySQLPrismaService,
-
-    //private readonly mysql: TestMySQLPrismaService, //TODO:ChangetoMySql when the test end
   ) { }
 
   async getPendingDocs() {
