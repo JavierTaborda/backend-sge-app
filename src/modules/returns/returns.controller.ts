@@ -36,10 +36,11 @@ export class ReturnsController {
     async createReturn(
         @CurrentUser('codven') codven: string,
         @CurrentUser('nameUser') nameUser: string,
+        @CurrentUser('userid_sge') userid_sge: string,
         @Body() createDevolucionDto: CbDevolucionDto
     ) {
         
         //throw new Error("Error de prueba para verificar el manejo de errores en el frontend.");
-        return this.returnsService.createReturn(createDevolucionDto, codven, nameUser);
+        return this.returnsService.createReturn(createDevolucionDto, codven, nameUser, userid_sge);
     }
 }

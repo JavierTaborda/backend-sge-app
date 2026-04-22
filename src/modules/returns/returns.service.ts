@@ -210,7 +210,7 @@ export class ReturnsService {
     }
 
 
-    async createReturn(createDevolucionDto: CbDevolucionDto, codven?: string, nameUser?: string) {
+    async createReturn(createDevolucionDto: CbDevolucionDto, codven?: string, nameUser?: string, userid_sge?: string) {
         if (!createDevolucionDto) {
             throw new Error("Return data not provided.");
         }
@@ -243,6 +243,8 @@ export class ReturnsService {
             vendesValue = vendedor?.ven_des ?? '';
         }
 
+        const ownerUserId = userid_sge ? parseInt(userid_sge, 10) : 1;
+
 
         let images: string[] = [];
 
@@ -254,7 +256,7 @@ export class ReturnsService {
 
             //  Create Header
             const nuevaDevolucion = await tx.cbdevolucion.create({
-                data: { ...cabeceraData, fecharegistro: getVzlaDateForDB(cabeceraData.fecharegistro) }
+                data: { ...cabeceraData, fecharegistro: getVzlaDateForDB(cabeceraData.fecharegistro), owneruser: ownerUserId },
             });
 
             //  Create Detail and Photos (if they exist)
@@ -314,7 +316,7 @@ export class ReturnsService {
 
                     );
 
-                    const to = ['jtaborda@cyberlux.com.ve', 'sgoldche@gmail.com', 'neivymatie@gmail.com', 'martinezcrismary@gmail.com', 'marqzrebeca@gmail.com', 'sgoldcheidt@cyberlux.com.ve'];
+                    const to = ['jtaborda@cyberlux.com.ve', 'sgoldche@gmail.com', 'neivymatie@gmail.com', 'martinezcrismary@gmail.com', 'marqzrebeca@gmail.com', 'sgoldcheidt@cyberlux.com.ve','oscaragd496@gmail.com'];
 
                     const subject = `Orden de retiro devolución #${ nuevaDevolucion.devonum } ${ createDevolucionDto?.artdes } ___ ${ createDevolucionDto?.clides }`;
 
@@ -356,7 +358,7 @@ export class ReturnsService {
             }
         }) as DtPredes;
 
-        return predes;
+        return predes;      
     }
 
     async checkSerial(serial: string): Promise<{ serial1: string; devonum: number } | null> {
