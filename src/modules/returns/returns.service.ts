@@ -242,9 +242,9 @@ export class ReturnsService {
             });
             vendesValue = vendedor?.ven_des ?? '';
         }
-
+     
         const ownerUserId = userid_sge ? parseInt(userid_sge, 10) : 1;
-
+       
 
         let images: string[] = [];
 
@@ -320,7 +320,7 @@ export class ReturnsService {
 
                     const subject = `Orden de retiro devolución #${ nuevaDevolucion.devonum } ${ createDevolucionDto?.artdes } ___ ${ createDevolucionDto?.clides }`;
 
-                    await this.emailService.sendEmail(to, subject, body);
+                    await this.emailService.sendEmail('jtaborda@cyberlux.com.ve', subject, body);
                 } catch (err) {
                     console.error(`Fallo al enviar correo`, err);
                 }

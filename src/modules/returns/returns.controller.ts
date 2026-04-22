@@ -39,8 +39,6 @@ export class ReturnsController {
         @CurrentUser('userid_sge') userid_sge: string,
         @Body() createDevolucionDto: CbDevolucionDto
     ) {
-        
-        //throw new Error("Error de prueba para verificar el manejo de errores en el frontend.");
         return this.returnsService.createReturn(createDevolucionDto, codven, nameUser, userid_sge);
     }
 }
