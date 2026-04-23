@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.6] - 2026-04-21
+## [1.0.6] - 2026-04-23
 
 ### Added
 
@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Send email when add order, return and cacel one
 - Added HTTP security headers via helmet.
 - Added rate limiting using @nestjs/throttler (60 requests / 60s per IP).
+- Added ServeStaticModule to save images in server for SGE
 
 ### Changed
 
