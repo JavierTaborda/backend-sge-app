@@ -11,6 +11,8 @@ All notable changes to this project will be documented in this file.
 - Add nodemailer to use SMTP
 - Add name user in JWT strategy
 - Send email when add order, return and cacel one
+- Added HTTP security headers via helmet.
+- Added rate limiting using @nestjs/throttler (60 requests / 60s per IP).
 
 ### Changed
 

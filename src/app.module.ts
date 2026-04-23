@@ -13,11 +13,22 @@ import { VendorsModule } from './modules/vendors/vendors.module';
 import { WarehousesModule } from './modules/warehouses/warehouses.module';
 import { ZonesModule } from './modules/zones/zones.module';
 
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { AuthModule } from './auth/auth.module';
 import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
-
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 60000,
+          limit: 60,
+        },
+      ],
+    }),
+    AuthModule,
     ServeStaticModule.forRoot({
 
       rootPath: process.env.IMAGES_ROUTE, // route in project
@@ -29,6 +40,10 @@ import { EmailModule } from './email/email.module';
     }),
     EmailModule,
     VendorsModule, OrdersModule, ZonesModule, CustomersModule, ProductsModule, IsOnlineModule, WarehousesModule, GoalsModule, CreateOrdersModule, ReturnsModule, PaysModule],
+    providers: [
+      { provide: APP_GUARD, useClass: ThrottlerGuard },
+      //{ provide: APP_GUARD, useClass: JwtAuthGuard },
+    ],
 
 
 })

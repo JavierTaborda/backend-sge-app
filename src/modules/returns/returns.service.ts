@@ -320,7 +320,7 @@ export class ReturnsService {
 
                     const subject = `Orden de retiro devolución #${ nuevaDevolucion.devonum } ${ createDevolucionDto?.artdes } ___ ${ createDevolucionDto?.clides }`;
 
-                    await this.emailService.sendEmail('jtaborda@cyberlux.com.ve', subject, body);
+                    await this.emailService.sendEmail(to, subject, body);
                 } catch (err) {
                     console.error(`Fallo al enviar correo`, err);
                 }
