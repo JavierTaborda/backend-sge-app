@@ -35,6 +35,23 @@ export class ReturnsService {
 
     }
 
+    private async getZoneDescription(codzon?: string | null): Promise<string> {
+        if (!codzon) {
+            return '';
+        }
+
+        const zone = await this.mysql.clzonas.findFirst({
+            where: {
+                codzon
+            },
+            select: {
+                zondes: true
+            }
+        });
+
+        return zone?.zondes ?? '';
+    }
+
     async getOrderByFactNumber(fact_number?: number) {
 
         if (!fact_number) {
@@ -115,11 +132,11 @@ export class ReturnsService {
 
         const predes = await this.getPredesBySerial(serial);
         let db = process.env.SQLSERVER_DATABASE;
-      
+
         if (predes == null) {
             return null;
         }
-     
+
         const order = await this.sql.pedidos.findFirst({
             where: {
                 fact_num: predes?.pednum,
@@ -158,14 +175,7 @@ export class ReturnsService {
 
             }
         });
-        const zone = await this.mysql.clzonas.findFirst({
-            where: {
-                codzon: predes?.cbpredes?.codzon ?? ''
-            },
-            select: {
-                zondes: true
-            }
-        });
+        const zoneDescription = await this.getZoneDescription(predes?.cbpredes?.codzon);
 
 
 
@@ -201,7 +211,7 @@ export class ReturnsService {
             dir_ent2: order?.cliente?.dir_ent2 ?? '',
             prednum: predes.prednum,
             pednum: predes.pednum,
-            zondes: zone?.zondes ?? '',
+            zondes: zoneDescription,
             codzon: predes?.cbpredes?.codzon ?? ''
 
         }
@@ -228,12 +238,76 @@ export class ReturnsService {
         // Get seller data (Outside the transaction to avoid locking tables)
 
         let vendesValue = '', finalCodVen = '';
-
-        if (createDevolucionDto.dtdevolucion.codven && createDevolucionDto.dtdevolucion.vendes) {
+  
+        if (createDevolucionDto.dtdevolucion.codven && createDevolucionDto.dtdevolucion.codven != 'N/A'
+            && createDevolucionDto.dtdevolucion.vendes) {
             finalCodVen = createDevolucionDto.dtdevolucion.codven.trim();
             vendesValue = createDevolucionDto.dtdevolucion.vendes.trim();
-        }
-        else {
+        } else if (!createDevolucionDto.dtdevolucion.vendes && createDevolucionDto.factnum) {
+            const db = process.env.SQLSERVER_DATABASE;
+            const factNum = Number(createDevolucionDto.factnum);
+
+            if (!Number.isNaN(factNum) && db) {
+
+                const pedNumQuery = `
+                WITH BusquedaPedidos AS (
+                SELECT rn.num_doc AS Document, 1 AS Prioridad
+                FROM ${db}.dbo.reng_nde rn
+                INNER JOIN ${db}.dbo.reng_fac rf ON rn.fact_num = rf.num_doc
+                WHERE rf.fact_num = ${factNum}
+                UNION ALL
+                SELECT num_doc AS Document, 2 AS Prioridad
+                FROM ${db}.dbo.reng_nde
+                WHERE fact_num = ${factNum}
+                )
+                SELECT TOP 1 Document 
+                FROM BusquedaPedidos
+                ORDER BY Prioridad ASC, Document ASC;
+            `;
+                const pedResult = await this.sql.$queryRawUnsafe<{ Document: number }[]>(pedNumQuery);
+                const pednum = pedResult.length > 0 ? pedResult[0].Document : 0;
+
+
+                if (pednum > 0) {
+                    const pedido = await this.sql.pedidos.findFirst({
+                        where: { fact_num: pednum },
+                        select: {
+                            co_ven: true,
+                            vendedor: { select: { ven_des: true } }
+                        }
+                    });
+
+                    if (pedido?.co_ven) {
+                        finalCodVen = pedido.co_ven.trim();
+                        vendesValue = pedido.vendedor?.ven_des?.trim() ?? '';
+                    }
+             
+                    const dispatchQuery = `SELECT d.pednum, d.prednum, fecdesp AS fechadespacho, codzon
+                    FROM dtpredes d 
+                    LEFT JOIN cbpredes c ON c.prednum = d.prednum 
+                    WHERE d.pednum = ${pednum} LIMIT 1;`;
+
+                    const dispatch = await this.mysql.$queryRawUnsafe<{ pednum: number; prednum: number; fechadespacho: string; codzon: string }[]>(dispatchQuery);
+
+                    const zoneDescription = await this.getZoneDescription(dispatch?.[0]?.codzon ?? '');
+
+                    createDevolucionDto.dtdevolucion.pednum = pednum;
+                    createDevolucionDto.dtdevolucion.fechadespacho = dispatch?.[0]?.fechadespacho ??  ''  ;
+                    createDevolucionDto.dtdevolucion.tiempofactura = DateUtils.getElapsedTimeText(dispatch?.[0]?.fechadespacho ?? new Date(), new Date());
+                    createDevolucionDto.dtdevolucion.prednum = dispatch?.[0]?.prednum ?? 0;
+                    createDevolucionDto.dtdevolucion.codzon = dispatch?.[0]?.codzon ?? '';
+                    createDevolucionDto.dtdevolucion.zondes = zoneDescription;
+
+                }
+
+           
+            }
+
+      
+            if (!finalCodVen && createDevolucionDto.dtdevolucion.codven) {
+                finalCodVen = createDevolucionDto.dtdevolucion.codven.trim();
+            }
+        } else {
             finalCodVen = codven ? codven : ''
 
             const vendedor = await this.sql.vendedor.findFirst({
@@ -242,9 +316,9 @@ export class ReturnsService {
             });
             vendesValue = vendedor?.ven_des ?? '';
         }
-     
+
         const ownerUserId = userid_sge ? parseInt(userid_sge, 10) : 1;
-       
+
 
         let images: string[] = [];
 
@@ -318,7 +392,7 @@ export class ReturnsService {
 
                     const to = ['jtaborda@cyberlux.com.ve', 'sgoldche@gmail.com', 'neivymatie@gmail.com', 'martinezcrismary@gmail.com', 'marqzrebeca@gmail.com', 'sgoldcheidt@cyberlux.com.ve','oscaragd496@gmail.com'];
 
-                    const subject = `Orden de retiro devolución #${ nuevaDevolucion.devonum } ${ createDevolucionDto?.artdes } ___ ${ createDevolucionDto?.clides }`;
+                    const subject = `Orden de retiro devolución #${nuevaDevolucion.devonum} ${createDevolucionDto?.artdes} ___ ${createDevolucionDto?.clides}`;
 
                     await this.emailService.sendEmail(to, subject, body);
                 } catch (err) {
@@ -328,8 +402,8 @@ export class ReturnsService {
 
             return;
         }, {
-            maxWait: 15000, //    
-            timeout: 10000, // 
+            maxWait: 15000,
+            timeout: 10000,
         });
     }
 
@@ -358,7 +432,7 @@ export class ReturnsService {
             }
         }) as DtPredes;
 
-        return predes;      
+        return predes;
     }
 
     async checkSerial(serial: string): Promise<{ serial1: string; devonum: number } | null> {
@@ -423,7 +497,7 @@ export class ReturnsService {
 
         return motives;
     }
-    
+
     /**
       * Construye el cuerpo y los attachments para el correo de nota de retiro.
       * @param devol Objeto con los datos de la devolución
@@ -512,6 +586,6 @@ export class ReturnsService {
 
         return body;
     }
- 
+
 
 }
