@@ -140,62 +140,7 @@ export class ReturnsService {
 
 
         // Get seller data (Outside the transaction to avoid locking tables)
-
-        let vendesValue = '', finalCodVen = '';
-
-        if (createDevolucionDto.dtdevolucion.codven && createDevolucionDto.dtdevolucion.codven != 'N/A'
-            && createDevolucionDto.dtdevolucion.vendes) {
-            finalCodVen = createDevolucionDto.dtdevolucion.codven.trim();
-            vendesValue = createDevolucionDto.dtdevolucion.vendes.trim();
-        } else if (!createDevolucionDto.dtdevolucion.vendes && createDevolucionDto.factnum) {
-            const pednum = await this.getPednumByFactNumber(createDevolucionDto.factnum);
-
-
-            if (pednum > 0) {
-                const pedido = await this.sql.pedidos.findFirst({
-                    where: { fact_num: pednum },
-                    select: {
-                        co_ven: true,
-                        vendedor: { select: { ven_des: true } }
-                    }
-                });
-
-                if (pedido?.co_ven) {
-                    finalCodVen = pedido.co_ven.trim();
-                    vendesValue = pedido.vendedor?.ven_des?.trim() ?? '';
-                }
-
-                const dispatchQuery = `SELECT d.pednum, d.prednum, fecdesp AS fechadespacho, codzon
-                    FROM dtpredes d 
-                    LEFT JOIN cbpredes c ON c.prednum = d.prednum 
-                    WHERE d.pednum = ${pednum} LIMIT 1;`;
-
-                const dispatch = await this.mysql.$queryRawUnsafe<{ pednum: number; prednum: number; fechadespacho: string; codzon: string }[]>(dispatchQuery);
-
-                const zoneDescription = await this.getZoneDescription(dispatch?.[0]?.codzon ?? '');
-
-                createDevolucionDto.dtdevolucion.pednum = pednum;
-                createDevolucionDto.dtdevolucion.fechadespacho = dispatch?.[0]?.fechadespacho ?? '';
-                createDevolucionDto.dtdevolucion.tiempofactura = DateUtils.getElapsedTimeText(dispatch?.[0]?.fechadespacho ?? new Date(), new Date());
-                createDevolucionDto.dtdevolucion.prednum = dispatch?.[0]?.prednum ?? 0;
-                createDevolucionDto.dtdevolucion.codzon = dispatch?.[0]?.codzon ?? '';
-                createDevolucionDto.dtdevolucion.zondes = zoneDescription;
-
-            }
-
-
-            if (!finalCodVen && createDevolucionDto.dtdevolucion.codven) {
-                finalCodVen = createDevolucionDto.dtdevolucion.codven.trim();
-            }
-        } else {
-            finalCodVen = codven ? codven : ''
-
-            const vendedor = await this.sql.vendedor.findFirst({
-                select: { ven_des: true },
-                where: { co_ven: finalCodVen ? { startsWith: finalCodVen } : undefined }
-            });
-            vendesValue = vendedor?.ven_des ?? '';
-        }
+        const { finalCodVen, vendesValue } = await this.resolveSellerData(createDevolucionDto, codven);
 
         const ownerUserId = userid_sge ? parseInt(userid_sge, 10) : 1;
 
@@ -270,11 +215,11 @@ export class ReturnsService {
 
                     );
 
-                    const to = ['jtaborda@cyberlux.com.ve', 'sgoldche@gmail.com', 'neivymatie@gmail.com', 'martinezcrismary@gmail.com', 'marqzrebeca@gmail.com', 'sgoldcheidt@cyberlux.com.ve', 'oscaragd496@gmail.com'];
+                    const to = ['jtaborda@cyberlux.com.ve', 'neivymatie@gmail.com', 'martinezcrismary@gmail.com', 'marqzrebeca@gmail.com', 'sgoldcheidt@cyberlux.com.ve', 'oscaragd496@gmail.com'];
 
                     const subject = `Orden de retiro devolución #${nuevaDevolucion.devonum} ${createDevolucionDto?.artdes} ___ ${createDevolucionDto?.clides}`;
 
-                    await this.emailService.sendEmail('jtaborda@cyberlux.com.ve', subject, body);
+                    await this.emailService.sendEmail(to, subject, body);
                 } catch (err) {
                     console.error(`Fallo al enviar correo`, err);
                 }
@@ -341,7 +286,7 @@ export class ReturnsService {
             }
         });
 
-        return zone?.zondes ?? '';
+        return zone?.zondes?.trim() ?? '';
     }
 
     private async getFactNumberByPednum(pednum?: number | null): Promise<number> {
@@ -489,6 +434,95 @@ export class ReturnsService {
                 codbarra: true
             }
         });
+    }
+
+    private async getSellerByPednum(pednum: number) {
+        return this.sql.pedidos.findFirst({
+            where: { fact_num: pednum },
+            select: {
+                co_ven: true,
+                vendedor: { select: { ven_des: true } }
+            }
+        });
+    }
+
+    private async getDispatchByPednum(pednum: number): Promise<{ pednum: number; prednum: number; fechadespacho: string; codzon: string } | null> {
+        const dispatchQuery = `SELECT d.pednum, d.prednum, fecdesp AS fechadespacho, codzon
+            FROM dtpredes d
+            LEFT JOIN cbpredes c ON c.prednum = d.prednum
+            WHERE d.pednum = ${pednum} LIMIT 1;`;
+
+        const dispatch = await this.mysql.$queryRawUnsafe<{ pednum: number; prednum: number; fechadespacho: string; codzon: string }[]>(dispatchQuery);
+
+        return dispatch?.[0] ?? null;
+    }
+
+    private async getSellerDescriptionByCode(codven?: string): Promise<string> {
+        if (!codven) {
+            return '';
+        }
+
+        const vendedor = await this.sql.vendedor.findFirst({
+            select: { ven_des: true },
+            where: { co_ven: { startsWith: codven } }
+        });
+
+        return vendedor?.ven_des ?? '';
+    }
+
+    private async applyDispatchDataToDto(createDevolucionDto: CbDevolucionDto, pednum: number): Promise<void> {
+        const dispatch = await this.getDispatchByPednum(pednum);
+        const zoneDescription = await this.getZoneDescription(dispatch?.codzon ?? '');
+
+        createDevolucionDto.dtdevolucion.pednum = pednum;
+        createDevolucionDto.dtdevolucion.fechadespacho = dispatch?.fechadespacho ?? '';
+        createDevolucionDto.dtdevolucion.tiempofactura = DateUtils.getElapsedTimeText(dispatch?.fechadespacho ?? new Date(), new Date());
+        createDevolucionDto.dtdevolucion.prednum = dispatch?.prednum ?? 0;
+        createDevolucionDto.dtdevolucion.codzon = dispatch?.codzon ?? '';
+        createDevolucionDto.dtdevolucion.zondes = zoneDescription;
+    }
+
+    private async resolveSellerData(createDevolucionDto: CbDevolucionDto, codven?: string): Promise<{ finalCodVen: string; vendesValue: string }> {
+        const dt = createDevolucionDto.dtdevolucion;
+        let finalCodVen = '';
+        let vendesValue = '';
+
+        if (!dt) {
+            finalCodVen = codven ?? '';
+            vendesValue = await this.getSellerDescriptionByCode(finalCodVen);
+            return { finalCodVen, vendesValue };
+        }
+
+        if (dt.codven && dt.codven !== 'N/A' && dt.vendes) {
+            finalCodVen = dt.codven;
+            vendesValue = dt.vendes;
+            return { finalCodVen, vendesValue };
+        }
+
+        if (!dt.vendes && createDevolucionDto.factnum) {
+            const pednum = await this.getPednumByFactNumber(createDevolucionDto.factnum);
+
+            if (pednum > 0) {
+                const pedido = await this.getSellerByPednum(pednum);
+
+                if (pedido?.co_ven) {
+                    finalCodVen = pedido.co_ven.trim();
+                    vendesValue = pedido.vendedor?.ven_des?.trim() ?? '';
+                }
+
+                await this.applyDispatchDataToDto(createDevolucionDto, pednum);
+            }
+
+            if (!finalCodVen && dt.codven) {
+                finalCodVen = dt.codven.trim();
+            }
+
+            return { finalCodVen, vendesValue };
+        }
+
+        finalCodVen = codven ?? '';
+        vendesValue = await this.getSellerDescriptionByCode(finalCodVen);
+        return { finalCodVen, vendesValue };
     }
 
     async getMotives() {
