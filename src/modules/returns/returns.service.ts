@@ -1,6 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { mkdir, writeFile } from 'fs/promises';
-import path from 'path';
 import { MySQLPrismaService } from 'src/database/mysql.service';
 import { SQLServerPrismaService } from 'src/database/sqlserver.service';
 import { EmailService } from 'src/email/email.service';
@@ -11,114 +9,71 @@ import { CbDevolucionDto } from './dtos/create-devolucion.dto';
 import { MotiveItemDto } from './dtos/motive.dto';
 import { ReturnByFactDto } from './dtos/returnbyfact.dts';
 import { ReturnBySerialDto } from './dtos/returnbyserial.dto';
+import { ReturnsEmailTemplateService } from './returns-email-template.service';
+import { ReturnsImageStorageService } from './returns-image-storage.service';
 import { CodMotives } from './types/CodMotives';
 import { DtPredes } from './types/dtpredes';
 
 
 @Injectable()
 export class ReturnsService {
-    private readonly baseDir: string;
-
     constructor(
         private readonly sql: SQLServerPrismaService,
         private readonly mysql: MySQLPrismaService,
         private readonly emailService: EmailService,
-    ) {
-        this.baseDir = this.getBaseDirectory();
-    }
+        private readonly returnsImageStorageService: ReturnsImageStorageService,
+        private readonly returnsEmailTemplateService: ReturnsEmailTemplateService,
+    ) { }
 
-
-    private getBaseDirectory(): string {
-        // const platform = os.platform();
-        // const homeDir = os.homedir();
-        return process.env.IMAGES_ROUTE_DEVOLUCION || '';
-
-    }
-
-    private async getZoneDescription(codzon?: string | null): Promise<string> {
-        if (!codzon) {
-            return '';
-        }
-
-        const zone = await this.mysql.clzonas.findFirst({
-            where: {
-                codzon
-            },
-            select: {
-                zondes: true
-            }
-        });
-
-        return zone?.zondes ?? '';
-    }
 
     async getOrderByFactNumber(fact_number?: number) {
 
         if (!fact_number) {
             throw new Error("fact_number is required to fetch the order.");
         }
-        const order = await this.sql.pedidos.findUnique({
-            where: {
-                fact_num: fact_number,
-            },
-            select: {
-                fact_num: true,
-                fec_emis: true,
-                co_cli: true,
-                co_ven: true,
-                reng_ped: {
-                    select: {
-                        co_art: true,
-                        art: {
-                            select: {
-                                art_des: true
-                            }
-                        }
-                    },
 
-                },
-                cliente: {
-                    select: {
-                        cli_des: true
-                    },
-                },
-                vendedor: {
-                    select: {
-                        ven_des: true
-                    }
-                }
-            },
-        });
+        const pedNumber = await this.getPednumByFactNumber(fact_number);
+
+        if (pedNumber === 0) {
+            return null;
+        }
 
 
+        const order = await this.getOrder(pedNumber);
         if (!order) {
             return null;
         }
 
-        const barcodes = await this.mysql.mtarticulos.findMany({
-            where: {
-                codart: { in: order.reng_ped.map(r => r.co_art ?? '') }
-            },
-            select: {
-                codart: true,
-                codbarra: true
-            }
-        });
+        const cbpredes = await this.getCbpredesByPednum(pedNumber);
+        const zoneDescription = await this.getZoneDescription(cbpredes?.codzon);
+        const barcodes = await this.getBarcodesByArticles(order.reng_ped.map(r => r.co_art));
 
         const result: ReturnByFactDto = {
-            fact_num: order?.fact_num ?? 0,
+            fact_num: fact_number,
             fecemis: order?.fec_emis as Date,
-            codcli: order?.co_cli ?? '',
+            codcli: order?.cliente?.co_cli ?? '',
             clides: order?.cliente?.cli_des ?? '',
-            codven: order?.co_ven ?? '',
+            codven: order?.vendedor?.co_ven ?? '',
             vendes: order?.vendedor?.ven_des ?? '',
+
             art: (order?.reng_ped ?? []).map(r => ({
                 co_art: r.co_art?.trim() ?? '',
                 art_des: r.art?.art_des?.trim() ?? '',
                 codbarra: barcodes.find(b => b.codart === r.co_art)?.codbarra ?? ''
-            }))
+            })),
+  
+             rif : order?.cliente?.rif ?? '',
+             telefonos : order?.cliente?.telefonos ?? '',
+             email : order?.cliente?.email ?? '',
+             dir_ent2 : order?.cliente?.dir_ent2 ?? '',
+             prednum : cbpredes?.prednum ?? 0,
+             pednum : cbpredes?.pednum ?? 0,
+             zondes: zoneDescription,
+             codzon: cbpredes?.codzon ?? '',
+                fecdesp: cbpredes?.fecdesp as Date,
 
-        }
+        }      
+           
 
         return result;
 
@@ -131,70 +86,19 @@ export class ReturnsService {
         }
 
         const predes = await this.getPredesBySerial(serial);
-        let db = process.env.SQLSERVER_DATABASE;
 
         if (predes == null) {
             return null;
         }
 
-        const order = await this.sql.pedidos.findFirst({
-            where: {
-                fact_num: predes?.pednum,
-            },
-            select: {
-                fact_num: true,
-                fec_emis: true,
-
-                reng_ped: {
-                    where: {
-                        co_art: predes?.codart
-                    },
-                    select: {
-                        co_art: true,
-                        art: {
-                            select: {
-                                art_des: true
-                            }
-                        }
-                    }
-                },
-                cliente: {
-                    select: {
-                        cli_des: true,
-                        dir_ent2: true,
-                        telefonos: true,
-                        email: true,
-                        rif: true
-                    }
-                },
-                vendedor: {
-                    select: {
-                        ven_des: true
-                    }
-                },
-
-            }
-        });
+        const order = await this.getOrder(predes?.pednum, predes?.codart);
         const zoneDescription = await this.getZoneDescription(predes?.cbpredes?.codzon);
-
-
-
-        const factNumQuery = `WITH BusquedaDocumentos AS (
-            SELECT rf.fact_num AS Document, 1 AS Prioridad FROM ${db}.dbo.reng_nde rn
-            INNER JOIN ${db}.dbo.reng_fac rf ON rn.fact_num = rf.num_doc
-            WHERE rn.num_doc = ${predes?.pednum}
-            UNION ALL
-            SELECT fact_num AS Document, 2 AS Prioridad FROM ${db}.dbo.reng_nde
-            WHERE num_doc = ${predes?.pednum})
-            SELECT TOP 1 Document FROM BusquedaDocumentos ORDER BY Prioridad ASC, Document ASC;`;
-
-
-        const factNum = await this.sql.$queryRawUnsafe<{ Document: number }[]>(factNumQuery);
+        const factNum = await this.getFactNumberByPednum(predes?.pednum);
 
 
 
         const data: ReturnBySerialDto = {
-            fact_num: factNum.length > 0 ? factNum[0].Document : 0,
+            fact_num: factNum,
             fecemis: order?.fec_emis as Date,
             fecdesp: predes?.cbpredes?.fecdesp as Date,
             codcli: predes.cbpredes?.codcli ?? '',
@@ -238,72 +142,48 @@ export class ReturnsService {
         // Get seller data (Outside the transaction to avoid locking tables)
 
         let vendesValue = '', finalCodVen = '';
-  
+
         if (createDevolucionDto.dtdevolucion.codven && createDevolucionDto.dtdevolucion.codven != 'N/A'
             && createDevolucionDto.dtdevolucion.vendes) {
             finalCodVen = createDevolucionDto.dtdevolucion.codven.trim();
             vendesValue = createDevolucionDto.dtdevolucion.vendes.trim();
         } else if (!createDevolucionDto.dtdevolucion.vendes && createDevolucionDto.factnum) {
-            const db = process.env.SQLSERVER_DATABASE;
-            const factNum = Number(createDevolucionDto.factnum);
-
-            if (!Number.isNaN(factNum) && db) {
-
-                const pedNumQuery = `
-                WITH BusquedaPedidos AS (
-                SELECT rn.num_doc AS Document, 1 AS Prioridad
-                FROM ${db}.dbo.reng_nde rn
-                INNER JOIN ${db}.dbo.reng_fac rf ON rn.fact_num = rf.num_doc
-                WHERE rf.fact_num = ${factNum}
-                UNION ALL
-                SELECT num_doc AS Document, 2 AS Prioridad
-                FROM ${db}.dbo.reng_nde
-                WHERE fact_num = ${factNum}
-                )
-                SELECT TOP 1 Document 
-                FROM BusquedaPedidos
-                ORDER BY Prioridad ASC, Document ASC;
-            `;
-                const pedResult = await this.sql.$queryRawUnsafe<{ Document: number }[]>(pedNumQuery);
-                const pednum = pedResult.length > 0 ? pedResult[0].Document : 0;
+            const pednum = await this.getPednumByFactNumber(createDevolucionDto.factnum);
 
 
-                if (pednum > 0) {
-                    const pedido = await this.sql.pedidos.findFirst({
-                        where: { fact_num: pednum },
-                        select: {
-                            co_ven: true,
-                            vendedor: { select: { ven_des: true } }
-                        }
-                    });
-
-                    if (pedido?.co_ven) {
-                        finalCodVen = pedido.co_ven.trim();
-                        vendesValue = pedido.vendedor?.ven_des?.trim() ?? '';
+            if (pednum > 0) {
+                const pedido = await this.sql.pedidos.findFirst({
+                    where: { fact_num: pednum },
+                    select: {
+                        co_ven: true,
+                        vendedor: { select: { ven_des: true } }
                     }
-             
-                    const dispatchQuery = `SELECT d.pednum, d.prednum, fecdesp AS fechadespacho, codzon
+                });
+
+                if (pedido?.co_ven) {
+                    finalCodVen = pedido.co_ven.trim();
+                    vendesValue = pedido.vendedor?.ven_des?.trim() ?? '';
+                }
+
+                const dispatchQuery = `SELECT d.pednum, d.prednum, fecdesp AS fechadespacho, codzon
                     FROM dtpredes d 
                     LEFT JOIN cbpredes c ON c.prednum = d.prednum 
                     WHERE d.pednum = ${pednum} LIMIT 1;`;
 
-                    const dispatch = await this.mysql.$queryRawUnsafe<{ pednum: number; prednum: number; fechadespacho: string; codzon: string }[]>(dispatchQuery);
+                const dispatch = await this.mysql.$queryRawUnsafe<{ pednum: number; prednum: number; fechadespacho: string; codzon: string }[]>(dispatchQuery);
 
-                    const zoneDescription = await this.getZoneDescription(dispatch?.[0]?.codzon ?? '');
+                const zoneDescription = await this.getZoneDescription(dispatch?.[0]?.codzon ?? '');
 
-                    createDevolucionDto.dtdevolucion.pednum = pednum;
-                    createDevolucionDto.dtdevolucion.fechadespacho = dispatch?.[0]?.fechadespacho ??  ''  ;
-                    createDevolucionDto.dtdevolucion.tiempofactura = DateUtils.getElapsedTimeText(dispatch?.[0]?.fechadespacho ?? new Date(), new Date());
-                    createDevolucionDto.dtdevolucion.prednum = dispatch?.[0]?.prednum ?? 0;
-                    createDevolucionDto.dtdevolucion.codzon = dispatch?.[0]?.codzon ?? '';
-                    createDevolucionDto.dtdevolucion.zondes = zoneDescription;
+                createDevolucionDto.dtdevolucion.pednum = pednum;
+                createDevolucionDto.dtdevolucion.fechadespacho = dispatch?.[0]?.fechadespacho ?? '';
+                createDevolucionDto.dtdevolucion.tiempofactura = DateUtils.getElapsedTimeText(dispatch?.[0]?.fechadespacho ?? new Date(), new Date());
+                createDevolucionDto.dtdevolucion.prednum = dispatch?.[0]?.prednum ?? 0;
+                createDevolucionDto.dtdevolucion.codzon = dispatch?.[0]?.codzon ?? '';
+                createDevolucionDto.dtdevolucion.zondes = zoneDescription;
 
-                }
-
-           
             }
 
-      
+
             if (!finalCodVen && createDevolucionDto.dtdevolucion.codven) {
                 finalCodVen = createDevolucionDto.dtdevolucion.codven.trim();
             }
@@ -349,7 +229,7 @@ export class ReturnsService {
                         try {
 
 
-                            const savedPath = await this.downloadWebpImage(url);
+                            const savedPath = await this.returnsImageStorageService.downloadWebpImage(url);
                             dtdevolucion.ftdevolucion[field] = savedPath;
                         } catch (error) {
                             throw new Error(`Failed to process image for ${field}: ${error instanceof Error ? error.message : String(error)}`);
@@ -381,7 +261,7 @@ export class ReturnsService {
             }
             setImmediate(async () => {
                 try {
-                    const body = await this.buildCollectionNoteEmail(
+                    const body = this.returnsEmailTemplateService.buildCollectionNoteEmail(
                         nuevaDevolucion,
                         images,
                         rif || '',
@@ -390,11 +270,11 @@ export class ReturnsService {
 
                     );
 
-                    const to = ['jtaborda@cyberlux.com.ve', 'sgoldche@gmail.com', 'neivymatie@gmail.com', 'martinezcrismary@gmail.com', 'marqzrebeca@gmail.com', 'sgoldcheidt@cyberlux.com.ve','oscaragd496@gmail.com'];
+                    const to = ['jtaborda@cyberlux.com.ve', 'sgoldche@gmail.com', 'neivymatie@gmail.com', 'martinezcrismary@gmail.com', 'marqzrebeca@gmail.com', 'sgoldcheidt@cyberlux.com.ve', 'oscaragd496@gmail.com'];
 
                     const subject = `Orden de retiro devolución #${nuevaDevolucion.devonum} ${createDevolucionDto?.artdes} ___ ${createDevolucionDto?.clides}`;
 
-                    await this.emailService.sendEmail(to, subject, body);
+                    await this.emailService.sendEmail('jtaborda@cyberlux.com.ve', subject, body);
                 } catch (err) {
                     console.error(`Fallo al enviar correo`, err);
                 }
@@ -446,37 +326,170 @@ export class ReturnsService {
         return checkSerial;
     }
 
-    private async ensureDirectoryExists(directory: string) {
-        await mkdir(directory, { recursive: true });
+
+    private async getZoneDescription(codzon?: string | null): Promise<string> {
+        if (!codzon) {
+            return '';
+        }
+
+        const zone = await this.mysql.clzonas.findFirst({
+            where: {
+                codzon
+            },
+            select: {
+                zondes: true
+            }
+        });
+
+        return zone?.zondes ?? '';
     }
 
-    async downloadWebpImage(url: string, customDirectory?: string): Promise<string> {
-        if (!url) {
-            throw new Error('Image URL not provided.');
+    private async getFactNumberByPednum(pednum?: number | null): Promise<number> {
+        const db = process.env.SQLSERVER_DATABASE;
+        const pednumValue = Number(pednum);
+
+        if (!db || Number.isNaN(pednumValue) || pednumValue <= 0) {
+            return 0;
         }
 
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`Failed to download image ${url}: ${response.status} ${response.statusText}`);
-        }
+        const factNumQuery = `WITH BusquedaDocumentos AS (
+            SELECT rf.fact_num AS Document, 1 AS Prioridad FROM ${db}.dbo.reng_nde rn
+            INNER JOIN ${db}.dbo.reng_fac rf ON rn.fact_num = rf.num_doc
+            WHERE rn.num_doc = ${pednumValue}
+            UNION ALL
+            SELECT fact_num AS Document, 2 AS Prioridad FROM ${db}.dbo.reng_nde
+            WHERE num_doc = ${pednumValue})
+            SELECT TOP 1 Document FROM BusquedaDocumentos ORDER BY Prioridad ASC, Document ASC;`;
 
-        const buffer = Buffer.from(await response.arrayBuffer());
+        const factNumResult = await this.sql.$queryRawUnsafe<{ Document: number }[]>(factNumQuery);
 
-        const directory = this.baseDir;
-        await this.ensureDirectoryExists(directory);
-
-        const urlObj = new URL(url);
-        const pathname = urlObj.pathname;
-        let filename = path.basename(pathname);
-        if (!filename.endsWith('.webp')) {
-            filename += '.webp';
-        }
-        const filePath = path.join(directory, filename);
-        await writeFile(filePath, buffer);
-        return filename;
+        return factNumResult.length > 0 ? factNumResult[0].Document : 0;
     }
 
+    private async getPednumByFactNumber(factnum?: number | string | null): Promise<number> {
+        const db = process.env.SQLSERVER_DATABASE;
+        const factNumValue = Number(factnum);
 
+        if (!db || Number.isNaN(factNumValue) || factNumValue <= 0) {
+            return 0;
+        }
+
+
+
+        const pedNumQuery = `
+            WITH BusquedaPedidos AS (
+            SELECT rn.num_doc AS Document, 1 AS Prioridad
+            FROM ${db}.dbo.reng_nde rn
+            INNER JOIN ${db}.dbo.reng_fac rf ON rn.fact_num = rf.num_doc
+            WHERE rf.fact_num = ${factNumValue}
+            UNION ALL
+            SELECT num_doc AS Document, 2 AS Prioridad
+            FROM ${db}.dbo.reng_nde
+            WHERE fact_num = ${factNumValue}
+            )
+            SELECT TOP 1 Document 
+            FROM BusquedaPedidos
+            ORDER BY Prioridad ASC, Document ASC;
+        `;
+
+        const pedResult = await this.sql.$queryRawUnsafe<{ Document: number }[]>(pedNumQuery);
+
+        return pedResult.length > 0 ? pedResult[0].Document : 0;
+    }
+
+    private async getOrder(pednum?: number | null, codart?: string | null) {
+        const pednumValue = Number(pednum);
+
+        if (Number.isNaN(pednumValue) || pednumValue <= 0) {
+            return null;
+        }
+
+        return this.sql.pedidos.findFirst({
+            where: {
+                fact_num: pednumValue,
+            },
+            select: {
+                fact_num: true,
+                fec_emis: true,
+
+                reng_ped: {
+                    where: {
+                        co_art: codart ?? undefined
+                    },
+                    select: {
+                        co_art: true,
+                        art: {
+                            select: {
+                                art_des: true
+                            }
+                        }
+                    }
+                },
+                cliente: {
+                    select: {
+                        cli_des: true,
+                        dir_ent2: true,
+                        telefonos: true,
+                        email: true,
+                        rif: true,
+                        co_cli: true,
+                    }
+                },
+                vendedor: {
+                    select: {
+                        ven_des: true,
+                        co_ven: true,
+                    }
+                },
+
+            }
+        });
+    }
+
+    private async getCbpredesByPednum(pednum?: number | null) {
+        const pednumValue = Number(pednum);
+
+        if (Number.isNaN(pednumValue) || pednumValue <= 0) {
+            return null;
+        }
+
+        return this.mysql.cbpredes.findFirst({
+            where: {
+                pednum: pednumValue
+            },
+            select: {
+                codzon: true,
+                codcli: true,
+                fecdesp: true,
+                fecemis: true,
+                pednum: true,
+                prednum: true,
+
+            }
+        });
+    }
+
+    private async getBarcodesByArticles(articles: Array<string | null>): Promise<Array<{ codart: string; codbarra: string | null }>> {
+
+
+        const codes = articles
+            .map(article => article?.trim() ?? '')
+            .filter(code => code.length > 0);
+
+        if (codes.length === 0) {
+            return [];
+        }
+
+        return this.mysql.mtarticulos.findMany({
+            where: {
+                codart: { in: codes }
+            },
+            select: {
+                codart: true,
+                codbarra: true
+            }
+        });
+    }
 
     async getMotives() {
 
@@ -497,95 +510,5 @@ export class ReturnsService {
 
         return motives;
     }
-
-    /**
-      * Construye el cuerpo y los attachments para el correo de nota de retiro.
-      * @param devol Objeto con los datos de la devolución
-      * @param images Array con los nombres de las imágenes
-      * @param rif RIF del cliente
-      * @param dirretiro Dirección de retiro
-      * @param telefono Teléfono de contacto
-      */
-
-    async buildCollectionNoteEmail(
-        devol: any,
-        images: string[],
-        rif: string,
-        dirretiro: string,
-        telefono: string
-    ): Promise<string> {
-
-        const {
-            clides,
-            codart,
-            artdes,
-            serial1,
-            factnum,
-            motivo,
-            codcli,
-            obsregistro,
-            registradopor,
-            fecharegistro,
-        } = devol;
-
-        const fechaStr = fecharegistro instanceof Date
-            ? fecharegistro.toLocaleDateString()
-            : fecharegistro;
-
-        const fotosHtml = images.length > 0
-            ? images.map(url =>
-                `<img src="${url}" style='max-width: 200px; height: 200px; border: 1px solid #ccc;' />`
-            ).join('')
-            : '';
-
-        const body = `
-        <hr>
-        <p>Se requiere gestionar el retiro del siguiente art&iacute;culo en la tienda del cliente &nbsp;<b><i>${clides}</i></b></p>
-        <p>RIF &nbsp;<b><i>${rif}</i></b></p>
-        <p>C&Oacute;DIGO &nbsp;<b><i>${codcli}</i></b></p>
-        <p>DIRECCI&Oacute;N &nbsp;<b><i>${dirretiro}</i></b></p>
-        <p>TEL&Eacute;FONO &nbsp;<b><i>${telefono}</i></b></p>
-        <br><br>
-
-        <div style='text-align: center;'>
-          <table style='margin: 0 auto; border-collapse: collapse; width: 90%; font-family: Arial, sans-serif;' border='1' cellpadding='5'>
-            <thead style='background-color: #f2f2f2;'>
-              <tr>
-                <th style='width: 8%;'>CODIGO</th>
-                <th style='width: 20%; word-wrap: break-word;'>DESCRIPCI&Oacute;N ART&iacute;CULO</th>
-                <th style='width: 8%;'>No. FACTURA</th>
-                <th style='width: 8%;'>CANTIDAD</th>
-                <th style='width: 10%;'>SERIAL</th>
-                <th style='width: 15%;'>MOTIVO</th>
-                <th style='width: 15%;'>OBSERVACI&Oacute;N</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td align='center'>${codart}</td>
-                <td align='left' style='word-wrap: break-word;'>${artdes}</td>
-                <td align='center'>${factnum}</td>
-                <td align='center'>1</td>
-                <td align='center'>${serial1}</td>
-                <td align='center'>${motivo}</td>
-                <td style='word-wrap: break-word;'>${obsregistro}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div style='margin-top: 20px; text-align: center;'>
-            <p><b>Evidencia Fotogr&aacute;fica:</b></p>
-            ${fotosHtml}
-        </div>
-
-        <br><br>
-        <p>Registrado por: &nbsp;<b>${registradopor}</b><br>
-        Fecha registro: &nbsp;<b>${fechaStr}</b></p>
-    `;
-
-        return body;
-    }
-
 
 }
