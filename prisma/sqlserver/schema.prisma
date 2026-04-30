@@ -232,6 +232,8 @@ model art {
   //manual 
   cat_art  cat_art?   @relation(fields: [co_cat], references: [co_cat])
   reng_ped reng_ped[]
+  // reng_nde reng_nde[]
+  // reng_fac reng_fac[]
 }
 model cat_art {
   co_cat    String   @id @db.Char(6)
@@ -443,6 +445,8 @@ model pedidos {
   telefono   String?    @db.VarChar(60)
   //Add raltion manual
   reng_ped   reng_ped[]
+  // reng_nde   reng_nde[]
+  // reng_fac   reng_fac[]
   cliente    clientes?  @relation(fields: [co_cli], references: [co_cli])
   vendedor   vendedor?  @relation(fields: [co_ven], references: [co_ven])
 }
@@ -499,6 +503,125 @@ model reng_ped {
 
   @@id([fact_num, reng_num], map: "reng_ped_reng_ped")
 }
+
+model reng_nde {
+  fact_num   Int
+  reng_num   Int
+  dis_cen    String?   @db.Text
+  tipo_doc   String?   @db.Char(1)
+  reng_doc   Int?
+  num_doc    Int?
+  co_art     String?   @db.Char(30)
+  co_alma    String?   @db.Char(6)
+  total_art  Decimal?  @db.Decimal(18, 5)
+  stotal_art Decimal?  @db.Decimal(18, 5)
+  pendiente  Decimal?  @db.Decimal(18, 5)
+  uni_venta  String?   @db.Char(6)
+  prec_vta   Decimal?  @db.Decimal(18, 5)
+  porc_desc  String?   @db.Char(15)
+  tipo_imp   String?   @db.Char(1)
+  reng_neto  Decimal?  @db.Decimal(18, 2)
+  cos_pro_un Decimal?  @db.Decimal(18, 5)
+  ult_cos_un Decimal?  @db.Decimal(18, 5)
+  ult_cos_om Decimal?  @db.Decimal(18, 5)
+  cos_pro_om Decimal?  @db.Decimal(18, 5)
+  total_dev  Decimal?  @db.Decimal(18, 5)
+  monto_dev  Decimal?  @db.Decimal(18, 5)
+  prec_vta2  Decimal?  @db.Decimal(18, 5)
+  anulado    Boolean?
+  des_art    String?   @db.Text
+  seleccion  Boolean?
+  cant_imp   Decimal?  @db.Decimal(18, 5)
+  comentario String?   @db.Text
+  rowguid    String?   @unique(map: "index_826486023") @db.UniqueIdentifier
+  total_uni  Decimal?  @db.Decimal(18, 5)
+  mon_ilc    Decimal?  @db.Decimal(18, 5)
+  otros      Decimal?  @db.Decimal(18, 5)
+  nro_lote   String?   @db.Char(20)
+  fec_lote   DateTime? @db.SmallDateTime
+  pendiente2 Decimal?  @db.Decimal(18, 5)
+  tipo_doc2  String?   @db.Char(1)
+  reng_doc2  Int?
+  num_doc2   Int?
+  co_alma2   String?   @db.Char(6)
+  aux01      Decimal?  @db.Decimal(18, 5)
+  aux02      String?   @db.VarChar(30)
+  cant_prod  Decimal?  @db.Decimal(18, 5)
+  imp_prod   Decimal?  @db.Decimal(18, 5)
+  //art    art?    @relation(fields: [co_art], references: [co_art])
+  //sub_alma   sub_alma? @relation(fields: [co_alma], references: [co_sub], onUpdate: NoAction, map: "FK_reng_nde_sub_alma")
+
+  @@id([fact_num, reng_num], map: "reng_nde_reng_nde")
+  @@index([fact_num], map: "fact_num")
+  @@index([co_alma], map: "ico_alma")
+  @@index([co_art], map: "ico_art")
+  @@index([fact_num, reng_num], map: "ifac_reng2")
+  @@index([reng_num], map: "reng_num")
+    //relation manual
+  //pedido pedidos @relation(fields: [fact_num], references: [fact_num])
+
+}
+model reng_fac {
+  fact_num   Int
+  reng_num   Int
+  dis_cen    String?   @db.Text
+  tipo_doc   String?   @db.Char(1)
+  reng_doc   Int?
+  num_doc    Int?
+  co_art     String?   @db.Char(30)
+  co_alma    String?   @db.Char(6)
+  total_art  Decimal?  @db.Decimal(18, 5)
+  stotal_art Decimal?  @db.Decimal(18, 5)
+  pendiente  Decimal?  @db.Decimal(18, 5)
+  uni_venta  String?   @db.Char(6)
+  prec_vta   Decimal?  @db.Decimal(18, 5)
+  porc_desc  String?   @db.Char(15)
+  tipo_imp   String?   @db.Char(1)
+  isv        Decimal?  @db.Decimal(18, 5)
+  reng_neto  Decimal?  @db.Decimal(18, 2)
+  cos_pro_un Decimal?  @db.Decimal(18, 5)
+  ult_cos_un Decimal?  @db.Decimal(18, 5)
+  ult_cos_om Decimal?  @db.Decimal(18, 5)
+  cos_pro_om Decimal?  @db.Decimal(18, 5)
+  total_dev  Decimal?  @db.Decimal(18, 5)
+  monto_dev  Decimal?  @db.Decimal(18, 5)
+  prec_vta2  Decimal?  @db.Decimal(18, 5)
+  anulado    Boolean?
+  des_art    String?   @db.Text
+  seleccion  Boolean?
+  cant_imp   Decimal?  @db.Decimal(18, 5)
+  comentario String?   @db.Text
+  rowguid    String?   @unique(map: "index_647009386") @db.UniqueIdentifier
+  total_uni  Decimal?  @db.Decimal(18, 5)
+  mon_ilc    Decimal?  @db.Decimal(18, 5)
+  otros      Decimal?  @db.Decimal(18, 5)
+  nro_lote   String?   @db.Char(20)
+  fec_lote   DateTime? @db.SmallDateTime
+  pendiente2 Decimal?  @db.Decimal(18, 5)
+  tipo_doc2  String?   @db.Char(1)
+  reng_doc2  Int?
+  num_doc2   Int?
+  tipo_prec  String?   @db.Char(1)
+  co_alma2   String?   @db.Char(6)
+  aux01      Decimal?  @db.Decimal(18, 5)
+  aux02      String?   @db.VarChar(30)
+  cant_prod  Decimal?  @db.Decimal(18, 5)
+  imp_prod   Decimal?  @db.Decimal(18, 5)
+  //art        art?      @relation(fields: [co_art], references: [co_art])
+
+  @@id([fact_num, reng_num], map: "reng_fac_reng_fac")
+  @@index([fact_num], map: "fact_num")
+  @@index([co_alma], map: "ico_alma")
+  @@index([co_art], map: "ico_art")
+  @@index([fact_num, reng_num], map: "ifac_reng1")
+  @@index([reng_num], map: "reng_num")
+    //relation manual
+  //pedido pedidos @relation(fields: [fact_num], references: [fact_num])
+}
+
+
+
+
 model tab_enc {
   fecha      DateTime   @id
   tasa       Decimal

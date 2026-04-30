@@ -13,6 +13,7 @@ import { ReturnsEmailTemplateService } from './returns-email-template.service';
 import { ReturnsImageStorageService } from './returns-image-storage.service';
 import { CodMotives } from './types/CodMotives';
 import { DtPredes } from './types/dtpredes';
+import { OrderFacturaRow } from './types/OrderFacturaRaw';
 
 
 @Injectable()
@@ -39,7 +40,7 @@ export class ReturnsService {
         }
 
 
-        const order = await this.getOrder(pedNumber);
+        const order = await this.getOrderFactura(fact_number);
         if (!order) {
             return null;
         }
@@ -389,6 +390,93 @@ export class ReturnsService {
 
             }
         });
+    }
+
+    private async getOrderFactura(numdoc?: number | null) {
+        const db = process.env.SQLSERVER_DATABASE;
+        const numdocValue = Number(numdoc);
+
+        if (!db || Number.isNaN(numdocValue) || numdocValue <= 0) {
+            return null;
+        }
+
+        const orderQuery = `
+            SELECT r.fact_num,
+                CONVERT(VARCHAR(10), f.fec_emis, 120) AS fec_emis,
+                (SELECT TOP 1 n.num_doc FROM ${db}.dbo.reng_nde n WHERE n.fact_num = r.num_doc) AS pednum,
+                0 AS prednum,
+                NULL AS fechadespacho,
+                NULL AS fechadespachoXml,
+                TRIM(r.co_art) AS codart,
+                (SELECT TRIM(art_des) FROM ${db}.dbo.art WHERE art.co_art = r.co_art) AS artdes,
+                (SELECT TRIM(ref) FROM ${db}.dbo.art WHERE art.co_art = r.co_art) AS codbarra,
+                NULL AS serial1,
+                TRIM(f.co_cli) AS codcli,
+                (SELECT TRIM(cli_des) FROM ${db}.dbo.clientes WHERE clientes.co_cli = f.co_cli) AS clides,
+                TRIM(f.co_ven) AS codven,
+                (SELECT TRIM(ven_des) FROM ${db}.dbo.vendedor WHERE vendedor.co_ven = f.co_ven) AS vendes,
+                (SELECT TRIM(clientes.co_zon) FROM ${db}.dbo.clientes WHERE clientes.co_cli = f.co_cli) AS codzon,
+                (SELECT TRIM(zon_des) FROM ${db}.dbo.zona WHERE zona.co_zon =
+                    (SELECT TRIM(clientes.co_zon) FROM ${db}.dbo.clientes WHERE clientes.co_cli = f.co_cli)) AS zondes
+            FROM ${db}.dbo.reng_fac r
+            LEFT JOIN ${db}.dbo.factura f ON f.fact_num = r.fact_num
+            WHERE r.fact_num = ${numdocValue}
+
+            UNION ALL
+
+            SELECT r.fact_num,
+                CONVERT(VARCHAR(10), n.fec_emis, 120) AS fec_emis,
+                num_doc AS pednum,
+                0 AS prednum,
+                NULL AS fecdesp,
+                NULL AS fecdespXml,
+                TRIM(r.co_art) AS codart,
+                (SELECT TRIM(art_des) FROM ${db}.dbo.art WHERE co_art = r.co_art) AS artdes,
+                (SELECT TRIM(ref) FROM ${db}.dbo.art WHERE art.co_art = r.co_art) AS codbarra,
+                NULL AS serial1,
+                TRIM(n.co_cli) AS codcli,
+                (SELECT TRIM(cli_des) FROM ${db}.dbo.clientes WHERE clientes.co_cli = n.co_cli) AS clides,
+                TRIM(n.co_ven) AS codven,
+                (SELECT TRIM(ven_des) FROM ${db}.dbo.vendedor WHERE vendedor.co_ven = n.co_ven) AS vendes,
+                (SELECT TRIM(clientes.co_zon) FROM ${db}.dbo.clientes WHERE clientes.co_cli = n.co_cli) AS codzon,
+                (SELECT TRIM(zon_des) FROM ${db}.dbo.zona WHERE zona.co_zon =
+                    (SELECT TRIM(clientes.co_zon) FROM ${db}.dbo.clientes WHERE clientes.co_cli = n.co_cli)) AS zondes
+            FROM ${db}.dbo.reng_nde r
+            LEFT JOIN ${db}.dbo.not_ent n ON n.fact_num = r.fact_num
+            WHERE r.fact_num = ${numdocValue};
+        `;
+
+
+        const rows = await this.sql.$queryRawUnsafe<OrderFacturaRow[]>(orderQuery);
+
+        if (!rows?.length) {
+            return null;
+        }
+
+        const first = rows[0];
+
+        return {
+            fact_num: first.fact_num,
+            fec_emis: first.fec_emis ? new Date(first.fec_emis) : null,
+            reng_ped: rows.map((r) => ({
+                co_art: r.codart,
+                art: {
+                    art_des: r.artdes,
+                },
+            })),
+            cliente: {
+                co_cli: first.codcli ?? '',
+                cli_des: first.clides,
+                dir_ent2: null,
+                telefonos: null,
+                email: null,
+                rif: null,
+            },
+            vendedor: {
+                co_ven: first.codven ?? '',
+                ven_des: first.vendes,
+            },
+        };
     }
 
     private async getCbpredesByPednum(pednum?: number | null) {
