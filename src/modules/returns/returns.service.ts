@@ -234,7 +234,8 @@ export class ReturnsService {
 
                     );
 
-                    const to = ['jtaborda@cyberlux.com.ve'];
+                    const to = ['jtaborda@cyberlux.com.ve', 'neivymatie@gmail.com', 'martinezcrismary@gmail.com', 'marqzrebeca@gmail.com', 'sgoldcheidt@cyberlux.com.ve', 'oscaragd496@gmail.com', 'servifrigilux3@gmail.com', 'servifrigilux2@gmail.com', 'servifrigilux1@gmail.com'];
+
 
                     const subject = `Orden de retiro devolución #${nuevaDevolucion.devonum} ${createDevolucionDto?.artdes} ___ ${createDevolucionDto?.clides}`;
 
