@@ -62,19 +62,19 @@ export class ReturnsService {
                 art_des: r.art?.art_des?.trim() ?? '',
                 codbarra: barcodes.find(b => b.codart === r.co_art)?.codbarra ?? ''
             })),
-  
-             rif : order?.cliente?.rif ?? '',
-             telefonos : order?.cliente?.telefonos ?? '',
-             email : order?.cliente?.email ?? '',
-             dir_ent2 : order?.cliente?.dir_ent2 ?? '',
-             prednum : cbpredes?.prednum ?? 0,
-             pednum : cbpredes?.pednum ?? 0,
-             zondes: zoneDescription,
-             codzon: cbpredes?.codzon ?? '',
-                fecdesp: cbpredes?.fecdesp as Date,
 
-        }      
-           
+            rif: order?.cliente?.rif ?? '',
+            telefonos: order?.cliente?.telefonos ?? '',
+            email: order?.cliente?.email ?? '',
+            dir_ent2: order?.cliente?.dir_ent2 ?? '',
+            prednum: cbpredes?.prednum ?? 0,
+            pednum: cbpredes?.pednum ?? 0,
+            zondes: zoneDescription,
+            codzon: cbpredes?.codzon ?? '',
+            fecdesp: cbpredes?.fecdesp as Date,
+
+        }
+
 
         return result;
 
@@ -185,6 +185,24 @@ export class ReturnsService {
 
                 const { ftdevolucion, devonum, pednum, ...datosRestantes } = dtdevolucion;
 
+                if (!dtdevolucion.zondes || !dtdevolucion.codzon) {
+                    const zoneDescription = await this.sql.clientes.findFirst({
+                        where: {
+                            co_cli: createDevolucionDto.codcli
+                        },
+                        select: {
+                            co_zon: true,
+
+                        }
+
+                    })
+
+
+                    datosRestantes.codzon = zoneDescription?.co_zon ?? '';
+                    datosRestantes.zondes = await this.getZoneDescription(datosRestantes.codzon);
+
+                }
+
                 await tx.dtdevolucion.create({
                     data: {
                         ...datosRestantes,
@@ -192,8 +210,8 @@ export class ReturnsService {
                         pednum: pednum || 0,             // Ensure numerical value
                         vendes: vendesValue,
                         codven: finalCodVen,
-                        tiempofactura: DateUtils.getElapsedTimeText(datosRestantes.fechadespacho, new Date()),
-                        fechadespacho: getVzlaDateForDB(new Date(datosRestantes.fechadespacho)),
+                        tiempofactura: datosRestantes.fechadespacho ? DateUtils.getElapsedTimeText(datosRestantes.fechadespacho, new Date()) : 'Sin fecha de despacho',
+                        fechadespacho: getVzlaDateForDB(new Date(datosRestantes.fechadespacho) || null),
 
 
                         ftdevolucion: ftdevolucion ? {
@@ -216,7 +234,7 @@ export class ReturnsService {
 
                     );
 
-                    const to = ['jtaborda@cyberlux.com.ve', 'neivymatie@gmail.com', 'martinezcrismary@gmail.com', 'marqzrebeca@gmail.com', 'sgoldcheidt@cyberlux.com.ve', 'oscaragd496@gmail.com'];
+                    const to = ['jtaborda@cyberlux.com.ve'];
 
                     const subject = `Orden de retiro devolución #${nuevaDevolucion.devonum} ${createDevolucionDto?.artdes} ___ ${createDevolucionDto?.clides}`;
 
@@ -283,7 +301,8 @@ export class ReturnsService {
                 codzon
             },
             select: {
-                zondes: true
+                zondes: true,
+
             }
         });
 
@@ -571,6 +590,7 @@ export class ReturnsService {
     }
 
     private async resolveSellerData(createDevolucionDto: CbDevolucionDto, codven?: string): Promise<{ finalCodVen: string; vendesValue: string }> {
+
         const dt = createDevolucionDto.dtdevolucion;
         let finalCodVen = '';
         let vendesValue = '';
@@ -606,6 +626,22 @@ export class ReturnsService {
             }
 
             return { finalCodVen, vendesValue };
+        }
+        if (!dt.codven || dt.codven === 'N/A' && createDevolucionDto.codcli) {
+            const client = await this.sql.clientes.findFirst({
+                where: {
+                    co_cli: createDevolucionDto.codcli
+                },
+                select: {
+                    co_ven: true
+                }
+            });
+            if (client?.co_ven) {
+                finalCodVen = client.co_ven.trim();
+                vendesValue = await this.getSellerDescriptionByCode(finalCodVen);
+                return { finalCodVen, vendesValue };
+            }
+
         }
 
         finalCodVen = codven ?? '';
