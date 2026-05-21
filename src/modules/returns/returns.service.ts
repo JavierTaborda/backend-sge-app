@@ -125,7 +125,9 @@ export class ReturnsService {
     }
 
 
-    async createReturn(createDevolucionDto: CbDevolucionDto, codven?: string, nameUser?: string, userid_sge?: string) {
+    async createReturn(createDevolucionDto: CbDevolucionDto, codven?: string, nameUser?: string, userid_sge?: string, email?: string) {
+
+        console.log("Received return creation request:", { createDevolucionDto, codven, nameUser, userid_sge, email });
         if (!createDevolucionDto) {
             throw new Error("Return data not provided.");
         }
@@ -234,7 +236,12 @@ export class ReturnsService {
 
                     );
 
-                    const to = ['jtaborda@cyberlux.com.ve', 'neivymatie@gmail.com', 'martinezcrismary@gmail.com', 'marqzrebeca@gmail.com', 'sgoldcheidt@cyberlux.com.ve', 'oscaragd496@gmail.com', 'servifrigilux3@gmail.com', 'servifrigilux2@gmail.com', 'servifrigilux1@gmail.com'];
+                    const to = ['neivymatie@gmail.com', 'martinezcrismary@gmail.com', 'marqzrebeca@gmail.com', 'oscaragd496@gmail.com', 'servifrigilux3@gmail.com', 'servifrigilux2@gmail.com', 'servifrigilux1@gmail.com'];
+
+
+                    if (email && !to.includes(email)) {
+                        to.push(email);
+                    }
 
 
                     const subject = `Orden de retiro devolución #${nuevaDevolucion.devonum} ${createDevolucionDto?.artdes} ___ ${createDevolucionDto?.clides}`;
@@ -421,28 +428,7 @@ export class ReturnsService {
         }
 
         const orderQuery = `
-            SELECT r.fact_num,
-                CONVERT(VARCHAR(10), f.fec_emis, 120) AS fec_emis,
-                (SELECT TOP 1 n.num_doc FROM ${db}.dbo.reng_nde n WHERE n.fact_num = r.num_doc) AS pednum,
-                0 AS prednum,
-                NULL AS fechadespacho,
-                NULL AS fechadespachoXml,
-                TRIM(r.co_art) AS codart,
-                (SELECT TRIM(art_des) FROM ${db}.dbo.art WHERE art.co_art = r.co_art) AS artdes,
-                (SELECT TRIM(ref) FROM ${db}.dbo.art WHERE art.co_art = r.co_art) AS codbarra,
-                NULL AS serial1,
-                TRIM(f.co_cli) AS codcli,
-                (SELECT TRIM(cli_des) FROM ${db}.dbo.clientes WHERE clientes.co_cli = f.co_cli) AS clides,
-                TRIM(f.co_ven) AS codven,
-                (SELECT TRIM(ven_des) FROM ${db}.dbo.vendedor WHERE vendedor.co_ven = f.co_ven) AS vendes,
-                (SELECT TRIM(clientes.co_zon) FROM ${db}.dbo.clientes WHERE clientes.co_cli = f.co_cli) AS codzon,
-                (SELECT TRIM(zon_des) FROM ${db}.dbo.zona WHERE zona.co_zon =
-                    (SELECT TRIM(clientes.co_zon) FROM ${db}.dbo.clientes WHERE clientes.co_cli = f.co_cli)) AS zondes
-            FROM ${db}.dbo.reng_fac r
-            LEFT JOIN ${db}.dbo.factura f ON f.fact_num = r.fact_num
-            WHERE r.fact_num = ${numdocValue}
-
-            UNION ALL
+          
 
             SELECT r.fact_num,
                 CONVERT(VARCHAR(10), n.fec_emis, 120) AS fec_emis,
@@ -463,6 +449,29 @@ export class ReturnsService {
                     (SELECT TRIM(clientes.co_zon) FROM ${db}.dbo.clientes WHERE clientes.co_cli = n.co_cli)) AS zondes
             FROM ${db}.dbo.reng_nde r
             LEFT JOIN ${db}.dbo.not_ent n ON n.fact_num = r.fact_num
+            WHERE r.fact_num = ${numdocValue}
+
+                UNION ALL    
+                   
+              SELECT r.fact_num,
+                CONVERT(VARCHAR(10), f.fec_emis, 120) AS fec_emis,
+                (SELECT TOP 1 n.num_doc FROM ${db}.dbo.reng_nde n WHERE n.fact_num = r.num_doc) AS pednum,
+                0 AS prednum,
+                NULL AS fechadespacho,
+                NULL AS fechadespachoXml,
+                TRIM(r.co_art) AS codart,
+                (SELECT TRIM(art_des) FROM ${db}.dbo.art WHERE art.co_art = r.co_art) AS artdes,
+                (SELECT TRIM(ref) FROM ${db}.dbo.art WHERE art.co_art = r.co_art) AS codbarra,
+                NULL AS serial1,
+                TRIM(f.co_cli) AS codcli,
+                (SELECT TRIM(cli_des) FROM ${db}.dbo.clientes WHERE clientes.co_cli = f.co_cli) AS clides,
+                TRIM(f.co_ven) AS codven,
+                (SELECT TRIM(ven_des) FROM ${db}.dbo.vendedor WHERE vendedor.co_ven = f.co_ven) AS vendes,
+                (SELECT TRIM(clientes.co_zon) FROM ${db}.dbo.clientes WHERE clientes.co_cli = f.co_cli) AS codzon,
+                (SELECT TRIM(zon_des) FROM ${db}.dbo.zona WHERE zona.co_zon =
+                    (SELECT TRIM(clientes.co_zon) FROM ${db}.dbo.clientes WHERE clientes.co_cli = f.co_cli)) AS zondes
+            FROM ${db}.dbo.reng_fac r
+            LEFT JOIN ${db}.dbo.factura f ON f.fact_num = r.fact_num
             WHERE r.fact_num = ${numdocValue};
         `;
 

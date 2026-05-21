@@ -36,9 +36,10 @@ export class ReturnsController {
     async createReturn(
         @CurrentUser('codven') codven: string,
         @CurrentUser('nameUser') nameUser: string,
+        @CurrentUser('email') email: string,
         @CurrentUser('userid_sge') userid_sge: string,
         @Body() createDevolucionDto: CbDevolucionDto
     ) {
-        return this.returnsService.createReturn(createDevolucionDto, codven, nameUser, userid_sge);
+        return this.returnsService.createReturn(createDevolucionDto, codven, nameUser, userid_sge, email);
     }
 }
