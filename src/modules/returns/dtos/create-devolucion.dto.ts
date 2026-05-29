@@ -79,6 +79,10 @@ export class CbDevolucionDto {
     @IsOptional()
     owneruser: number;
 
+    @IsInt()
+    @IsOptional()
+    cantidad: number;
+
     @IsOptional()
     dtdevolucion: dtdevolucion;
 

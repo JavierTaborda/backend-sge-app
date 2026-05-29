@@ -11,7 +11,6 @@ import { ReturnByFactDto } from './dtos/returnbyfact.dts';
 import { ReturnBySerialDto } from './dtos/returnbyserial.dto';
 import { ReturnsEmailTemplateService } from './returns-email-template.service';
 import { ReturnsImageStorageService } from './returns-image-storage.service';
-import { CodMotives } from './types/CodMotives';
 import { DtPredes } from './types/dtpredes';
 import { OrderFacturaRow } from './types/OrderFacturaRaw';
 
@@ -127,7 +126,7 @@ export class ReturnsService {
 
     async createReturn(createDevolucionDto: CbDevolucionDto, codven?: string, nameUser?: string, userid_sge?: string, email?: string) {
 
-        console.log("Received return creation request:", { createDevolucionDto, codven, nameUser, userid_sge, email });
+      
         if (!createDevolucionDto) {
             throw new Error("Return data not provided.");
         }
@@ -158,7 +157,12 @@ export class ReturnsService {
 
             //  Create Header
             const nuevaDevolucion = await tx.cbdevolucion.create({
-                data: { ...cabeceraData, fecharegistro: getVzlaDateForDB(cabeceraData.fecharegistro), owneruser: ownerUserId },
+                data: {
+                    ...cabeceraData,
+                    fecharegistro: getVzlaDateForDB(cabeceraData.fecharegistro),
+                    owneruser: ownerUserId,
+                    cantidad: createDevolucionDto.cantidad || 1,
+                },
             });
 
             //  Create Detail and Photos (if they exist)
@@ -238,6 +242,7 @@ export class ReturnsService {
 
                     const to = ['neivymatie@gmail.com', 'martinezcrismary@gmail.com', 'marqzrebeca@gmail.com', 'oscaragd496@gmail.com', 'servifrigilux3@gmail.com', 'servifrigilux2@gmail.com', 'servifrigilux1@gmail.com'];
 
+                    //const to = ['jtaborda@cyberlux.com.ve'];
 
                     if (email && !to.includes(email)) {
                         to.push(email);
@@ -490,7 +495,7 @@ export class ReturnsService {
             reng_ped: rows.map((r) => ({
                 co_art: r.codart,
                 art: {
-                    art_des: r.artdes,
+                    art_des: r.artdes,  
                 },
             })),
             cliente: {
@@ -659,24 +664,24 @@ export class ReturnsService {
         return { finalCodVen, vendesValue };
     }
 
-    async getMotives() {
+    // async getMotives(role?: string) {
 
-        const codmotives: CodMotives[] = [
-            "DAÑADO",
-            "GARANTIA",
-            "NO SOLICITADO",
-            "GOLPEADO",
-            "REPONER",
-            "CAMBIO X CAMBIO",
-            "EXCEDENTE"
-        ];
+       
+   
 
-        const motives: MotiveItemDto[] = codmotives.map((codmotive, index) => ({
-            id: index + 1,
-            codmotive
+    async getMotives(role?: string) {
+
+        const dbMotives = await this.mysql.clmotivo.findMany();
+
+        let motives: MotiveItemDto[] = dbMotives.map((motivo, index) => ({
+            id: Number(motivo.codmoti), 
+            codmotive: motivo.desmoti.trim(),
         }));
+        if (role === '4' || role === '5' || role === '1') {
+            motives = motives.filter(m=> m.codmotive.toLowerCase() !== 'garantia' && m.codmotive.toLowerCase() !== 'reponer' && m.codmotive.toLowerCase() !== 'cambio x cambio');
+        }
 
         return motives;
-    }
+     }
 
 }

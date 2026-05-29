@@ -85,31 +85,31 @@ model cbplanpagos {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model cbpredes {
-  prednum   Int       @default(0)
-  pednum    Int       @default(0)
-  profite   Boolean   @default(false)
-  estatus   Boolean   @default(false)
-  fecemis   DateTime  @db.DateTime(0)
-  fecdesp   DateTime  @db.DateTime(0)
-  fecfinal  DateTime? @db.DateTime(0)
-  codcli    String    @db.VarChar(10)
-  codzon    String    @db.VarChar(6)
-  codven    String    @db.VarChar(6)
-  cantped   Int       @default(1)
-  cantreng  Int       @default(0)
-  cantdesp  Int       @default(0)
-  cantcarga Int       @default(0)
-  totneto   Decimal   @default(0.00) @db.Decimal(18, 2)
-  parcial   Boolean   @default(false)
-  compuesto Boolean   @default(false)
-  codtrans  String?   @db.VarChar(6)
-  codchofer Int       @default(0) @db.SmallInt
-  placa     String    @db.VarChar(10)
-  cerrado   Boolean   @default(false)
-  anulado   Boolean   @default(false)
-  proceso   Boolean   @default(false)
-  owneruser Int       @default(1)
-  dtpredes   dtpredes[]
+  prednum   Int        @default(0)
+  pednum    Int        @default(0)
+  profite   Boolean    @default(false)
+  estatus   Boolean    @default(false)
+  fecemis   DateTime   @db.DateTime(0)
+  fecdesp   DateTime   @db.DateTime(0)
+  fecfinal  DateTime?  @db.DateTime(0)
+  codcli    String     @db.VarChar(10)
+  codzon    String     @db.VarChar(6)
+  codven    String     @db.VarChar(6)
+  cantped   Int        @default(1)
+  cantreng  Int        @default(0)
+  cantdesp  Int        @default(0)
+  cantcarga Int        @default(0)
+  totneto   Decimal    @default(0.00) @db.Decimal(18, 2)
+  parcial   Boolean    @default(false)
+  compuesto Boolean    @default(false)
+  codtrans  String?    @db.VarChar(6)
+  codchofer Int        @default(0) @db.SmallInt
+  placa     String     @db.VarChar(10)
+  cerrado   Boolean    @default(false)
+  anulado   Boolean    @default(false)
+  proceso   Boolean    @default(false)
+  owneruser Int        @default(1)
+  dtpredes  dtpredes[]
 
   @@id([prednum, pednum, fecdesp, codcli])
   @@unique([prednum, pednum])
@@ -380,8 +380,6 @@ model ctdocumento {
   @@ignore
 }
 
-
-
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model dtplanpagos {
   planpagonumero     Int       @db.SmallInt
@@ -406,7 +404,7 @@ model dtplanpagos {
   fechaemision       DateTime  @db.Date
   fechavencimiento   DateTime  @db.Date
   fecharegistro      DateTime  @db.Date
-  numerofactura      String?    @default("0") @db.VarChar(15)
+  numerofactura      String?   @default("0") @db.VarChar(15)
   observacion        String?   @db.VarChar(120)
   tasacambio         Decimal   @db.Decimal(18, 2)
   moneda             String    @db.VarChar(6)
@@ -463,7 +461,7 @@ model dtpredes {
   refbarra  String? @db.VarChar(30)
   recouser  Int     @default(1)
 
-  cbpredes  cbpredes @relation(fields: [prednum, pednum], references: [prednum, pednum])
+  cbpredes cbpredes @relation(fields: [prednum, pednum], references: [prednum, pednum])
 
   @@id([pednum, serial1])
 }
@@ -500,7 +498,7 @@ model hsplanpagos {
   fechavencimiento   DateTime @db.Date
   fecharegistro      DateTime @db.Date
   registradopor      String   @db.Char(30)
-  numerofactura      String?    @default("0") @db.VarChar(15)
+  numerofactura      String?  @default("0") @db.VarChar(15)
   observacion        String?  @db.VarChar(120)
   tasacambio         Decimal  @default(1.00) @db.Decimal(18, 2)
   moneda             String   @db.VarChar(6)
@@ -726,64 +724,65 @@ model mtprofitart {
 }
 
 model cbdevolucion {
-  devonum        Int      @id @default(autoincrement())
-  motivo         String   @db.VarChar(40)
-  estatus        String   @default("1") @db.Char(1)
-  anulada        String   @default("0") @db.Char(1)
-  cerrada        String   @default("0") @db.Char(1)
-  codcli         String   @db.VarChar(6)
-  clides         String   @db.VarChar(100)
-  codart         String   @db.Char(30)
-  artdes         String   @db.VarChar(120)
-  codbarra       String?  @db.VarChar(30)
-  serial1        String   @db.VarChar(40)
-  factnum        Int      @default(0)
-  registradopor  String   @db.Char(30)
-  fecharegistro  DateTime
-  obsregistro    String?  @db.VarChar(255)
-  linkproforma   String?  @db.VarChar(60)
-  owneruser      Int      @default(1)
+  devonum       Int      @id @default(autoincrement())
+  motivo        String   @db.VarChar(40)
+  estatus       String   @default("1") @db.Char(1)
+  anulada       String   @default("0") @db.Char(1)
+  cerrada       String   @default("0") @db.Char(1)
+  codcli        String   @db.VarChar(6)
+  clides        String   @db.VarChar(100)
+  codart        String   @db.Char(30)
+  artdes        String   @db.VarChar(120)
+  codbarra      String?  @db.VarChar(30)
+  serial1       String   @db.VarChar(40)
+  cantidad      Int      @default(1)
+  factnum       Int      @default(0)
+  registradopor String   @db.Char(30)
+  fecharegistro DateTime
+  obsregistro   String?  @db.VarChar(255)
+  linkproforma  String?  @db.VarChar(60)
+  owneruser     Int      @default(1)
 
-  dtdevolucion   dtdevolucion?
+  dtdevolucion dtdevolucion?
 }
 
 model dtdevolucion {
-  devonum        Int      @id
+  devonum Int @id
 
-  prednum        Int      @default(0)
-  fechadespacho  DateTime?
-  pednum         Int      @default(0)
-  codven         String   @db.VarChar(6)
-  vendes         String   @db.VarChar(60)
-  codzon         String?  @db.VarChar(6)
-  zondes         String?  @db.VarChar(60)
-  recibidopor    String?  @db.Char(30)
-  fecharecibido  DateTime?
-  obsrecibido    String?  @db.VarChar(255)
-  chofer         String?  @db.VarChar(40)
-  placa          String?  @db.VarChar(10)
-  chofer2         String?  @db.VarChar(40)
-  placa2          String?  @db.VarChar(10)
-  revisionpor    String?  @db.Char(30)
-  fecharevision  DateTime?
-  obsrevision    String?  @db.VarChar(255)
-  enviorevision  String   @default("0") @db.Char(1)
-  tecnicopor     String?  @db.Char(30)
-  fechatecnico   DateTime?
-  obstecnico     String?  @db.VarChar(255)
-  enviotecnico   String   @default("0") @db.Char(1)
-  almacenpor     String?  @db.Char(30)
-  fechaalmacen   DateTime?
-  obsalmacen     String?  @db.VarChar(255)
-  envioalmacen   String   @default("0") @db.Char(1)
-  tiempofactura  String?  @db.VarChar(100)
+  prednum       Int       @default(0)
+  fechadespacho DateTime?
+  pednum        Int       @default(0)
+  codven        String    @db.VarChar(6)
+  vendes        String    @db.VarChar(60)
+  codzon        String?   @db.VarChar(6)
+  zondes        String?   @db.VarChar(60)
+  recibidopor   String?   @db.Char(30)
+  fecharecibido DateTime?
+  obsrecibido   String?   @db.VarChar(255)
+  chofer        String?   @db.VarChar(40)
+  placa         String?   @db.VarChar(10)
+  chofer2       String?   @db.VarChar(40)
+  placa2        String?   @db.VarChar(10)
+  revisionpor   String?   @db.Char(30)
+  fecharevision DateTime?
+  obsrevision   String?   @db.VarChar(255)
+  enviorevision String    @default("0") @db.Char(1)
+  tecnicopor    String?   @db.Char(30)
+  fechatecnico  DateTime?
+  obstecnico    String?   @db.VarChar(255)
+  enviotecnico  String    @default("0") @db.Char(1)
+  almacenpor    String?   @db.Char(30)
+  fechaalmacen  DateTime?
+  obsalmacen    String?   @db.VarChar(255)
+  envioalmacen  String    @default("0") @db.Char(1)
+  tiempofactura String?   @db.VarChar(100)
 
-  cbdevolucion   cbdevolucion @relation(fields: [devonum], references: [devonum])
-  ftdevolucion   ftdevolucion?
+  cbdevolucion cbdevolucion  @relation(fields: [devonum], references: [devonum])
+  ftdevolucion ftdevolucion?
 }
 
 model ftdevolucion {
-  devonum   Int   @id      
+  devonum    Int     @id
   namefoto1  String? @db.VarChar(100)
   namefoto2  String? @db.VarChar(100)
   namefoto3  String? @db.VarChar(100)
@@ -802,6 +801,11 @@ model ftdevolucion {
 
   dtdevolucion dtdevolucion @relation(fields: [devonum], references: [devonum])
 }
+model clmotivo {
+  codmoti String @id @db.Char(1)
+  desmoti String @db.VarChar(40)
+}
+
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model mvcajachica {
@@ -835,6 +839,7 @@ model mvcajachica {
 
   @@ignore
 }
+
 model mvplanpagos {
   planpagonumero     Int       @default(0) @db.SmallInt
   autorizadonumero   Int
@@ -858,7 +863,7 @@ model mvplanpagos {
   fechaemision       DateTime  @db.Date
   fechavencimiento   DateTime  @db.Date
   fecharegistro      DateTime  @db.Date
-  numerofactura      String?    @default("0") @db.VarChar(15)
+  numerofactura      String?   @default("0") @db.VarChar(15)
   observacion        String?   @db.VarChar(120)
   tasacambio         Decimal   @default(1.00) @db.Decimal(18, 2)
   moneda             String    @db.VarChar(6)

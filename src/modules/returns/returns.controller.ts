@@ -28,9 +28,10 @@ export class ReturnsController {
     }
     @Get('motives')
     async getMotives(
-
+        @CurrentUser('role') role: string,
     ) {
-        return this.returnsService.getMotives();
+        const result = await this.returnsService.getMotives(role); 
+        return result;
     }
     @Post()
     async createReturn(

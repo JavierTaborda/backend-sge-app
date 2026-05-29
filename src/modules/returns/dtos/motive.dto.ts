@@ -1,4 +1,3 @@
-import { CodMotives } from "../types/CodMotives";
 
 
 import {
@@ -8,7 +7,7 @@ import {
 
 export class MotiveItemDto {
     @IsNumber()
-    id: number;
+    id!: number;
 
-    codmotive: CodMotives;
-}
+    codmotive!: string;
+}      

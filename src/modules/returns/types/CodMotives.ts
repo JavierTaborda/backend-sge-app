@@ -1,2 +1,0 @@
-export type CodMotives = "DAÑADO" | "GARANTIA" | "NO SOLICITADO" | "GOLPEADO" | "REPONER" | "CAMBIO X CAMBIO" | "EXCEDENTE";
-
