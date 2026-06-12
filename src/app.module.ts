@@ -10,6 +10,7 @@ import { PaysModule } from './modules/pays/pays.module';
 import { ProductsModule } from './modules/products/products.module';
 import { ReturnsModule } from './modules/returns/returns.module';
 import { VendorsModule } from './modules/vendors/vendors.module';
+import { VeneluxModule } from './modules/venelux/venelux.module';
 import { WarehousesModule } from './modules/warehouses/warehouses.module';
 import { ZonesModule } from './modules/zones/zones.module';
 
@@ -39,7 +40,7 @@ import { EmailModule } from './email/email.module';
       serveRoot: '/',
     }),
     EmailModule,
-    VendorsModule, OrdersModule, ZonesModule, CustomersModule, ProductsModule, IsOnlineModule, WarehousesModule, GoalsModule, CreateOrdersModule, ReturnsModule, PaysModule],
+    VendorsModule, OrdersModule, ZonesModule, CustomersModule, ProductsModule, IsOnlineModule, WarehousesModule, GoalsModule, CreateOrdersModule, ReturnsModule, PaysModule, VeneluxModule],
     providers: [
       { provide: APP_GUARD, useClass: ThrottlerGuard },
       //{ provide: APP_GUARD, useClass: JwtAuthGuard },

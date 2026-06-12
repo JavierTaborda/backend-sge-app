@@ -82,35 +82,10 @@ model saArticulo {
   validador                                                          Unsupported("timestamp")
   rowguid                                                            String                     @unique(map: "UK_saArticulo_RowGuid") @default(dbgenerated("newid()"), map: "DF_saArticulo_rowguid") @db.UniqueIdentifier
   aux_imp01                                                          Decimal?                   @db.Decimal(18, 5)
-  pvArticuloExt                                                      pvArticuloExt?
-  saArtCaracteristica                                                saArtCaracteristica?
   saCatArticulo                                                      saCatArticulo              @relation(fields: [co_cat], references: [co_cat], onUpdate: NoAction, map: "FK_saArticulo_saCatArticulo")
-  saColor                                                            saColor                    @relation(fields: [co_color], references: [co_color], onUpdate: NoAction, map: "FK_saArticulo_saColor")
-  saConISLR                                                          saConISLR?                 @relation(fields: [co_reten], references: [co_islr], onDelete: NoAction, onUpdate: NoAction, map: "FK_saArticulo_saConISLR")
-  saProcedencia                                                      saProcedencia?             @relation(fields: [cod_proc], references: [cod_proc], onDelete: NoAction, onUpdate: NoAction, map: "FK_saArticulo_saProcedencia")
-  saProveedor                                                        saProveedor?               @relation(fields: [reten_iva_tercero], references: [co_prov], onDelete: NoAction, onUpdate: NoAction, map: "FK_saArticulo_saProveedor")
   saSubLinea                                                         saSubLinea                 @relation(fields: [co_lin, co_subl], references: [co_lin, co_subl], onUpdate: NoAction, map: "FK_saArticulo_saSubLinea")
-  saUbicacion                                                        saUbicacion                @relation(fields: [co_ubicacion], references: [co_ubicacion], onUpdate: NoAction, map: "FK_saArticulo_saUbicacion")
-  saArtImagen                                                        saArtImagen[]
-  saArtImportacion                                                   saArtImportacion[]
-  saArtMargen                                                        saArtMargen[]
   saArtPrecio                                                        saArtPrecio[]
-  saArtProveedorReng                                                 saArtProveedorReng[]
-  saArtRelacionadoReng_saArtRelacionadoReng_co_artTosaArticulo       saArtRelacionadoReng[]     @relation("saArtRelacionadoReng_co_artTosaArticulo")
-  saArtRelacionadoReng_saArtRelacionadoReng_cod_relacTosaArticulo    saArtRelacionadoReng[]     @relation("saArtRelacionadoReng_cod_relacTosaArticulo")
-  saArtUbicacion                                                     saArtUbicacion[]
   saArtUnidad                                                        saArtUnidad[]
-  saComisionGeneracion_saComisionGeneracion_co_art_desdeTosaArticulo saComisionGeneracion[]     @relation("saComisionGeneracion_co_art_desdeTosaArticulo")
-  saComisionGeneracion_saComisionGeneracion_co_art_hastaTosaArticulo saComisionGeneracion[]     @relation("saComisionGeneracion_co_art_hastaTosaArticulo")
-  saComisionPrecioArticulo                                           saComisionPrecioArticulo[]
-  saComisionRentabArticulo                                           saComisionRentabArticulo[]
-  saCostoHistoricoEntrada                                            saCostoHistoricoEntrada[]
-  saCostoHistoricoSalida                                             saCostoHistoricoSalida[]
-  saDescArticulo                                                     saDescArticulo[]
-  saLoteEntrada                                                      saLoteEntrada[]
-  saLoteSalida                                                       saLoteSalida[]
-  saSeriales                                                         saSeriales[]
-  saStockAlmacen                                                     saStockAlmacen[]
 
   @@index([art_des], map: "IX_saArticulo_art_des")
   @@index([co_cat], map: "IX_saArticulo_co_cat")
@@ -151,9 +126,7 @@ model saArtPrecio {
   co_mone           String?                  @db.Char(6)
   Inactivo          Boolean                  @default(false, map: "DF__saArtPrec__Inact__3CB4DFB3")
   rowguid           String                   @default(dbgenerated("newid()"), map: "DF_saArtPrecio_rowguid") @db.UniqueIdentifier
-  saAlmacen         saAlmacen?               @relation(fields: [co_alma], references: [co_alma], onDelete: NoAction, onUpdate: NoAction, map: "FK_saArtPrecio_saAlmacen")
   saArticulo        saArticulo               @relation(fields: [co_art], references: [co_art], onDelete: Cascade, map: "FK_saArtPrecio_saArticulo")
-  saTipoPrecio      saTipoPrecio             @relation(fields: [co_precio], references: [co_precio], onUpdate: NoAction, map: "FK_saArtPrecio_saTipoPrecio")
 
   @@id([co_art, co_precio, co_alma_calculado, desde], map: "PK_saArtPrecio")
 }
@@ -183,47 +156,8 @@ model saArtUnidad {
   trasnfe                                                                         String?                     @db.Char(1)
   validador                                                                       Unsupported("timestamp")
   rowguid                                                                         String                      @unique(map: "UK_saArtUnidad_rowguid") @default(dbgenerated("newid()"), map: "DF_saArtUnidad_rowguid") @db.UniqueIdentifier
-  saAjusteReng_saAjusteReng_co_art_co_uniTosaArtUnidad                            saAjusteReng[]              @relation("saAjusteReng_co_art_co_uniTosaArtUnidad")
-  saAjusteReng_saAjusteReng_co_art_sco_uniTosaArtUnidad                           saAjusteReng[]              @relation("saAjusteReng_co_art_sco_uniTosaArtUnidad")
-  saArtCompuesto                                                                  saArtCompuesto?
-  saArtCompuestoGen                                                               saArtCompuestoGen[]
-  saArtCompuestoGenReng                                                           saArtCompuestoGenReng[]
-  saArtCompuestoReng                                                              saArtCompuestoReng[]
-  saArtIdentificadorReng                                                          saArtIdentificadorReng[]
   saArticulo                                                                      saArticulo                  @relation(fields: [co_art], references: [co_art], onDelete: Cascade, map: "FK_saArtUnidad_saArticulo")
   saUnidad                                                                        saUnidad                    @relation(fields: [co_uni], references: [co_uni], map: "FK_saArtUnidad_saUnidad")
-  saCotizacionClienteReng_saCotizacionClienteReng_co_art_co_uniTosaArtUnidad      saCotizacionClienteReng[]   @relation("saCotizacionClienteReng_co_art_co_uniTosaArtUnidad")
-  saCotizacionClienteReng_saCotizacionClienteReng_co_art_sco_uniTosaArtUnidad     saCotizacionClienteReng[]   @relation("saCotizacionClienteReng_co_art_sco_uniTosaArtUnidad")
-  saCotizacionProveedorReng_saCotizacionProveedorReng_co_art_co_uniTosaArtUnidad  saCotizacionProveedorReng[] @relation("saCotizacionProveedorReng_co_art_co_uniTosaArtUnidad")
-  saCotizacionProveedorReng_saCotizacionProveedorReng_co_art_sco_uniTosaArtUnidad saCotizacionProveedorReng[] @relation("saCotizacionProveedorReng_co_art_sco_uniTosaArtUnidad")
-  saDevolucionClienteReng_saDevolucionClienteReng_co_art_co_uniTosaArtUnidad      saDevolucionClienteReng[]   @relation("saDevolucionClienteReng_co_art_co_uniTosaArtUnidad")
-  saDevolucionClienteReng_saDevolucionClienteReng_co_art_sco_uniTosaArtUnidad     saDevolucionClienteReng[]   @relation("saDevolucionClienteReng_co_art_sco_uniTosaArtUnidad")
-  saDevolucionProveedorReng_saDevolucionProveedorReng_co_art_co_uniTosaArtUnidad  saDevolucionProveedorReng[] @relation("saDevolucionProveedorReng_co_art_co_uniTosaArtUnidad")
-  saDevolucionProveedorReng_saDevolucionProveedorReng_co_art_sco_uniTosaArtUnidad saDevolucionProveedorReng[] @relation("saDevolucionProveedorReng_co_art_sco_uniTosaArtUnidad")
-  saDocumentoCompraReng                                                           saDocumentoCompraReng[]
-  saDocumentoVentaReng                                                            saDocumentoVentaReng[]
-  saFacturaCompraReng_saFacturaCompraReng_co_art_co_uniTosaArtUnidad              saFacturaCompraReng[]       @relation("saFacturaCompraReng_co_art_co_uniTosaArtUnidad")
-  saFacturaCompraReng_saFacturaCompraReng_co_art_sco_uniTosaArtUnidad             saFacturaCompraReng[]       @relation("saFacturaCompraReng_co_art_sco_uniTosaArtUnidad")
-  saFacturaVentaReng_saFacturaVentaReng_co_art_co_uniTosaArtUnidad                saFacturaVentaReng[]        @relation("saFacturaVentaReng_co_art_co_uniTosaArtUnidad")
-  saFacturaVentaReng_saFacturaVentaReng_co_art_sco_uniTosaArtUnidad               saFacturaVentaReng[]        @relation("saFacturaVentaReng_co_art_sco_uniTosaArtUnidad")
-  saNotaDespachoVentaReng_saNotaDespachoVentaReng_co_art_co_uniTosaArtUnidad      saNotaDespachoVentaReng[]   @relation("saNotaDespachoVentaReng_co_art_co_uniTosaArtUnidad")
-  saNotaDespachoVentaReng_saNotaDespachoVentaReng_co_art_sco_uniTosaArtUnidad     saNotaDespachoVentaReng[]   @relation("saNotaDespachoVentaReng_co_art_sco_uniTosaArtUnidad")
-  saNotaEntregaVentaReng_saNotaEntregaVentaReng_co_art_co_uniTosaArtUnidad        saNotaEntregaVentaReng[]    @relation("saNotaEntregaVentaReng_co_art_co_uniTosaArtUnidad")
-  saNotaEntregaVentaReng_saNotaEntregaVentaReng_co_art_sco_uniTosaArtUnidad       saNotaEntregaVentaReng[]    @relation("saNotaEntregaVentaReng_co_art_sco_uniTosaArtUnidad")
-  saNotaRecepcionCompraReng_saNotaRecepcionCompraReng_co_art_co_uniTosaArtUnidad  saNotaRecepcionCompraReng[] @relation("saNotaRecepcionCompraReng_co_art_co_uniTosaArtUnidad")
-  saNotaRecepcionCompraReng_saNotaRecepcionCompraReng_co_art_sco_uniTosaArtUnidad saNotaRecepcionCompraReng[] @relation("saNotaRecepcionCompraReng_co_art_sco_uniTosaArtUnidad")
-  saOrdenCompraReng_saOrdenCompraReng_co_art_co_uniTosaArtUnidad                  saOrdenCompraReng[]         @relation("saOrdenCompraReng_co_art_co_uniTosaArtUnidad")
-  saOrdenCompraReng_saOrdenCompraReng_co_art_sco_uniTosaArtUnidad                 saOrdenCompraReng[]         @relation("saOrdenCompraReng_co_art_sco_uniTosaArtUnidad")
-  saPedidoVentaReng_saPedidoVentaReng_co_art_co_uniTosaArtUnidad                  saPedidoVentaReng[]         @relation("saPedidoVentaReng_co_art_co_uniTosaArtUnidad")
-  saPedidoVentaReng_saPedidoVentaReng_co_art_sco_uniTosaArtUnidad                 saPedidoVentaReng[]         @relation("saPedidoVentaReng_co_art_sco_uniTosaArtUnidad")
-  saPlantillaCompraReng_saPlantillaCompraReng_co_art_co_uniTosaArtUnidad          saPlantillaCompraReng[]     @relation("saPlantillaCompraReng_co_art_co_uniTosaArtUnidad")
-  saPlantillaCompraReng_saPlantillaCompraReng_co_art_sco_uniTosaArtUnidad         saPlantillaCompraReng[]     @relation("saPlantillaCompraReng_co_art_sco_uniTosaArtUnidad")
-  saPlantillaVentaReng_saPlantillaVentaReng_co_art_co_uniTosaArtUnidad            saPlantillaVentaReng[]      @relation("saPlantillaVentaReng_co_art_co_uniTosaArtUnidad")
-  saPlantillaVentaReng_saPlantillaVentaReng_co_art_sco_uniTosaArtUnidad           saPlantillaVentaReng[]      @relation("saPlantillaVentaReng_co_art_sco_uniTosaArtUnidad")
-  saResInventarioReng_saResInventarioReng_co_art_co_uniTosaArtUnidad              saResInventarioReng[]       @relation("saResInventarioReng_co_art_co_uniTosaArtUnidad")
-  saResInventarioReng_saResInventarioReng_co_art_sco_uniTosaArtUnidad             saResInventarioReng[]       @relation("saResInventarioReng_co_art_sco_uniTosaArtUnidad")
-  saTrasladoReng_saTrasladoReng_co_art_co_uniTosaArtUnidad                        saTrasladoReng[]            @relation("saTrasladoReng_co_art_co_uniTosaArtUnidad")
-  saTrasladoReng_saTrasladoReng_co_art_sco_uniTosaArtUnidad                       saTrasladoReng[]            @relation("saTrasladoReng_co_art_sco_uniTosaArtUnidad")
 
   @@id([co_art, co_uni], map: "PK_saArtUnidad")
   @@index([co_art], map: "IX_saArtUnidad_CoArt")
@@ -258,15 +192,7 @@ model saCatArticulo {
   trasnfe                                                               String?                     @db.Char(1)
   validador                                                             Unsupported("timestamp")
   rowguid                                                               String                      @default(dbgenerated("newid()"), map: "DF_saCatArticulo_rowguid") @db.UniqueIdentifier
-  saArtCrearAut_saArtCrearAut_co_cat_desdeTosaCatArticulo               saArtCrearAut[]             @relation("saArtCrearAut_co_cat_desdeTosaCatArticulo") @ignore
-  saArtCrearAut_saArtCrearAut_co_cat_hastaTosaCatArticulo               saArtCrearAut[]             @relation("saArtCrearAut_co_cat_hastaTosaCatArticulo") @ignore
   saArticulo                                                            saArticulo[]
-  saConISLR                                                             saConISLR?                  @relation(fields: [co_reten], references: [co_islr], onDelete: NoAction, onUpdate: NoAction, map: "FK_saCatArticulo_saConISLR")
-  saComisionGeneracion_saComisionGeneracion_co_cat_desdeTosaCatArticulo saComisionGeneracion[]      @relation("saComisionGeneracion_co_cat_desdeTosaCatArticulo")
-  saComisionGeneracion_saComisionGeneracion_co_cat_hastaTosaCatArticulo saComisionGeneracion[]      @relation("saComisionGeneracion_co_cat_hastaTosaCatArticulo")
-  saComisionPrecioCategoria                                             saComisionPrecioCategoria[]
-  saComisionRentabCategoria                                             saComisionRentabCategoria[]
-  saDescCategoria                                                       saDescCategoria[]
 
   @@index([cat_des], map: "IX_saCatArticulo_Cat_des")
 }
@@ -304,17 +230,6 @@ model saLineaArticulo {
   rowguid                                                                 String                   @default(dbgenerated("newid()"), map: "DF_saLineaArticulo_rowguid") @db.UniqueIdentifier
   feccom                                                                  DateTime?                @db.SmallDateTime
   numcom                                                                  Int?
-  saArtCaracteristica_saArtCaracteristica_co_lin01TosaLineaArticulo       saArtCaracteristica[]    @relation("saArtCaracteristica_co_lin01TosaLineaArticulo")
-  saArtCaracteristica_saArtCaracteristica_co_lin02TosaLineaArticulo       saArtCaracteristica[]    @relation("saArtCaracteristica_co_lin02TosaLineaArticulo")
-  saArtCaracteristica_saArtCaracteristica_co_lin03TosaLineaArticulo       saArtCaracteristica[]    @relation("saArtCaracteristica_co_lin03TosaLineaArticulo")
-  saArtCaracteristica_saArtCaracteristica_co_lin04TosaLineaArticulo       saArtCaracteristica[]    @relation("saArtCaracteristica_co_lin04TosaLineaArticulo")
-  saArtCaracteristica_saArtCaracteristica_co_lin05TosaLineaArticulo       saArtCaracteristica[]    @relation("saArtCaracteristica_co_lin05TosaLineaArticulo")
-  saComisionGeneracion_saComisionGeneracion_co_lin_desdeTosaLineaArticulo saComisionGeneracion[]   @relation("saComisionGeneracion_co_lin_desdeTosaLineaArticulo")
-  saComisionGeneracion_saComisionGeneracion_co_lin_hastaTosaLineaArticulo saComisionGeneracion[]   @relation("saComisionGeneracion_co_lin_hastaTosaLineaArticulo")
-  saComisionPrecioLinea                                                   saComisionPrecioLinea[]
-  saComisionRentabLinea                                                   saComisionRentabLinea[]
-  saDescLinea                                                             saDescLinea[]
-  saConISLR                                                               saConISLR?               @relation(fields: [co_reten], references: [co_islr], onDelete: NoAction, onUpdate: NoAction, map: "FK_saLineaArticulo_saConISLR")
   saSubLinea                                                              saSubLinea[]
 
   @@index([lin_des], map: "IX_saLineaArticulo_Lin_Des")
@@ -347,15 +262,7 @@ model saSubLinea {
   trasnfe                                                                      String?                  @db.Char(1)
   validador                                                                    Unsupported("timestamp")
   rowguid                                                                      String                   @default(dbgenerated("newid()"), map: "DF_saSublinea_rowguid") @db.UniqueIdentifier
-  saArtCaracteristicaMov_saArtCaracteristicaMov_co_lin01_co_subl01TosaSubLinea saArtCaracteristicaMov[] @relation("saArtCaracteristicaMov_co_lin01_co_subl01TosaSubLinea")
-  saArtCaracteristicaMov_saArtCaracteristicaMov_co_lin02_co_subl02TosaSubLinea saArtCaracteristicaMov[] @relation("saArtCaracteristicaMov_co_lin02_co_subl02TosaSubLinea")
-  saArtCaracteristicaMov_saArtCaracteristicaMov_co_lin03_co_subl03TosaSubLinea saArtCaracteristicaMov[] @relation("saArtCaracteristicaMov_co_lin03_co_subl03TosaSubLinea")
-  saArtCaracteristicaMov_saArtCaracteristicaMov_co_lin04_co_subl04TosaSubLinea saArtCaracteristicaMov[] @relation("saArtCaracteristicaMov_co_lin04_co_subl04TosaSubLinea")
-  saArtCaracteristicaMov_saArtCaracteristicaMov_co_lin05_co_subl05TosaSubLinea saArtCaracteristicaMov[] @relation("saArtCaracteristicaMov_co_lin05_co_subl05TosaSubLinea")
-  saArtCrearAut_saArtCrearAut_co_lin_desde_co_subl_desdeTosaSubLinea           saArtCrearAut[]          @relation("saArtCrearAut_co_lin_desde_co_subl_desdeTosaSubLinea") @ignore
-  saArtCrearAut_saArtCrearAut_co_lin_hasta_co_subl_hastaTosaSubLinea           saArtCrearAut[]          @relation("saArtCrearAut_co_lin_hasta_co_subl_hastaTosaSubLinea") @ignore
   saArticulo                                                                   saArticulo[]
-  saConISLR                                                                    saConISLR?               @relation(fields: [co_reten], references: [co_islr], onDelete: NoAction, onUpdate: NoAction, map: "FK_saSubLinea_saConISLR")
   saLineaArticulo                                                              saLineaArticulo          @relation(fields: [co_lin], references: [co_lin], onUpdate: NoAction, map: "FK_saSubLinea_saLineaArticulo")
 
   @@id([co_lin, co_subl], map: "PK_saSubLinea")
@@ -384,9 +291,6 @@ model saUnidad {
   trasnfe                                  String?                  @db.Char(1)
   validador                                Unsupported("timestamp")
   rowguid                                  String                   @default(dbgenerated("newid()"), map: "DF_saUnidad_rowguid") @db.UniqueIdentifier
-  par_emp_par_emp_co_uni_pesoTosaUnidad    par_emp[]                @relation("par_emp_co_uni_pesoTosaUnidad")
-  par_emp_par_emp_co_uni_volumenTosaUnidad par_emp[]                @relation("par_emp_co_uni_volumenTosaUnidad")
-  saArtCrearAut                            saArtCrearAut[]          @ignore
   saArtUnidad                              saArtUnidad[]
 
   @@index([des_uni], map: "IX_saUnidad_Des_Uni")
