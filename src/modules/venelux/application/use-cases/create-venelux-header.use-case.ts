@@ -1,9 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { CreateHeaderDto } from '../../dtos/create-header.dto';
 import {
   VENELUX_REPOSITORY,
-  VeneluxRepository,
+  type VeneluxRepository,
 } from '../../domain/interfaces/venelux.repository';
+import { CreateHeaderDto } from '../../dtos/create-header.dto';
 
 @Injectable()
 export class CreateVeneluxHeaderUseCase {

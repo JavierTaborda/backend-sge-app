@@ -1,7 +1,7 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import {
     VENELUX_REPOSITORY,
-    VeneluxRepository,
+    type VeneluxRepository,
 } from '../../domain/interfaces/venelux.repository';
 import { CreateSolicitudDto } from '../../dtos/create-solicitud.dto';
 
