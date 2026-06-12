@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.7] - 2026-06-12
+
+### Added
+
+- add SQLServer2PrismaService for connecting to SQL Server Venelux
+
+### Changed
+
+- enhance return handling with new quantity field and dynamic motive retrieval
+- feat: add email parameter to createReturn method and log request details
+- feat: add additional email recipients for return order notifications
+- refactor: improve zone description handling and streamline seller data resolution in createReturn method
+- feat: pays improvement with test user return
+- refactor: implement getOrderFactura method and define OrderFacturaRow and ReturnOrder types
+- refactor: streamline seller data retrieval and dispatch data application in createReturn method
+- refactor: enhance ReturnsService and DTOs with additional fields and methods, add ReturnsEmailTemplateService and ReturnsImageStorageService
+- refactor: simplify zone description retrieval and enhance createReturn method logic
+
+### Fixed
+
+### Removed
+
 ## [1.0.6] - 2026-04-23
 
 ### Added
