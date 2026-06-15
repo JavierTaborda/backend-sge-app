@@ -894,7 +894,7 @@ model mvplanpagos {
   estatuslogistico   String?   @db.VarChar(20)
   fechalogistico     DateTime? @db.Date
 }
-model mvpredes {
+model saArticulo {
   codart    Int     @id @default(0)
   marca     String  @db.Char(60)
   noparte   String  @db.Char(30)
