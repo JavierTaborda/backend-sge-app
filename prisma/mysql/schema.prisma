@@ -894,7 +894,15 @@ model mvplanpagos {
   estatuslogistico   String?   @db.VarChar(20)
   fechalogistico     DateTime? @db.Date
 }
+model mvpredes {
+  codart    Int     @id @default(0)
+  marca     String  @db.Char(60)
+  noparte   String  @db.Char(30)
+  imagen1   String  @db.VarChar(100)
+  imagen2   String  @db.VarChar(100)
+  imagen3   String  @db.VarChar(100)
 
+}
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model mvpredes {
   prednum   Int     @default(0)

@@ -44,6 +44,9 @@ export class VeneluxPrismaRepository implements VeneluxRepository {
       ORDER BY material;
     `;
   }
+  getMaterialsSGE(): Promise<VeneluxMaterial[]> {
+    throw new Error('Method not implemented.');
+  }
 
   async getUnits(): Promise<VeneluxUnit[]> {
     return this.sql.$queryRaw<VeneluxUnit[]>`

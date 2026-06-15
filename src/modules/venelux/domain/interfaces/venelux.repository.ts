@@ -8,6 +8,7 @@ export const VENELUX_REPOSITORY = Symbol('VENELUX_REPOSITORY');
 
 export interface VeneluxRepository {
   getMaterials(): Promise<VeneluxMaterial[]>;
+  getMaterialsSGE(): Promise<VeneluxMaterial[]>;
   getUnits(): Promise<VeneluxUnit[]>;
   createHeader(payload: CreateVeneluxHeader): Promise<void>;
   createDetail(payload: CreateVeneluxDetail): Promise<void>;
