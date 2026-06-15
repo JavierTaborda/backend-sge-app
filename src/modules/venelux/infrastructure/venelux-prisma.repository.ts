@@ -1,15 +1,17 @@
 import { Injectable } from '@nestjs/common';
+import { MySQLPrismaService } from 'src/database/mysql.service';
 import { SQLServer2PrismaService } from 'src/database/sqlserver2.service';
 import { VeneluxRepository } from '../domain/interfaces/venelux.repository';
 import { CreateVeneluxDetail } from '../domain/types/create-venelux-detail.type';
 import { CreateVeneluxHeader } from '../domain/types/create-venelux-header.type';
 import { CreateVeneluxSolicitud } from '../domain/types/create-venelux-solicitud.type';
+import { SaArticuloMaterial } from '../domain/types/saarticulo-material.type';
 import { VeneluxMaterial } from '../domain/types/venelux-material.type';
 import { VeneluxUnit } from '../domain/types/venelux-unit.type';
 
 @Injectable()
 export class VeneluxPrismaRepository implements VeneluxRepository {
-  constructor(private readonly sql: SQLServer2PrismaService) {}
+  constructor(private readonly sql: SQLServer2PrismaService, private readonly mysql: MySQLPrismaService,) { }
 
   async getMaterials(): Promise<VeneluxMaterial[]> {
     return this.sql.$queryRaw<VeneluxMaterial[]>`
@@ -44,8 +46,17 @@ export class VeneluxPrismaRepository implements VeneluxRepository {
       ORDER BY material;
     `;
   }
-  getMaterialsSGE(): Promise<VeneluxMaterial[]> {
-    throw new Error('Method not implemented.');
+  getMaterialsSGE(): Promise<SaArticuloMaterial[]> {
+    return this.mysql.saArticulo.findMany({
+      select: {
+        codart: true,
+        marca: true,
+        noparte: true,
+        imagen1: true,
+        imagen2: true,  
+        imagen3: true,
+      },
+    });
   }
 
   async getUnits(): Promise<VeneluxUnit[]> {
