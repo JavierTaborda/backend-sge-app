@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CreateVeneluxDetailUseCase } from './application/use-cases/create-venelux-detail.use-case';
 import { CreateVeneluxHeaderUseCase } from './application/use-cases/create-venelux-header.use-case';
 import { CreateVeneluxSolicitudUseCase } from './application/use-cases/create-venelux-solicitud.use-case';
@@ -8,7 +9,7 @@ import { CreateDetailDto } from './dtos/create-detail.dto';
 import { CreateHeaderDto } from './dtos/create-header.dto';
 import { CreateSolicitudDto } from './dtos/create-solicitud.dto';
 
-// @UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('venelux')
 export class VeneluxController {
   constructor(

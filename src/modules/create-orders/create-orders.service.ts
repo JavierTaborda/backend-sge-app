@@ -128,15 +128,31 @@ export class CreateOrdersService {
                 cond_des: true,
                 dias_cred: true,
             },
-            orderBy: {
-                cond_des: "asc",
-            },
         });
+
+        const prioridadCondiciones = ["credito 30 dias", "prepago", "contado"];
+
+        const getPrioridad = (condicion?: string): number => {
+            const nombre = condicion?.trim().toLowerCase() ?? "";
+            const index = prioridadCondiciones.findIndex(p => nombre.includes(p));
+            return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+        };
+
+        condi.sort((a, b) => {
+            const prioridadA = getPrioridad(a.cond_des);
+            const prioridadB = getPrioridad(b.cond_des);
+
+            if (prioridadA !== prioridadB) return prioridadA - prioridadB;
+
+            return (a.cond_des ?? "").localeCompare(b.cond_des ?? "");
+        });
+
         const result: CondicionDto[] = condi.map(c => ({
             co_cond: c.co_cond,
             cond_des: c.cond_des,
             dias_cred: c.dias_cred,
         }));
+        
 
 
         return result;
