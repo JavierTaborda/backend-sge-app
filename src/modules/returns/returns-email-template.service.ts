@@ -11,6 +11,7 @@ type CollectionEmailInput = {
   obsregistro: string | null;
   registradopor: string | null;
   fecharegistro: Date | string | null;
+  cantidad: number | null;
 };
 
 @Injectable()
@@ -33,6 +34,7 @@ export class ReturnsEmailTemplateService {
             obsregistro,
             registradopor,
             fecharegistro,
+            cantidad,
         } = devol;
 
         const fechaStr = fecharegistro instanceof Date
@@ -72,7 +74,7 @@ export class ReturnsEmailTemplateService {
                 <td align='center'>${codart}</td>
                 <td align='left' style='word-wrap: break-word;'>${artdes}</td>
                 <td align='center'>${factnum}</td>
-                <td align='center'>1</td>
+                <td align='center'>${cantidad ?? '1'}</td>
                 <td align='center'>${serial1}</td>
                 <td align='center'>${motivo}</td>
                 <td style='word-wrap: break-word;'>${obsregistro}</td>

@@ -154,7 +154,7 @@ export class ReturnsService {
 
             // Separate header from detail
             const { dtdevolucion, rif, telefono, dirretiro, ...cabeceraData } = createDevolucionDto;
-
+           
             //  Create Header
             const nuevaDevolucion = await tx.cbdevolucion.create({
                 data: {
@@ -240,9 +240,9 @@ export class ReturnsService {
 
                     );
 
-                    const to = ['neivymatie@gmail.com', 'martinezcrismary@gmail.com', 'marqzrebeca@gmail.com', 'oscaragd496@gmail.com', 'servifrigilux3@gmail.com', 'servifrigilux2@gmail.com', 'servifrigilux1@gmail.com'];
+                    // const to = ['neivymatie@gmail.com', 'martinezcrismary@gmail.com', 'marqzrebeca@gmail.com', 'oscaragd496@gmail.com', 'servifrigilux3@gmail.com', 'servifrigilux2@gmail.com', 'servifrigilux1@gmail.com'];
 
-                    //const to = ['jtaborda@cyberlux.com.ve'];
+                    const to = ['jtaborda@cyberlux.com.ve'];
 
                     if (email && !to.includes(email)) {
                         to.push(email);

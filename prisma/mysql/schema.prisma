@@ -726,7 +726,7 @@ model mtprofitart {
 model cbdevolucion {
   devonum       Int      @id @default(autoincrement())
   motivo        String   @db.VarChar(40)
-  estatus       String   @default("1") @db.Char(1)
+  estatus       String   @default("1") @db.Char(2)
   anulada       String   @default("0") @db.Char(1)
   cerrada       String   @default("0") @db.Char(1)
   codcli        String   @db.VarChar(6)
@@ -741,6 +741,9 @@ model cbdevolucion {
   fecharegistro DateTime
   obsregistro   String?  @db.VarChar(255)
   linkproforma  String?  @db.VarChar(60)
+  linknotasalida String?  @db.VarChar(60)
+  linknotarecibe String?  @db.VarChar(60)
+  direc         String?  @db.VarChar(120)
   owneruser     Int      @default(1)
 
   dtdevolucion dtdevolucion?
