@@ -769,15 +769,15 @@ model dtdevolucion {
   revisionpor   String?   @db.Char(30)
   fecharevision DateTime?
   obsrevision   String?   @db.VarChar(255)
-  enviorevision String    @default("0") @db.Char(1)
+  enviorevision String    @default("9") @db.Char(1)
   tecnicopor    String?   @db.Char(30)
   fechatecnico  DateTime?
   obstecnico    String?   @db.VarChar(255)
-  enviotecnico  String    @default("0") @db.Char(1)
+  enviotecnico  String    @default("9") @db.Char(1)
   almacenpor    String?   @db.Char(30)
   fechaalmacen  DateTime?
   obsalmacen    String?   @db.VarChar(255)
-  envioalmacen  String    @default("0") @db.Char(1)
+  envioalmacen  String    @default("9") @db.Char(1)
   tiempofactura String?   @db.VarChar(100)
 
   cbdevolucion cbdevolucion  @relation(fields: [devonum], references: [devonum])

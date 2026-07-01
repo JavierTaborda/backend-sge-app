@@ -126,7 +126,7 @@ export class ReturnsService {
 
     async createReturn(createDevolucionDto: CbDevolucionDto, codven?: string, nameUser?: string, userid_sge?: string, email?: string) {
 
-      
+
         if (!createDevolucionDto) {
             throw new Error("Return data not provided.");
         }
@@ -154,7 +154,7 @@ export class ReturnsService {
 
             // Separate header from detail
             const { dtdevolucion, rif, telefono, dirretiro, ...cabeceraData } = createDevolucionDto;
-           
+
             //  Create Header
             const nuevaDevolucion = await tx.cbdevolucion.create({
                 data: {
@@ -216,6 +216,19 @@ export class ReturnsService {
                         pednum: pednum || 0,             // Ensure numerical value
                         vendes: vendesValue,
                         codven: finalCodVen,
+                        enviorevision:
+                            !datosRestantes.enviorevision || Number(datosRestantes.enviorevision) === 0
+                                ? undefined
+                                : String(datosRestantes.enviorevision),
+
+                        enviotecnico:
+                            !datosRestantes.enviotecnico || Number(datosRestantes.enviotecnico) === 0
+                                ? undefined
+                                : String(datosRestantes.enviotecnico),
+                        envioalmacen:
+                            !datosRestantes.envioalmacen || Number(datosRestantes.envioalmacen) === 0
+                                ? undefined
+                                : String(datosRestantes.envioalmacen),
                         tiempofactura: datosRestantes.fechadespacho ? DateUtils.getElapsedTimeText(datosRestantes.fechadespacho, new Date()) : 'Sin fecha de despacho',
                         fechadespacho: getVzlaDateForDB(new Date(datosRestantes.fechadespacho) || null),
 
@@ -240,7 +253,7 @@ export class ReturnsService {
 
                     );
 
-                     const to = ['neivymatie@gmail.com', 'martinezcrismary@gmail.com', 'marqzrebeca@gmail.com', 'oscaragd496@gmail.com', 'servifrigilux3@gmail.com', 'servifrigilux2@gmail.com', 'servifrigilux1@gmail.com'];
+                    const to = ['neivymatie@gmail.com', 'martinezcrismary@gmail.com', 'marqzrebeca@gmail.com', 'oscaragd496@gmail.com', 'servifrigilux3@gmail.com', 'servifrigilux2@gmail.com', 'servifrigilux1@gmail.com'];
 
                     //const to = ['jtaborda@cyberlux.com.ve'];
 
@@ -495,7 +508,7 @@ export class ReturnsService {
             reng_ped: rows.map((r) => ({
                 co_art: r.codart,
                 art: {
-                    art_des: r.artdes,  
+                    art_des: r.artdes,
                 },
             })),
             cliente: {
@@ -666,22 +679,22 @@ export class ReturnsService {
 
     // async getMotives(role?: string) {
 
-       
-   
+
+
 
     async getMotives(role?: string) {
 
         const dbMotives = await this.mysql.clmotivo.findMany();
 
         let motives: MotiveItemDto[] = dbMotives.map((motivo, index) => ({
-            id: Number(motivo.codmoti), 
+            id: Number(motivo.codmoti),
             codmotive: motivo.desmoti.trim(),
         }));
         if (role === '4' || role === '5' || role === '1') {
-            motives = motives.filter(m=> m.codmotive.toLowerCase() !== 'garantia' && m.codmotive.toLowerCase() !== 'reponer' && m.codmotive.toLowerCase() !== 'cambio x cambio');
+            motives = motives.filter(m => m.codmotive.toLowerCase() !== 'garantia' && m.codmotive.toLowerCase() !== 'reponer' && m.codmotive.toLowerCase() !== 'cambio x cambio');
         }
 
         return motives;
-     }
+    }
 
 }
