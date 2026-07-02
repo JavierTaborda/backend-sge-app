@@ -1,5 +1,6 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as bodyParser from 'body-parser';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
@@ -43,6 +44,20 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  if (!isProd) {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('Backend SGE API')
+      .setDescription('Documentacion de endpoints del Backend SGE')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+
+    const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('docs', app, swaggerDocument, {
+      useGlobalPrefix: true,
+    });
+  }
 
   await app.listen(process.env.PORT || (isProd ? 443 : 3000));
 }

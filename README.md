@@ -94,30 +94,30 @@ prisma/
 
 Schema.prisma (MySQL)
 prisma/mysql/schema.prisma
-  generator client {
-    provider = "prisma-client-js"
-    output = "../../src/prisma-clients/mysql”
-      moduleFormat    = "cjs"
+generator client {
+provider = "prisma-client-js"
+output = "../../src/prisma-clients/mysql”
+moduleFormat = "cjs"
 
-  }
+}
 
-  datasource db {
-    provider = "mysql"
-  }
+datasource db {
+provider = "mysql"
+}
 
 Schema.prisma (SQL Server)
 
 prisma/sqlserver/schema.prisma
-  generator client {
-    provider = "prisma-client-js"
-    output = "../../src/prisma-clients/sqlserver
-      moduleFormat    = "cjs"
+generator client {
+provider = "prisma-client-js"
+output = "../../src/prisma-clients/sqlserver
+moduleFormat = "cjs"
 
-  }
+}
 
-  datasource db {
-    provider = "sqlserver"
-  }
+datasource db {
+provider = "sqlserver"
+}
 prisma.sql.config.ts y prisma.mysql.config.ts
 
 ```bash
@@ -161,8 +161,8 @@ npx prisma db pull --schema=prisma/sqlserver/schema.prisma
 ```bash
 npm run prisma:generate
 
-npx prisma generate  --config=prisma.mysql.config.ts  
-npx prisma generate  --config=prisma.sql.config.ts  
+npx prisma generate  --config=prisma.mysql.config.ts
+npx prisma generate  --config=prisma.sql.config.ts
 ```
 
 Esto generará los clientes de Prisma en prisma-clients/mysql y prisma-clients/sqlserver.
@@ -174,6 +174,8 @@ npm run start:dev
 ```
 
 La API estará disponible en <http://localhost:3000>.
+
+La documentacion Swagger estara disponible en <http://localhost:3000/api/docs>.
 
 Todos los cambios en src/ se recargan automáticamente.
 

@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.8] - 2026-07-02
+
+### Added
+
+- Add Swagger documentation with `@nestjs/swagger`.
+- Document all API controllers with Swagger tags, summaries, responses, parameters, queries and request bodies.
+- Add Swagger UI at `/api/docs` for non-production environments.
+
+### Changed
+
+- Disable Swagger documentation when `NODE_ENV=production`.
+
+### Fixed
+
+- N/A
+
+### Removed
+
+- N/A
+
 ## [1.0.7] - 2026-06-12
 
 ### Added
