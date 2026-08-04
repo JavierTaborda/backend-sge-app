@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   VENELUX_REPOSITORY,
   type VeneluxRepository,
@@ -7,34 +7,50 @@ import { SaArticuloMaterial } from '../../domain/types/saarticulo-material.type'
 
 @Injectable()
 export class GetVeneluxMaterialsUseCase {
+  private readonly logger = new Logger(GetVeneluxMaterialsUseCase.name);
+
   constructor(
     @Inject(VENELUX_REPOSITORY)
     private readonly repository: VeneluxRepository,
   ) {}
 
-  execute() {
-    const materials = this.repository.getMaterials();
-    const materialsSGE = this.repository.getMaterialsSGE();
+  async execute() {
+    try {
+      const [veneluxMaterials, sgeMaterials] = await Promise.all([
+        this.repository.getMaterials(),
+        this.repository.getMaterialsSGE(),
+      ]);
     
-    return Promise.all([materials, materialsSGE]).then(([veneluxMaterials, sgeMaterials]) => {
+
       const materialsMap = new Map<number, SaArticuloMaterial>();
+   
 
       sgeMaterials.forEach((sge) => {
-        materialsMap.set(sge.codart, sge);
+        const key = Number(sge.codart);
+        if (!Number.isNaN(key)) {
+          materialsMap.set(key, sge);
+        }
       });
+     
+      //console.log('SGE materials:', sgeMaterials);
 
-      return veneluxMaterials.map((venelux) => {
-        const sge = venelux.codart != null ? materialsMap.get(venelux.codart) : undefined;
+      const result = veneluxMaterials.map((venelux) => {
+        const key = Number(venelux.codart);
+        const sge = !Number.isNaN(key) ? materialsMap.get(key) : undefined;
+
         return {
           ...venelux,
-          marca: sge?.marca || null,
-          noparte: sge?.noparte || null,
-          imagen1: sge?.imagen1 || null,
-          imagen2: sge?.imagen2 || null,
-          imagen3: sge?.imagen3 || null,
+          marca: sge?.marca ?? null,
+          noparte: sge?.noparte ?? null,
+          imagen1: sge?.imagen1 ?? null,
+          imagen2: sge?.imagen2 ?? null,
+          imagen3: sge?.imagen3 ?? null,
         };
       });
-    });
-    
+      return result;
+    } catch (error) {
+      this.logger.error('Failed to load Venelux materials', error instanceof Error ? error.stack : String(error));
+      throw error; 
+    }
   }
 }
