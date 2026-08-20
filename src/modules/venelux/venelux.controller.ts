@@ -1,5 +1,7 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CreateVeneluxDetailUseCase } from './application/use-cases/create-venelux-detail.use-case';
 import { CreateVeneluxHeaderUseCase } from './application/use-cases/create-venelux-header.use-case';
 import { CreateVeneluxSolicitudUseCase } from './application/use-cases/create-venelux-solicitud.use-case';
@@ -9,7 +11,7 @@ import { CreateDetailDto } from './dtos/create-detail.dto';
 import { CreateHeaderDto } from './dtos/create-header.dto';
 import { CreateSolicitudDto } from './dtos/create-solicitud.dto';
 
-// @UseGuards(JwtAuthGuard)
+ @UseGuards(JwtAuthGuard)
 @Controller('venelux')
 @ApiTags('Venelux')
 @ApiBearerAuth()
@@ -24,9 +26,21 @@ export class VeneluxController {
 
   @Get('materials')
   @ApiOperation({ summary: 'Lista materiales Venelux' })
-  @ApiResponse({ status: 200, description: 'Materiales disponibles en Venelux.' })
-  getMaterials() {
-    return this.getVeneluxMaterialsUseCase.execute();
+  @ApiQuery({ name: 'page', required: false, description: 'Pagina a consultar', example: '1' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Cantidad de registros por pagina', example: '50' })
+  @ApiResponse({ status: 200, description: 'Materiales disponibles en Venelux con paginacion.' })
+  getMaterials(
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '50',
+  ) {
+    return this.getVeneluxMaterialsUseCase.execute(+page, +limit);
+  }
+
+  @Get('materials/all')
+  @ApiOperation({ summary: 'Lista todos los materiales Venelux sin paginacion' })
+  @ApiResponse({ status: 200, description: 'Todos los materiales disponibles en Venelux sin paginacion.' })
+  getAllMaterials() {
+    return this.getVeneluxMaterialsUseCase.executeAll();
   }
 
   @Get('units')
@@ -35,10 +49,16 @@ export class VeneluxController {
   getUnits() {
     return this.getVeneluxUnitsUseCase.execute();
   }
+@Get('obras')
+  @ApiOperation({ summary: 'Lista obras Venelux' })
+  @ApiResponse({ status: 200, description: 'Obras disponibles en Venelux.' })
+  getObras(  @CurrentUser('userid_sge') userid_sge: string,) {
+    return this.getVeneluxMaterialsUseCase.getObras(userid_sge);
+  }
 
   @Post('solicitudes/header')
   @ApiOperation({ summary: 'Crea el encabezado de una solicitud Venelux' })
-  @ApiBody({ type: CreateHeaderDto })
+   @ApiBody({ type: CreateHeaderDto })
   @ApiResponse({ status: 201, description: 'Encabezado de solicitud creado correctamente.' })
   createHeader(@Body() payload: CreateHeaderDto) {
     return this.createVeneluxHeaderUseCase.execute(payload);

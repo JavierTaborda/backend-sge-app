@@ -11,6 +11,7 @@ export interface VeneluxRepository {
   getMaterials(): Promise<VeneluxMaterial[]>;
   getMaterialsSGE(): Promise<SaArticuloMaterial[]>;
   getUnits(): Promise<VeneluxUnit[]>;
+  getObras(userid_sge: string): Promise<{ codigoobra: string; descripcionobra: string }[]>;
   createHeader(payload: CreateVeneluxHeader): Promise<void>;
   createDetail(payload: CreateVeneluxDetail): Promise<void>;
   createSolicitudWithDetails(payload: CreateVeneluxSolicitud): Promise<void>;

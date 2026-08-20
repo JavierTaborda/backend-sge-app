@@ -46,8 +46,8 @@ export class VeneluxPrismaRepository implements VeneluxRepository {
       ORDER BY material;
     `;
   }
-  getMaterialsSGE(): Promise<SaArticuloMaterial[]> {
-    return this.mysql.saArticulo.findMany({
+  async getMaterialsSGE(): Promise<SaArticuloMaterial[]> {
+    const materials = await this.mysql.saArticulo.findMany({
       select: {
         codart: true,
         marca: true,
@@ -57,6 +57,11 @@ export class VeneluxPrismaRepository implements VeneluxRepository {
         imagen3: true,
       },
     });
+
+    return materials.map((item) => ({
+      ...item,
+      codart: String(item.codart),
+    }));
   }
 
   async getUnits(): Promise<VeneluxUnit[]> {
@@ -213,5 +218,26 @@ export class VeneluxPrismaRepository implements VeneluxRepository {
         `;
       }
     });
+  }
+  async getObras(userid_sge: string): Promise<{ codigoobra: string; descripcionobra: string }[]> {
+
+    const ownerUserId = userid_sge ? parseInt(userid_sge, 10) : 1;
+
+    if (ownerUserId === 1) {
+      return this.mysql.$queryRaw<{ codigoobra: string; descripcionobra: string }[]>`
+        SELECT RTRIM(codigoobra) AS codigoobra,
+               RTRIM(descripcionobra) AS descripcionobra
+        FROM sge.users_builds
+        ORDER BY descripcionobra;
+      `;
+    }
+
+    return this.mysql.$queryRaw<{ codigoobra: string; descripcionobra: string }[]>`
+      SELECT RTRIM(codigoobra) AS codigoobra,
+             RTRIM(descripcionobra) AS descripcionobra
+      FROM sge.users_builds
+      WHERE userID = ${ownerUserId}
+      ORDER BY descripcionobra;
+    `;
   }
 }

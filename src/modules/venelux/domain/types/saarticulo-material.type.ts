@@ -1,7 +1,7 @@
 
 
 export interface SaArticuloMaterial {
-  codart: number;
+  codart: string;
   marca: string;
   noparte: string;
   imagen1: string;
