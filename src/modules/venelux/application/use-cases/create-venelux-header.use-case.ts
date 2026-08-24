@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
-  VENELUX_REPOSITORY,
-  type VeneluxRepository,
+    VENELUX_REPOSITORY,
+    type VeneluxRepository,
 } from '../../domain/interfaces/venelux.repository';
 import { CreateHeaderDto } from '../../dtos/create-header.dto';
 
@@ -12,8 +12,9 @@ export class CreateVeneluxHeaderUseCase {
     private readonly repository: VeneluxRepository,
   ) {}
 
-  async execute(payload: CreateHeaderDto) {
-    await this.repository.createHeader(payload);
+  async execute(payload: CreateHeaderDto, userid_sge: string) {
+    await this.repository.createHeader(payload, userid_sge);
+
     return {
       success: true,
       solicitudnumero: payload.solicitudnumero,

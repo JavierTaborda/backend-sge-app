@@ -4,14 +4,17 @@ import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CreateVeneluxDetailUseCase } from './application/use-cases/create-venelux-detail.use-case';
 import { CreateVeneluxHeaderUseCase } from './application/use-cases/create-venelux-header.use-case';
+import { CreateVeneluxMovementUseCase } from './application/use-cases/create-venelux-movement.use-case';
 import { CreateVeneluxSolicitudUseCase } from './application/use-cases/create-venelux-solicitud.use-case';
 import { GetVeneluxMaterialsUseCase } from './application/use-cases/get-venelux-materials.use-case';
+import { GetVeneluxSolicitudesWithMaterialsUseCase } from './application/use-cases/get-venelux-solicitudes-with-materials.use-case';
 import { GetVeneluxUnitsUseCase } from './application/use-cases/get-venelux-units.use-case';
 import { CreateDetailDto } from './dtos/create-detail.dto';
 import { CreateHeaderDto } from './dtos/create-header.dto';
+import { CreateMovementDto } from './dtos/create-movement.dto';
 import { CreateSolicitudDto } from './dtos/create-solicitud.dto';
 
- @UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('venelux')
 @ApiTags('Venelux')
 @ApiBearerAuth()
@@ -21,7 +24,9 @@ export class VeneluxController {
     private readonly getVeneluxUnitsUseCase: GetVeneluxUnitsUseCase,
     private readonly createVeneluxHeaderUseCase: CreateVeneluxHeaderUseCase,
     private readonly createVeneluxDetailUseCase: CreateVeneluxDetailUseCase,
+    private readonly createVeneluxMovementUseCase: CreateVeneluxMovementUseCase,
     private readonly createVeneluxSolicitudUseCase: CreateVeneluxSolicitudUseCase,
+    private readonly getVeneluxSolicitudesWithMaterialsUseCase: GetVeneluxSolicitudesWithMaterialsUseCase,
   ) {}
 
   @Get('materials')
@@ -56,12 +61,22 @@ export class VeneluxController {
     return this.getVeneluxMaterialsUseCase.getObras(userid_sge);
   }
 
+  @Get('solicitudes')
+  @ApiOperation({ summary: 'Consulta solicitudes Venelux con su lista de materiales' })
+  @ApiResponse({ status: 200, description: 'Solicitudes Venelux con sus materiales.' })
+  getSolicitudes() {
+    return this.getVeneluxSolicitudesWithMaterialsUseCase.execute();
+  }
+
   @Post('solicitudes/header')
   @ApiOperation({ summary: 'Crea el encabezado de una solicitud Venelux' })
    @ApiBody({ type: CreateHeaderDto })
   @ApiResponse({ status: 201, description: 'Encabezado de solicitud creado correctamente.' })
-  createHeader(@Body() payload: CreateHeaderDto) {
-    return this.createVeneluxHeaderUseCase.execute(payload);
+  createHeader(
+    @Body() payload: CreateHeaderDto,
+    @CurrentUser('userid_sge') userid_sge: string,
+  ) {
+    return this.createVeneluxHeaderUseCase.execute(payload, userid_sge);
   }
 
   @Post('solicitudes/detail')
@@ -72,11 +87,21 @@ export class VeneluxController {
     return this.createVeneluxDetailUseCase.execute(payload);
   }
 
+  @Post('solicitudes/movement')
+  @ApiOperation({ summary: 'Crea un movimiento de solicitud Venelux' })
+  @ApiBody({ type: CreateMovementDto })
+  @ApiResponse({ status: 201, description: 'Movimiento de solicitud creado correctamente.' })
+  createMovement(@Body() payload: CreateMovementDto) {
+    return this.createVeneluxMovementUseCase.execute(payload);
+  }
+
   @Post('solicitudes/transaction')
   @ApiOperation({ summary: 'Crea una solicitud Venelux completa en una transaccion' })
   @ApiBody({ type: CreateSolicitudDto })
   @ApiResponse({ status: 201, description: 'Solicitud Venelux creada correctamente.' })
-  createSolicitudTransaction(@Body() payload: CreateSolicitudDto) {
-    return this.createVeneluxSolicitudUseCase.execute(payload);
+  createSolicitudTransaction(@Body() payload: CreateSolicitudDto, @CurrentUser('userid_sge') userid_sge: string,) {
+
+    
+    return this.createVeneluxSolicitudUseCase.execute(payload, userid_sge);
   }
 }
