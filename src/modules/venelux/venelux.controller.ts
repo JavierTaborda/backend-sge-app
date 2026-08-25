@@ -7,6 +7,7 @@ import { CreateVeneluxHeaderUseCase } from './application/use-cases/create-venel
 import { CreateVeneluxMovementUseCase } from './application/use-cases/create-venelux-movement.use-case';
 import { CreateVeneluxSolicitudUseCase } from './application/use-cases/create-venelux-solicitud.use-case';
 import { GetVeneluxMaterialsUseCase } from './application/use-cases/get-venelux-materials.use-case';
+import { GetVeneluxSolicitudesStatusUseCase } from './application/use-cases/get-venelux-solicitudes-status.use-case';
 import { GetVeneluxSolicitudesWithMaterialsUseCase } from './application/use-cases/get-venelux-solicitudes-with-materials.use-case';
 import { GetVeneluxUnitsUseCase } from './application/use-cases/get-venelux-units.use-case';
 import { CreateDetailDto } from './dtos/create-detail.dto';
@@ -26,6 +27,7 @@ export class VeneluxController {
     private readonly createVeneluxDetailUseCase: CreateVeneluxDetailUseCase,
     private readonly createVeneluxMovementUseCase: CreateVeneluxMovementUseCase,
     private readonly createVeneluxSolicitudUseCase: CreateVeneluxSolicitudUseCase,
+    private readonly getVeneluxSolicitudesStatusUseCase: GetVeneluxSolicitudesStatusUseCase,
     private readonly getVeneluxSolicitudesWithMaterialsUseCase: GetVeneluxSolicitudesWithMaterialsUseCase,
   ) {}
 
@@ -66,6 +68,16 @@ export class VeneluxController {
   @ApiResponse({ status: 200, description: 'Solicitudes Venelux con sus materiales.' })
   getSolicitudes() {
     return this.getVeneluxSolicitudesWithMaterialsUseCase.execute();
+  }
+
+  @Get('solicitudes/status')
+  @ApiOperation({ summary: 'Resumen rapido de solicitudes Venelux por estatus' })
+  @ApiResponse({ status: 200, description: 'Totales de solicitudes agrupadas por estatus numerico.' })
+  getSolicitudesStatus(
+    @CurrentUser('role') role: string,
+    @CurrentUser('userid_sge') userid_sge: string,
+  ) {
+    return this.getVeneluxSolicitudesStatusUseCase.execute(role, userid_sge);
   }
 
   @Post('solicitudes/header')

@@ -13,11 +13,11 @@ export class CreateVeneluxHeaderUseCase {
   ) {}
 
   async execute(payload: CreateHeaderDto, userid_sge: string) {
-    await this.repository.createHeader(payload, userid_sge);
+    const solicitudnumero = await this.repository.createHeader(payload, userid_sge);
 
     return {
       success: true,
-      solicitudnumero: payload.solicitudnumero,
+      solicitudnumero,
     };
   }
 }

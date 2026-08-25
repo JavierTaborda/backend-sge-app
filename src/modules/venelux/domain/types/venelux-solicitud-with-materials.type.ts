@@ -35,3 +35,8 @@ export interface VeneluxSolicitudWithMaterials {
   owneruser: string;
   materiales: VeneluxSolicitudMaterialItem[];
 }
+
+export interface VeneluxSolicitudStatusSummary {
+  estatus: number;
+  total: number;
+}

@@ -1,7 +1,7 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import {
-    VENELUX_REPOSITORY,
-    type VeneluxRepository,
+  VENELUX_REPOSITORY,
+  type VeneluxRepository,
 } from '../../domain/interfaces/venelux.repository';
 import { CreateSolicitudDto } from '../../dtos/create-solicitud.dto';
 
@@ -13,34 +13,14 @@ export class CreateVeneluxSolicitudUseCase {
   ) {}
 
   async execute(payload: CreateSolicitudDto, userid_sge: string) {
-    const headerNumber = payload.header.solicitudnumero;
-    const allMatchHeader = payload.details.every(
-      (item) => item.solicitudnumero === headerNumber,
-    );
-
-    if (!allMatchHeader) {
-      throw new BadRequestException(
-        'Todos los detalles deben tener el mismo solicitudnumero de la cabecera.',
-      );
-    }
-
     const movements = payload.movements ?? [];
-    const allMovementsMatchHeader = movements.every(
-      (item) => item.solicitudnumero === headerNumber,
-    );
-
-    if (!allMovementsMatchHeader) {
-      throw new BadRequestException(
-        'Todos los movimientos deben tener el mismo solicitudnumero de la cabecera.',
-      );
-    }
 
     const detailKeys = new Set(
-      payload.details.map((item) => `${item.solicitudnumero}::${item.itemnumero}`),
+      payload.details.map((item) => item.itemnumero),
     );
 
     const hasMovementWithoutDetail = movements.some(
-      (item) => !detailKeys.has(`${item.solicitudnumero}::${item.itemnumero}`),
+      (item) => !detailKeys.has(item.itemnumero),
     );
 
     if (hasMovementWithoutDetail) {
@@ -49,7 +29,7 @@ export class CreateVeneluxSolicitudUseCase {
       );
     }
 
-    await this.repository.createSolicitudWithDetails(
+    const solicitudnumero = await this.repository.createSolicitudWithDetails(
       {
         header: payload.header,
         details: payload.details,
@@ -60,7 +40,7 @@ export class CreateVeneluxSolicitudUseCase {
 
     return {
       success: true,
-      solicitudnumero: headerNumber,
+      solicitudnumero,
       totalDetalles: payload.details.length,
     };
   }

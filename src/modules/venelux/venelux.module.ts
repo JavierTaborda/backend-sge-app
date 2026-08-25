@@ -5,6 +5,7 @@ import { CreateVeneluxHeaderUseCase } from './application/use-cases/create-venel
 import { CreateVeneluxMovementUseCase } from './application/use-cases/create-venelux-movement.use-case';
 import { CreateVeneluxSolicitudUseCase } from './application/use-cases/create-venelux-solicitud.use-case';
 import { GetVeneluxMaterialsUseCase } from './application/use-cases/get-venelux-materials.use-case';
+import { GetVeneluxSolicitudesStatusUseCase } from './application/use-cases/get-venelux-solicitudes-status.use-case';
 import { GetVeneluxSolicitudesWithMaterialsUseCase } from './application/use-cases/get-venelux-solicitudes-with-materials.use-case';
 import { GetVeneluxUnitsUseCase } from './application/use-cases/get-venelux-units.use-case';
 import { VENELUX_REPOSITORY } from './domain/interfaces/venelux.repository';
@@ -25,6 +26,7 @@ import { VeneluxController } from './venelux.controller';
     CreateVeneluxDetailUseCase,
     CreateVeneluxMovementUseCase,
     CreateVeneluxSolicitudUseCase,
+    GetVeneluxSolicitudesStatusUseCase,
     GetVeneluxSolicitudesWithMaterialsUseCase,
   ],
 })

@@ -8,12 +8,28 @@ import { CreateVeneluxMovement } from '../domain/types/create-venelux-movement.t
 import { CreateVeneluxSolicitud } from '../domain/types/create-venelux-solicitud.type';
 import { SaArticuloMaterial } from '../domain/types/saarticulo-material.type';
 import { VeneluxMaterial } from '../domain/types/venelux-material.type';
-import { VeneluxSolicitudWithMaterials } from '../domain/types/venelux-solicitud-with-materials.type';
+import { VeneluxSolicitudStatusSummary, VeneluxSolicitudWithMaterials } from '../domain/types/venelux-solicitud-with-materials.type';
 import { VeneluxUnit } from '../domain/types/venelux-unit.type';
+
+type RawQueryable = {
+  $queryRaw<T = unknown>(query: TemplateStringsArray, ...values: unknown[]): Promise<T>;
+};
 
 @Injectable()
 export class VeneluxPrismaRepository implements VeneluxRepository {
   constructor(private readonly sql: SQLServer2PrismaService, private readonly mysql: MySQLPrismaService,) { }
+
+  private async getNextSolicitudNumero(client: RawQueryable): Promise<string> {
+    const [row] = await client.$queryRaw<Array<{ solicitudnumero: number | bigint | string | null }>>`
+      SELECT solicitudnumero
+      FROM cbsolicimat
+      ORDER BY solicitudnumero DESC
+      LIMIT 1
+      FOR UPDATE;
+    `;
+
+    return String(Number(row?.solicitudnumero ?? 0) + 1);
+  }
 
   async getMaterials(): Promise<VeneluxMaterial[]> {
     return this.sql.$queryRaw<VeneluxMaterial[]>`
@@ -210,41 +226,105 @@ export class VeneluxPrismaRepository implements VeneluxRepository {
     };
   }
 
-  async createHeader(payload: CreateVeneluxHeader, userid_sge: string): Promise<void> {
-    await this.mysql.$executeRaw`
-      INSERT INTO cbsolicimat (
-        solicitudnumero,
-        empresa,
-        codigoobra,
-        descripcionobra,
-        numerocontrol,
-        solicitanteuser,
-        solicitantecodigo,
-        fechasolicitud,
-        fechautilizacion,
-        observacion,
-        actividad,
-        direccionentrega,
-        registradopor,
-        owneruser
-      )
-      VALUES (
-        ${payload.solicitudnumero},
-        ${payload.empresa},
-        ${payload.codigoobra},
-        ${payload.descripcionobra},
-        ${payload.numerocontrol},
-        ${payload.solicitanteuser},
-        ${payload.solicitantecodigo},
-        ${payload.fechasolicitud},
-        ${payload.fechautilizacion},
-        ${payload.observacion},
-        ${payload.actividad},
-        ${payload.direccionentrega},
-        ${payload.registradopor},
-        ${userid_sge}
-      );
+  async getSolicitudesStatusSummary(filters: {
+    role?: string | number;
+    userid_sge?: string | number;
+  }): Promise<{
+    data: VeneluxSolicitudStatusSummary[];
+    total: number;
+  }> {
+    const role = filters.role !== undefined && filters.role !== null ? String(filters.role).trim() : undefined;
+    const ownerUserId = filters.userid_sge !== undefined && filters.userid_sge !== null ? String(filters.userid_sge).trim() : undefined;
+    const userBuildsFilter = role === '1' || ownerUserId === '1' ? null : ownerUserId || null;
+    const columns = await this.mysql.$queryRaw<Array<{ column_name: string }>>`
+      SELECT COLUMN_NAME AS column_name
+      FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'cbsolicimat';
     `;
+    const availableColumns = new Set(columns.map((item) => item.column_name.toLowerCase()));
+    const statusExpression = availableColumns.has('estatus')
+      ? 'CAST(h.estatus AS UNSIGNED)'
+      : availableColumns.has('status')
+        ? 'CAST(h.status AS UNSIGNED)'
+        : availableColumns.has('anulado') && availableColumns.has('revisado')
+          ? 'CASE WHEN COALESCE(h.anulado, 0) = 1 THEN 3 WHEN COALESCE(h.revisado, 0) = 1 THEN 1 ELSE 0 END'
+          : availableColumns.has('anulado')
+            ? 'CASE WHEN COALESCE(h.anulado, 0) = 1 THEN 3 ELSE 0 END'
+            : availableColumns.has('revisado')
+              ? 'CASE WHEN COALESCE(h.revisado, 0) = 1 THEN 1 ELSE 0 END'
+              : '0';
+
+    const data = await this.mysql.$queryRawUnsafe<VeneluxSolicitudStatusSummary[]>(`
+      SELECT
+        ${statusExpression} AS estatus,
+        COUNT(1) AS total
+      FROM cbsolicimat h
+      WHERE (
+        ? IS NULL
+        OR EXISTS (
+          SELECT 1
+          FROM sge.users_builds ub
+          WHERE CAST(ub.userID AS CHAR(50)) = ?
+            AND TRIM(ub.codigoobra) COLLATE utf8mb4_unicode_ci = TRIM(h.codigoobra) COLLATE utf8mb4_unicode_ci
+        )
+      )
+        AND h.fechasolicitud >= DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE()) - 1 DAY)
+        AND h.fechasolicitud < DATE_ADD(DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE()) - 1 DAY), INTERVAL 1 MONTH)
+      GROUP BY estatus
+      ORDER BY estatus ASC;
+    `, userBuildsFilter, userBuildsFilter);
+
+    return {
+      data: data.map((item) => ({
+        estatus: Number(item.estatus),
+        total: Number(item.total),
+      })),
+      total: data.reduce((sum, item) => sum + Number(item.total), 0),
+    };
+  }
+
+  async createHeader(payload: CreateVeneluxHeader, userid_sge: string): Promise<string> {
+    return this.mysql.$transaction(async (tx) => {
+      const solicitudnumero = await this.getNextSolicitudNumero(tx);
+
+      await tx.$executeRaw`
+        INSERT INTO cbsolicimat (
+          solicitudnumero,
+          empresa,
+          codigoobra,
+          descripcionobra,
+          numerocontrol,
+          solicitanteuser,
+          solicitantecodigo,
+          fechasolicitud,
+          fechautilizacion,
+          observacion,
+          actividad,
+          direccionentrega,
+          registradopor,
+          owneruser
+        )
+        VALUES (
+          ${solicitudnumero},
+          ${payload.empresa},
+          ${payload.codigoobra},
+          ${payload.descripcionobra},
+          ${payload.numerocontrol},
+          ${payload.solicitanteuser},
+          ${payload.solicitantecodigo},
+          ${payload.fechasolicitud},
+          ${payload.fechautilizacion},
+          ${payload.observacion},
+          ${payload.actividad},
+          ${payload.direccionentrega},
+          ${payload.registradopor},
+          ${userid_sge}
+        );
+      `;
+
+      return solicitudnumero;
+    });
   }
 
   async createDetail(payload: CreateVeneluxDetail): Promise<void> {
@@ -319,8 +399,10 @@ export class VeneluxPrismaRepository implements VeneluxRepository {
     `;
   }
 
-  async createSolicitudWithDetails(payload: CreateVeneluxSolicitud, userid_sge: string): Promise<void> {
-    await this.mysql.$transaction(async (tx) => {
+  async createSolicitudWithDetails(payload: CreateVeneluxSolicitud, userid_sge: string): Promise<string> {
+    return this.mysql.$transaction(async (tx) => {
+      const solicitudnumero = await this.getNextSolicitudNumero(tx);
+
       await tx.$executeRaw`
         INSERT INTO cbsolicimat (
           solicitudnumero,
@@ -339,7 +421,7 @@ export class VeneluxPrismaRepository implements VeneluxRepository {
           owneruser
         )
         VALUES (
-          ${payload.header.solicitudnumero},
+          ${solicitudnumero},
           ${payload.header.empresa},
           ${payload.header.codigoobra},
           ${payload.header.descripcionobra},
@@ -374,7 +456,7 @@ export class VeneluxPrismaRepository implements VeneluxRepository {
             materialnuevo
           )
           VALUES (
-            ${detail.solicitudnumero},
+            ${solicitudnumero},
             ${detail.itemnumero},
             ${detail.codigomaterial},
             ${detail.descripcionmaterial},
@@ -410,7 +492,7 @@ export class VeneluxPrismaRepository implements VeneluxRepository {
             fechacosto
           )
           VALUES (
-            ${movement.solicitudnumero},
+            ${solicitudnumero},
             ${movement.itemnumero},
             ${movement.codart},
             ${movement.coduni},
@@ -427,6 +509,8 @@ export class VeneluxPrismaRepository implements VeneluxRepository {
           );
         `;
       }
+
+      return solicitudnumero;
     });
   }
   async getObras(userid_sge: string): Promise<{ codigoobra: string; descripcionobra: string }[]> {
