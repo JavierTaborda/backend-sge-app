@@ -15,6 +15,16 @@ type RawQueryable = {
   $queryRaw<T = unknown>(query: TemplateStringsArray, ...values: unknown[]): Promise<T>;
 };
 
+const VENELUX_SOLICITUD_STATUS_LABELS: Record<number, string> = {
+  0: 'Por autorizar',
+  1: 'Autorizada solicitud',
+  2: 'Autorizado despacho',
+  3: 'En despacho',
+  4: 'Autorizado comprar',
+  5: 'En compra',
+  6: 'Anulado',
+};
+
 @Injectable()
 export class VeneluxPrismaRepository implements VeneluxRepository {
   constructor(private readonly sql: SQLServer2PrismaService, private readonly mysql: MySQLPrismaService,) { }
@@ -29,6 +39,66 @@ export class VeneluxPrismaRepository implements VeneluxRepository {
     `;
 
     return String(Number(row?.solicitudnumero ?? 0) + 1);
+  }
+
+  private async getCbsolicimatColumns(): Promise<Set<string>> {
+    const columns = await this.mysql.$queryRaw<Array<{ column_name: string }>>`
+      SELECT COLUMN_NAME AS column_name
+      FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'cbsolicimat';
+    `;
+
+    return new Set(columns.map((item) => item.column_name.toLowerCase()));
+  }
+
+  private buildSolicitudStatusSql(availableColumns: Set<string>) {
+    const isTrue = (column: string) => availableColumns.has(column)
+      ? `COALESCE(h.${column}, 0) = 1`
+      : 'FALSE';
+    const dateValue = (column: string) => availableColumns.has(column)
+      ? `h.${column}`
+      : 'NULL';
+    const fallbackDate = availableColumns.has('fechasolicitud') ? 'h.fechasolicitud' : 'CURDATE()';
+
+    return {
+      statusExpression: `CASE
+        WHEN ${isTrue('anulado')} THEN 6
+        WHEN ${isTrue('compra')} THEN 5
+        WHEN ${isTrue('comprar')} THEN 4
+        WHEN ${isTrue('pedido')} THEN 3
+        WHEN ${isTrue('despachar')} THEN 2
+        WHEN ${isTrue('autorizado')} THEN 1
+        ELSE 0
+      END`,
+      statusStartedAtExpression: `CASE
+        WHEN ${isTrue('anulado')} THEN COALESCE(${dateValue('fechaanulado')}, ${fallbackDate})
+        WHEN ${isTrue('compra')} THEN COALESCE(${dateValue('fec_emis_comp')}, ${fallbackDate})
+        WHEN ${isTrue('comprar')} THEN COALESCE(${dateValue('fechacomprar')}, ${fallbackDate})
+        WHEN ${isTrue('pedido')} THEN COALESCE(${dateValue('fec_emis_ped')}, ${fallbackDate})
+        WHEN ${isTrue('despachar')} THEN COALESCE(${dateValue('fechadespachar')}, ${fallbackDate})
+        WHEN ${isTrue('autorizado')} THEN COALESCE(${dateValue('fechaautorizado')}, ${fallbackDate})
+        ELSE ${fallbackDate}
+      END`,
+    };
+  }
+
+  private buildHeaderColumnSql(availableColumns: Set<string>, column: string, alias = column) {
+    return availableColumns.has(column.toLowerCase())
+      ? `h.${column} AS ${alias}`
+      : `NULL AS ${alias}`;
+  }
+
+  private buildHeaderDateColumnSql(availableColumns: Set<string>, column: string, alias = column) {
+    return availableColumns.has(column.toLowerCase())
+      ? `DATE_FORMAT(h.${column}, '%Y-%m-%d %H:%i:%s') AS ${alias}`
+      : `NULL AS ${alias}`;
+  }
+
+  private buildHeaderStringColumnSql(availableColumns: Set<string>, column: string, alias = column) {
+    return availableColumns.has(column.toLowerCase())
+      ? `RTRIM(h.${column}) AS ${alias}`
+      : `NULL AS ${alias}`;
   }
 
   async getMaterials(): Promise<VeneluxMaterial[]> {
@@ -49,6 +119,7 @@ export class VeneluxPrismaRepository implements VeneluxRepository {
                  AND h.co_precio = 'PMVP'
                  AND h.co_alma = '900'
              ), 0) AS precio
+
       FROM VENE_A.dbo.saArticulo a
       LEFT JOIN VENE_A.dbo.saArtUnidad b ON b.co_art = a.co_art
       LEFT JOIN VENE_A.dbo.saUnidad c ON c.co_uni = b.co_uni
@@ -96,7 +167,10 @@ export class VeneluxPrismaRepository implements VeneluxRepository {
     data: VeneluxSolicitudWithMaterials[];
     total: number;
   }> {
-    const rows = await this.mysql.$queryRaw<Array<{
+    const availableColumns = await this.getCbsolicimatColumns();
+    const { statusExpression, statusStartedAtExpression } = this.buildSolicitudStatusSql(availableColumns);
+
+    const rows = await this.mysql.$queryRawUnsafe<Array<{
       solicitudnumero: string | number;
       empresa: string | null;
       codigoobra: string | null;
@@ -110,7 +184,32 @@ export class VeneluxPrismaRepository implements VeneluxRepository {
       actividad: string | null;
       direccionentrega: string | null;
       registradopor: string | null;
+      autorizado: string | number | boolean | null;
+      fechaautorizado: string | null;
+      autorizadopor: string | null;
+      anulado: string | number | boolean | null;
+      motivoanulado: string | null;
+      fechaanulado: string | null;
+      anuladopor: string | null;
+      despachar: string | number | boolean | null;
+      fechadespachar: string | null;
+      despacharpor: string | null;
+      comentadespachar: string | null;
+      pedido: string | number | boolean | null;
+      ped_num: string | null;
+      fec_emis_ped: string | null;
+      co_us_ped: string | null;
+      comprar: string | number | boolean | null;
+      fechacomprar: string | null;
+      comprarpor: string | null;
+      comentacomprar: string | null;
+      compra: string | number | boolean | null;
+      comp_num: string | null;
+      fec_emis_comp: string | null;
+      co_us_comp: string | null;
       owneruser: string | number | null;
+      estatus: string | number | bigint;
+      horasEnEstatus: string | number | bigint | null;
       itemnumero: string | number | null;
       codigomaterial: string | null;
       descripcionmaterial: string | null;
@@ -126,9 +225,18 @@ export class VeneluxPrismaRepository implements VeneluxRepository {
       categoria: string | null;
       cantidadsolicitada: number | null;
       precioventa: number | null;
+      detalle_autorizado: string | number | boolean | null;
+      detalle_fechaautorizado: string | null;
+      detalle_autorizadopor: string | null;
+      detalle_cantidadautorizada: string | number | null;
+      detalle_cantidaddespacho: string | number | null;
+      detalle_cantidaddisponible: string | number | null;
+      detalle_almacendespacho: string | null;
+      detalle_cantidadcompra: string | number | null;
+      detalle_comprar: string | number | boolean | null;
       detalle_observacion: string | null;
       materialnuevo: string | null;
-    }>>`
+    }>>(`
       SELECT
         h.solicitudnumero,
         RTRIM(h.empresa) AS empresa,
@@ -143,7 +251,32 @@ export class VeneluxPrismaRepository implements VeneluxRepository {
         RTRIM(h.actividad) AS actividad,
         RTRIM(h.direccionentrega) AS direccionentrega,
         RTRIM(h.registradopor) AS registradopor,
+        ${this.buildHeaderColumnSql(availableColumns, 'autorizado')},
+        ${this.buildHeaderDateColumnSql(availableColumns, 'fechaautorizado')},
+        ${this.buildHeaderStringColumnSql(availableColumns, 'autorizadopor')},
+        ${this.buildHeaderColumnSql(availableColumns, 'anulado')},
+        ${this.buildHeaderStringColumnSql(availableColumns, 'motivoanulado')},
+        ${this.buildHeaderDateColumnSql(availableColumns, 'fechaanulado')},
+        ${this.buildHeaderStringColumnSql(availableColumns, 'anuladopor')},
+        ${this.buildHeaderColumnSql(availableColumns, 'despachar')},
+        ${this.buildHeaderDateColumnSql(availableColumns, 'fechadespachar')},
+        ${this.buildHeaderStringColumnSql(availableColumns, 'despacharpor')},
+        ${this.buildHeaderStringColumnSql(availableColumns, 'comentadespachar')},
+        ${this.buildHeaderColumnSql(availableColumns, 'pedido')},
+        ${this.buildHeaderStringColumnSql(availableColumns, 'ped_num')},
+        ${this.buildHeaderDateColumnSql(availableColumns, 'fec_emis_ped')},
+        ${this.buildHeaderStringColumnSql(availableColumns, 'co_us_ped')},
+        ${this.buildHeaderColumnSql(availableColumns, 'comprar')},
+        ${this.buildHeaderDateColumnSql(availableColumns, 'fechacomprar')},
+        ${this.buildHeaderStringColumnSql(availableColumns, 'comprarpor')},
+        ${this.buildHeaderStringColumnSql(availableColumns, 'comentacomprar')},
+        ${this.buildHeaderColumnSql(availableColumns, 'compra')},
+        ${this.buildHeaderStringColumnSql(availableColumns, 'comp_num')},
+        ${this.buildHeaderDateColumnSql(availableColumns, 'fec_emis_comp')},
+        ${this.buildHeaderStringColumnSql(availableColumns, 'co_us_comp')},
         h.owneruser,
+        ${statusExpression} AS estatus,
+        GREATEST(TIMESTAMPDIFF(HOUR, ${statusStartedAtExpression}, NOW()), 0) AS horasEnEstatus,
         dt.itemnumero,
         RTRIM(dt.codigomaterial) AS codigomaterial,
         RTRIM(dt.descripcionmaterial) AS descripcionmaterial,
@@ -159,6 +292,15 @@ export class VeneluxPrismaRepository implements VeneluxRepository {
         RTRIM(dt.categoria) AS categoria,
         dt.cantidadsolicitada,
         dt.precioventa,
+        dt.autorizado AS detalle_autorizado,
+        DATE_FORMAT(dt.fechaautorizado, '%Y-%m-%d %H:%i:%s') AS detalle_fechaautorizado,
+        RTRIM(dt.autorizadopor) AS detalle_autorizadopor,
+        dt.cantidadautorizada AS detalle_cantidadautorizada,
+        dt.cantidaddespacho AS detalle_cantidaddespacho,
+        dt.cantidaddisponible AS detalle_cantidaddisponible,
+        RTRIM(dt.almacendespacho) AS detalle_almacendespacho,
+        dt.cantidadcompra AS detalle_cantidadcompra,
+        dt.comprar AS detalle_comprar,
         RTRIM(dt.observacion) AS detalle_observacion,
         RTRIM(dt.materialnuevo) AS materialnuevo
       FROM cbsolicimat h
@@ -167,7 +309,7 @@ export class VeneluxPrismaRepository implements VeneluxRepository {
         ON CAST(art.codart AS CHAR(30)) COLLATE utf8mb4_unicode_ci
          = TRIM(dt.codigomaterial) COLLATE utf8mb4_unicode_ci
       ORDER BY h.solicitudnumero DESC, dt.itemnumero ASC;
-    `;
+    `);
 
     const grouped = new Map<string, VeneluxSolicitudWithMaterials>();
 
@@ -176,6 +318,9 @@ export class VeneluxPrismaRepository implements VeneluxRepository {
       const header = grouped.get(solicitudnumero);
 
       if (!header) {
+        const estatus = Number(row.estatus);
+        const horasEnEstatus = Number(row.horasEnEstatus ?? 0);
+
         grouped.set(solicitudnumero, {
           solicitudnumero,
           empresa: row.empresa ?? '',
@@ -190,7 +335,34 @@ export class VeneluxPrismaRepository implements VeneluxRepository {
           actividad: row.actividad ?? '',
           direccionentrega: row.direccionentrega ?? '',
           registradopor: row.registradopor ?? '',
+          autorizado: row.autorizado,
+          fechaautorizado: row.fechaautorizado,
+          autorizadopor: row.autorizadopor,
+          anulado: row.anulado,
+          motivoanulado: row.motivoanulado,
+          fechaanulado: row.fechaanulado,
+          anuladopor: row.anuladopor,
+          despachar: row.despachar,
+          fechadespachar: row.fechadespachar,
+          despacharpor: row.despacharpor,
+          comentadespachar: row.comentadespachar,
+          pedido: row.pedido,
+          ped_num: row.ped_num,
+          fec_emis_ped: row.fec_emis_ped,
+          co_us_ped: row.co_us_ped,
+          comprar: row.comprar,
+          fechacomprar: row.fechacomprar,
+          comprarpor: row.comprarpor,
+          comentacomprar: row.comentacomprar,
+          compra: row.compra,
+          comp_num: row.comp_num,
+          fec_emis_comp: row.fec_emis_comp,
+          co_us_comp: row.co_us_comp,
           owneruser: String(row.owneruser ?? ''),
+          estatus,
+          estatusLabel: VENELUX_SOLICITUD_STATUS_LABELS[estatus] ?? `Estatus ${estatus}`,
+          horasEnEstatus,
+          diasEnEstatus: Number((horasEnEstatus / 24).toFixed(2)),
           materiales: [],
         });
       }
@@ -212,14 +384,24 @@ export class VeneluxPrismaRepository implements VeneluxRepository {
           categoria: row.categoria ?? '',
           cantidadsolicitada: Number(row.cantidadsolicitada ?? 0),
           precioventa: Number(row.precioventa ?? 0),
+          autorizado: Boolean(Number(row.detalle_autorizado ?? 0)),
+          fechaautorizado: row.detalle_fechaautorizado,
+          autorizadopor: row.detalle_autorizadopor,
+          cantidadautorizada: Number(row.detalle_cantidadautorizada ?? 0),
+          cantidaddespacho: Number(row.detalle_cantidaddespacho ?? 0),
+          cantidaddisponible: Number(row.detalle_cantidaddisponible ?? 0),
+          almacendespacho: row.detalle_almacendespacho,
+          cantidadcompra: Number(row.detalle_cantidadcompra ?? 0),
+          comprar: Boolean(Number(row.detalle_comprar ?? 0)),
           observacion: row.detalle_observacion ?? '',
           materialnuevo: row.materialnuevo ?? '',
         });
       }
     }
 
-    const data = Array.from(grouped.values());
 
+    const data = Array.from(grouped.values());
+console.log(data);
     return {
       data,
       total: data.length,
@@ -236,29 +418,22 @@ export class VeneluxPrismaRepository implements VeneluxRepository {
     const role = filters.role !== undefined && filters.role !== null ? String(filters.role).trim() : undefined;
     const ownerUserId = filters.userid_sge !== undefined && filters.userid_sge !== null ? String(filters.userid_sge).trim() : undefined;
     const userBuildsFilter = role === '1' || ownerUserId === '1' ? null : ownerUserId || null;
-    const columns = await this.mysql.$queryRaw<Array<{ column_name: string }>>`
-      SELECT COLUMN_NAME AS column_name
-      FROM INFORMATION_SCHEMA.COLUMNS
-      WHERE TABLE_SCHEMA = DATABASE()
-        AND TABLE_NAME = 'cbsolicimat';
-    `;
-    const availableColumns = new Set(columns.map((item) => item.column_name.toLowerCase()));
-    const statusExpression = availableColumns.has('estatus')
-      ? 'CAST(h.estatus AS UNSIGNED)'
-      : availableColumns.has('status')
-        ? 'CAST(h.status AS UNSIGNED)'
-        : availableColumns.has('anulado') && availableColumns.has('revisado')
-          ? 'CASE WHEN COALESCE(h.anulado, 0) = 1 THEN 3 WHEN COALESCE(h.revisado, 0) = 1 THEN 1 ELSE 0 END'
-          : availableColumns.has('anulado')
-            ? 'CASE WHEN COALESCE(h.anulado, 0) = 1 THEN 3 ELSE 0 END'
-            : availableColumns.has('revisado')
-              ? 'CASE WHEN COALESCE(h.revisado, 0) = 1 THEN 1 ELSE 0 END'
-              : '0';
+    const availableColumns = await this.getCbsolicimatColumns();
+    const { statusExpression, statusStartedAtExpression } = this.buildSolicitudStatusSql(availableColumns);
+    const currentMonthFilter = availableColumns.has('fechasolicitud')
+      ? `AND h.fechasolicitud >= DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE()) - 1 DAY)
+        AND h.fechasolicitud < DATE_ADD(DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE()) - 1 DAY), INTERVAL 1 MONTH)`
+      : '';
 
-    const data = await this.mysql.$queryRawUnsafe<VeneluxSolicitudStatusSummary[]>(`
+    const data = await this.mysql.$queryRawUnsafe<Array<{
+      estatus: number | string | bigint;
+      total: number | string | bigint;
+      promedioHorasEnEstatus: number | string | null;
+    }>>(`
       SELECT
         ${statusExpression} AS estatus,
-        COUNT(1) AS total
+        COUNT(1) AS total,
+        AVG(GREATEST(TIMESTAMPDIFF(HOUR, ${statusStartedAtExpression}, NOW()), 0)) AS promedioHorasEnEstatus
       FROM cbsolicimat h
       WHERE (
         ? IS NULL
@@ -269,17 +444,24 @@ export class VeneluxPrismaRepository implements VeneluxRepository {
             AND TRIM(ub.codigoobra) COLLATE utf8mb4_unicode_ci = TRIM(h.codigoobra) COLLATE utf8mb4_unicode_ci
         )
       )
-        AND h.fechasolicitud >= DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE()) - 1 DAY)
-        AND h.fechasolicitud < DATE_ADD(DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE()) - 1 DAY), INTERVAL 1 MONTH)
+      ${currentMonthFilter}
       GROUP BY estatus
       ORDER BY estatus ASC;
     `, userBuildsFilter, userBuildsFilter);
 
     return {
-      data: data.map((item) => ({
-        estatus: Number(item.estatus),
-        total: Number(item.total),
-      })),
+      data: data.map((item) => {
+        const estatus = Number(item.estatus);
+        const promedioHorasEnEstatus = Number(item.promedioHorasEnEstatus ?? 0);
+
+        return {
+          estatus,
+          label: VENELUX_SOLICITUD_STATUS_LABELS[estatus] ?? `Estatus ${estatus}`,
+          total: Number(item.total),
+          promedioHorasEnEstatus,
+          promedioDiasEnEstatus: Number((promedioHorasEnEstatus / 24).toFixed(2)),
+        };
+      }),
       total: data.reduce((sum, item) => sum + Number(item.total), 0),
     };
   }

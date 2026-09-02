@@ -1,4 +1,4 @@
-import { Transform, Type } from 'class-transformer';
+v  crk//import { Transform, Type } from 'class-transformer';
 import { Allow, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 const toStringValue = ({ value }: { value: unknown }) =>
@@ -37,12 +37,10 @@ export class CreateDetailDto {
 
   @Transform(toStringValue)
   @IsString()
-  @IsNotEmpty()
   linea: string;
 
   @Transform(toStringValue)
   @IsString()
-  @IsNotEmpty()
   sublinea: string;
 
   @Transform(toStringValue)

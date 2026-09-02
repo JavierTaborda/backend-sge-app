@@ -67,7 +67,9 @@ export class VeneluxController {
   @ApiOperation({ summary: 'Consulta solicitudes Venelux con su lista de materiales' })
   @ApiResponse({ status: 200, description: 'Solicitudes Venelux con sus materiales.' })
   getSolicitudes() {
-    return this.getVeneluxSolicitudesWithMaterialsUseCase.execute();
+    const  result= this.getVeneluxSolicitudesWithMaterialsUseCase.execute();
+   
+    return result;
   }
 
   @Get('solicitudes/status')

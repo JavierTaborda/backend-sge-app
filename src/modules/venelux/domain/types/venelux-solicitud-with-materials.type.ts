@@ -16,6 +16,18 @@ export interface VeneluxSolicitudMaterialItem {
   precioventa: number;
   observacion: string;
   materialnuevo: string;
+  autorizado: boolean;
+  fechaautorizado: string | null;
+  autorizadopor: string | null;
+  cantidadautorizada: number;
+  cantidaddespacho: number;
+  cantidaddisponible: number;
+  almacendespacho: string | null;
+  cantidadcompra: number;
+  comprar:boolean;
+
+  
+
 }
 
 export interface VeneluxSolicitudWithMaterials {
@@ -32,11 +44,41 @@ export interface VeneluxSolicitudWithMaterials {
   actividad: string;
   direccionentrega: string;
   registradopor: string;
+  autorizado: string | number | boolean | null;
+  fechaautorizado: string | null;
+  autorizadopor: string | null;
+  anulado: string | number | boolean | null;
+  motivoanulado: string | null;
+  fechaanulado: string | null;
+  anuladopor: string | null;
+  despachar: string | number | boolean | null;
+  fechadespachar: string | null;
+  despacharpor: string | null;
+  comentadespachar: string | null;
+  pedido: string | number | boolean | null;
+  ped_num: string | null;
+  fec_emis_ped: string | null;
+  co_us_ped: string | null;
+  comprar: string | number | boolean | null;
+  fechacomprar: string | null;
+  comprarpor: string | null;
+  comentacomprar: string | null;
+  compra: string | number | boolean | null;
+  comp_num: string | null;
+  fec_emis_comp: string | null;
+  co_us_comp: string | null;
   owneruser: string;
+  estatus: number;
+  estatusLabel: string;
+  horasEnEstatus: number;
+  diasEnEstatus: number;
   materiales: VeneluxSolicitudMaterialItem[];
 }
 
 export interface VeneluxSolicitudStatusSummary {
   estatus: number;
+  label: string;
   total: number;
+  promedioHorasEnEstatus: number;
+  promedioDiasEnEstatus: number;
 }
