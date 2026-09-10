@@ -24,6 +24,7 @@ export type RawPedidoRow = {
   anulada: boolean;       
   co_zon: string;
   zon_des: string;
+  origen: string;
 
   // Renglon
   reng_num: number;

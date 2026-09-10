@@ -85,6 +85,7 @@ export function mapRawPedidos(rows: RawPedidoRow[]): AprobacionPedidoDto[] {
         forma_pag: row.forma_pag,
         cond_des: row.cond_des,
         revisado: row.revisado,
+        origen: row.origen,
         tot_bruto: safeNumber(row.tot_bruto),
         tot_neto: safeNumber(row.tot_neto),
         iva: safeNumber(row.iva),

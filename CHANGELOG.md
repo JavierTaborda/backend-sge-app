@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.9] - 2026-09-10
+
+### Added
+
+- Add endpoint to update an order comment.
+- Include the order `origen` field in order responses.
+
+### Changed
+
+- Remove debug logging from the Venelux repository.
+
+### Fixed
+
+- N/A
+
+### Removed
+
+- N/A
+
 ## [1.0.8] - 2026-07-02
 
 ### Added

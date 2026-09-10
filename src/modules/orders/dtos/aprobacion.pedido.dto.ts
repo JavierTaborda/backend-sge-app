@@ -85,7 +85,10 @@ export class AprobacionPedidoDto {
 
   @IsString()
   zon_des: string;
-
+  
+  @IsString()
+  origen: string;
+  
   @IsArray()
   @Type(() => RengPedDto)
   reng_ped: RengPedDto[];

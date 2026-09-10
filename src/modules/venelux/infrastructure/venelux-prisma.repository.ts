@@ -401,7 +401,7 @@ export class VeneluxPrismaRepository implements VeneluxRepository {
 
 
     const data = Array.from(grouped.values());
-console.log(data);
+
     return {
       data,
       total: data.length,

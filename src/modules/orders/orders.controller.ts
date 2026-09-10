@@ -104,5 +104,19 @@ export class OrdersController {
 
     return this.orderService.CancelOrder(factNum);
   }
+  // PATCH /api/orders/comment/:
+  @Role('2', '4', '5')
+  @Patch('/comment/:factNum/')
+  @ApiOperation({ summary: 'Actualiza el comentario de un pedido' })
+  @ApiParam({ name: 'factNum', description: 'Numero de factura del pedido', type: Number })
+  @ApiBody({ schema: { type: 'object', properties: { newcomment: { type: 'string', example: 'Nuevo comentario' } }, required: ['newcomment'] } })
+  @ApiResponse({ status: 200, description: 'Comentario actualizado correctamente.' })
+  async updateComment(
+    @Param('factNum', ParseIntPipe) factNum: number,
+    @Body('newcomment') newcomment: string,
+  ) {
+    return this.orderService.UpdateComment(factNum, newcomment);
+  }
+
 }
 

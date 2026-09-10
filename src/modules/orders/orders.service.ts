@@ -98,7 +98,8 @@ export class OrdersService {
       CASE WHEN p.moneda = 'BS' THEN reng_neto ELSE CAST(ROUND(reng_neto/p.tasa,2) AS DECIMAL(18,5)) END AS reng_neto,
       porc_desc,
       r.tipo_imp,
-      al.des_sub
+      al.des_sub, 
+      p.origen
     FROM pedidos p
     LEFT JOIN clientes c ON p.co_cli = c.co_cli
     LEFT JOIN zona z ON c.co_zon = z.co_zon
@@ -223,7 +224,8 @@ export class OrdersService {
       CASE WHEN p.moneda = 'BS' THEN reng_neto ELSE CAST(ROUND(reng_neto/p.tasa,2) AS DECIMAL(18,5)) END AS reng_neto,
       porc_desc,
       r.tipo_imp,
-      al.des_sub
+      al.des_sub,
+      p.origen
     FROM   ${db}.dbo.pedidos p
     LEFT JOIN ${db}.dbo.clientes c ON p.co_cli = c.co_cli
     LEFT JOIN ${db}.dbo.zona z ON c.co_zon = z.co_zon
