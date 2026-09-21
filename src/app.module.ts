@@ -18,6 +18,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module';
 import { EmailModule } from './email/email.module';
+import { AccountsReceivableModule } from './modules/accounts-receivable/accounts-receivable.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { EmailModule } from './email/email.module';
       serveRoot: '/',
     }),
     EmailModule,
+    AccountsReceivableModule,
     VendorsModule, OrdersModule, ZonesModule, CustomersModule, ProductsModule, IsOnlineModule, WarehousesModule, GoalsModule, CreateOrdersModule, ReturnsModule, PaysModule, VeneluxModule],
     providers: [
       { provide: APP_GUARD, useClass: ThrottlerGuard },
