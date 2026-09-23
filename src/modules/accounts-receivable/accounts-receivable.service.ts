@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { SQLServerPrismaService } from 'src/database/sqlserver.service';
+import { getVzlaDateForDB } from 'src/utils/date.venezuela.db';
 
 export interface AccountReceivableRow {
   renglon: string;
@@ -35,6 +36,7 @@ export class AccountsReceivableService {
     if (!clientCode?.trim()) {
       throw new BadRequestException('El codigo del cliente es requerido.');
     }
+ 
 
     const database = process.env.SQLSERVER_DATABASE;
     const vendorScoped = (role === '5' || role === '4') && !!codven;
@@ -55,9 +57,7 @@ export class AccountsReceivableService {
         d.fec_emis,
         d.co_cli,
         c.cli_des,
-      -- 1. Reemplaza NBSP (160) y Tabulaciones (9) por espacios normales
-        -- 2. Elimina espacios dobles/múltiples
-        -- 3. Hace TRIM a los extremos
+   
         LTRIM(RTRIM(
           REPLACE(
             REPLACE(
@@ -76,6 +76,7 @@ export class AccountsReceivableService {
         ON c.co_cli = d.co_cli
       WHERE d.anulado = 0
         AND d.saldo > 0
+        AND d.tasa > 1
         AND d.co_cli = @P1
         
         ${vendorFilter}
@@ -86,7 +87,13 @@ export class AccountsReceivableService {
     const params = vendorScoped
       ? [clientCode.trim(), codven.trim()]
       : [clientCode.trim()];
-    return this.sql.$queryRawUnsafe<AccountReceivableRow[]>(query, ...params);
+    const rows = await this.sql.$queryRawUnsafe<AccountReceivableRow[]>(query, ...params);
+    return rows.map((row) => ({
+      ...row,
+      fec_emis: getVzlaDateForDB(
+        new Date(row.fec_emis.getTime() + 4 * 60 * 60 * 1000),
+      ),
+    }));
   }
 
   async findAll(role?: string, codven?: string): Promise<AccountReceivableSummary[]> {
@@ -118,7 +125,8 @@ export class AccountsReceivableService {
       INNER JOIN ${database}.dbo.clientes AS c
         ON c.co_cli = d.co_cli
       WHERE d.anulado = 0
-        AND d.co_cli NOT IN ('00261','00470','00485','00494','00510','00304','00511', 'GEN01', 'GEN02') AND d.saldo > 0
+        AND d.co_cli NOT IN ('00261','00470','00485','00494','00510','00304','00511', 'GEN01', 'GEN02', '00514', '00512','00646') AND d.saldo > 0 
+        AND d.tasa >1 
         ${vendorFilter}
       
       GROUP BY d.co_cli, c.cli_des, c.mont_cre
