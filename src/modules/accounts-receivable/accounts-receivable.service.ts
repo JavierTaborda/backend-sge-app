@@ -44,7 +44,13 @@ export class AccountsReceivableService {
     const query = `
       SELECT
         'Cuentas x Cobrar' AS renglon,
-        d.tipo_doc,
+        CASE
+          WHEN d.tipo_doc LIKE 'AJP%' THEN 'AJUSTE POSITIVO'
+          WHEN d.tipo_doc LIKE 'AJN%' THEN 'AJUSTE NEGATIVO'
+          WHEN d.tipo_doc LIKE 'N/CR%' THEN 'NOTA DE CREDITO'
+          WHEN d.tipo_doc LIKE 'FACT%' THEN 'FACTURA'
+          ELSE d.tipo_doc
+        END AS tipo_doc,
         d.nro_doc,
         d.moneda,
         CAST(
