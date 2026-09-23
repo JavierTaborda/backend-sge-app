@@ -55,7 +55,7 @@ export class AccountsReceivableService {
         d.moneda,
         CAST(
           (d.saldo * CASE
-            WHEN d.tipo_doc IN ('N/DB','GIRO','CHEQ','FACT','AJPA','AJPM', 'N/CR') THEN 1
+            WHEN d.tipo_doc IN ('N/DB','GIRO','CHEQ','FACT','AJPA','AJPM') THEN 1
             ELSE -1
           END) / d.tasa
           AS DECIMAL(18,2)
@@ -113,7 +113,7 @@ export class AccountsReceivableService {
         c.mont_cre,
         SUM(CAST(
           (d.saldo * CASE
-            WHEN d.tipo_doc IN ('N/DB','GIRO','CHEQ','FACT','AJPA','AJPM', 'N/CR') THEN 1
+            WHEN d.tipo_doc IN ('N/DB','GIRO','CHEQ','FACT','AJPA','AJPM') THEN 1
             ELSE -1
           END) / NULLIF(d.tasa, 0)
           AS DECIMAL(18,2)
@@ -121,7 +121,7 @@ export class AccountsReceivableService {
         CAST(
           c.mont_cre - SUM(
             (d.saldo * CASE
-              WHEN d.tipo_doc IN ('N/DB','GIRO','CHEQ','FACT','AJPA','AJPM', 'N/CR') THEN 1
+              WHEN d.tipo_doc IN ('N/DB','GIRO','CHEQ','FACT','AJPA','AJPM') THEN 1
               ELSE -1
             END) / NULLIF(d.tasa, 0)
           )
