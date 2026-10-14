@@ -14,6 +14,7 @@ export interface AccountReceivableRow {
   observa: string | null;
   origen: string | null;
   origen_d: string | null;
+  diasCalle: number;
 }
 
 export interface AccountReceivableSummary {
@@ -87,18 +88,33 @@ export class AccountsReceivableService {
         
         ${vendorFilter}
 
-        ORDER BY d.fec_emis DESC
+        ORDER BY d.fec_emis ASC
     `;
 
     const params = vendorScoped
       ? [clientCode.trim(), codven.trim()]
       : [clientCode.trim()];
     const rows = await this.sql.$queryRawUnsafe<AccountReceivableRow[]>(query, ...params);
+    const today = getVzlaDateForDB();
+    const todayStart = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+    ).getTime();
+
     return rows.map((row) => ({
       ...row,
-      fec_emis: getVzlaDateForDB(
-        new Date(row.fec_emis.getTime() + 4 * 60 * 60 * 1000),
-      ),
+      fec_emis: getVzlaDateForDB(new Date(row.fec_emis.getTime() + 4 * 60 * 60 * 1000)),
+      diasCalle:
+        Math.floor(
+          (todayStart -
+            new Date(
+              row.fec_emis.getFullYear(),
+              row.fec_emis.getMonth(),
+              row.fec_emis.getDate(),
+            ).getTime()) /
+            (24 * 60 * 60 * 1000),
+        ) + 1,
     }));
   }
 
