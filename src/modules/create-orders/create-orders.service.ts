@@ -52,6 +52,24 @@ export class CreateOrdersService {
 
         // get info
         const codarts = available.map((m) => m.codart);
+        const availableWarehouseArticles = codarts.length > 0
+            ? await this.sql.$queryRawUnsafe<{ co_art: string }[]>(
+                `SELECT co_art
+                 FROM st_almac
+                 WHERE co_alma LIKE @P1
+                   AND COALESCE(stock_act, 0) - COALESCE(stock_com, 0) > 0
+                   AND co_art IN (${codarts.map((_, index) => `@P${index + 2}`).join(', ')})`,
+                '0001%',
+                ...codarts,
+            )
+            : [];
+        const warehouseArticleCodes = new Set(
+            availableWarehouseArticles.map((article) => article.co_art.trim()),
+        );
+        const availableInWarehouse = available.filter((m) =>
+            warehouseArticleCodes.has(m.codart.trim()),
+        );
+
         const arts = await this.sql.art.findMany({
             select: {
                 co_art: true,
@@ -72,12 +90,14 @@ export class CreateOrdersService {
 
 
             },
-            where: { co_art: { in: codarts } },
+            where: {
+                co_art: { in: availableInWarehouse.map((m) => m.codart) }
+            },
         });
 
 
 
-        const groupedData = available.reduce((acc, m) => {
+        const groupedData = availableInWarehouse.reduce((acc, m) => {
             //  codven is undefined, group by codart 
             // codven, group by key 
             const key = codVen ? `${m.codven}-${m.codart}` : m.codart;
@@ -257,6 +277,27 @@ export class CreateOrdersService {
         const year = DateUtils.GetYear();
         const month = DateUtils.GetMonthMM(); 
 
+        const articleCodes = [...new Set(reng_ped.map((r) => r.co_art))];
+        const warehouseStock = articleCodes.length > 0
+            ? await this.sql.$queryRawUnsafe<
+                { co_art: string; stock_disponible: number | string }[]
+            >(
+                `SELECT co_art,
+                        COALESCE(stock_act, 0) - COALESCE(stock_com, 0) AS stock_disponible
+                 FROM ${db}.dbo.st_almac
+                 WHERE co_alma LIKE @P1
+                   AND co_art IN (${articleCodes.map((_, index) => `@P${index + 2}`).join(', ')})`,
+                '0001%',
+                ...articleCodes,
+            )
+            : [];
+        const stockByArticle = new Map(
+            warehouseStock.map((stock) => [
+                stock.co_art.trim(),
+                Number(stock.stock_disponible),
+            ]),
+        );
+
         for (const r of reng_ped) {
             const meta = await this.mysql.metas.findFirst({
                 where: {
@@ -267,7 +308,7 @@ export class CreateOrdersService {
                 },
             });
 
-            console.log(meta)
+            //console.log(meta)
             if (!meta) throw new Error(`No existe meta para el artículo ${r.co_art}`);
 
             const disponible = meta.asignado - meta.utilizado;
@@ -277,6 +318,16 @@ export class CreateOrdersService {
                     ? `${disponible} Unidad(es) disponible(s)`
                     : 'Sin unidades disponibles';
                 throw new Error(`Meta insuficiente para ${r.co_art?.trim()}. ${mssg}`);
+            }
+
+            const stockDisponible = r.co_art
+                ? stockByArticle.get(r.co_art.trim())
+                : undefined;
+            if (stockDisponible === undefined || r.total_art! > stockDisponible) {
+                const mssg = stockDisponible && stockDisponible > 0
+                    ? `${stockDisponible} Unidad(es) disponible(s) en el almacén 0001`
+                    : 'Sin unidades disponibles en el almacén 0001';
+                throw new Error(`Stock insuficiente para ${r.co_art?.trim()}. ${mssg}`);
             }
         }
 
