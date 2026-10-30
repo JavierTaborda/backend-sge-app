@@ -3,6 +3,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { CreateOrdersModule } from './modules/create-orders/create-orders.module';
 import { CustomersModule } from './modules/customers/customers.module';
+import { DispatchModule } from './modules/dispatch/dispatch.module';
 import { GoalsModule } from './modules/goals/goals.module';
 import { IsOnlineModule } from './modules/isonline/isonline.module';
 import { OrdersModule } from './modules/orders/orders.module';
@@ -42,6 +43,7 @@ import { AccountsReceivableModule } from './modules/accounts-receivable/accounts
     }),
     EmailModule,
     AccountsReceivableModule,
+    DispatchModule,
     VendorsModule, OrdersModule, ZonesModule, CustomersModule, ProductsModule, IsOnlineModule, WarehousesModule, GoalsModule, CreateOrdersModule, ReturnsModule, PaysModule, VeneluxModule],
     providers: [
       { provide: APP_GUARD, useClass: ThrottlerGuard },
