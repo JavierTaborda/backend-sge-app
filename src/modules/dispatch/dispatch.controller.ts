@@ -1,27 +1,27 @@
 import {
-    BadRequestException,
-    Body,
-    Controller,
-    Get,
-    HttpCode,
-    HttpStatus,
-    Param,
-    Post,
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
 } from '@nestjs/common';
 import {
-    ApiBearerAuth,
-    ApiBody,
-    ApiOperation,
-    ApiParam,
-    ApiResponse,
-    ApiTags,
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
 import { DispatchService } from './dispatch.service';
 import { DispatchOrderParamsDto } from './dtos/dispatch-order-params.dto';
 import {
-    DispatchItemDto,
-    DispatchOrderDto,
-    DispatchOrderWithItemsDto,
+  DispatchItemDto,
+  DispatchOrderDto,
+  DispatchOrderWithItemsDto,
 } from './dtos/dispatch-order.dto';
 
 @Controller('dispatch')
@@ -69,6 +69,15 @@ export class DispatchController {
     return { received: true };
   }
 
+  @Get('list')
+  @ApiOperation({
+    summary: 'Lista códigos de barras de prueba que no requieren serial',
+  })
+  @ApiResponse({ status: 200, type: String, isArray: true })
+  getBarcodesWithoutSerial(): string[] {
+    return this.dispatchService.getBarcodesWithoutSerial();
+  }
+
   @Get('orders')
   @ApiOperation({
     summary: 'Lista despachos en estados 0 y 1, y finalizados hoy',
@@ -110,7 +119,7 @@ export class DispatchController {
   @ApiOperation({
     summary: 'Lista el contenido completo de un predespacho y pedido',
     description:
-      'Combina mvpredes y dtpredes sin duplicar unidades entre ambas tablas. No aplica el limite de 50 de la consulta general.',
+      'Consulta en dtpredes los items de despachos finalizados hoy y en mvpredes los demas. No aplica el limite de 50 de la consulta general.',
   })
   @ApiParam({ name: 'prednum', type: Number, example: 6242 })
   @ApiParam({ name: 'pednum', type: Number, example: 19665 })

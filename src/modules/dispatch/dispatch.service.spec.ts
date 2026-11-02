@@ -301,21 +301,13 @@ describe('DispatchService', () => {
     expect(new Set(items.map((item) => item.itemnum)).size).toBe(52);
     expect(query.sql).not.toMatch(/\bLIMIT\b/);
     expect(query.values).toEqual([6242, 19665]);
-    expect(query.sql).toContain('UNION ALL');
-    expect(query.sql).toContain('WHERE NOT EXISTS');
-    expect(query.sql).toContain(
-      'd.prednum = m.prednum AND d.pednum = m.pednum AND d.itemnum = m.itemnum',
-    );
-    expect(query.sql).toContain(
-      'm.prednum = d.prednum AND m.pednum = d.pednum AND m.itemnum = d.itemnum',
-    );
-    expect(query.sql).toContain(
-      "COALESCE(NULLIF(TRIM(d.serial1), ''), m.serial1)",
-    );
-    expect(query.sql).toContain('COALESCE(d.horacapture, m.horacapture)');
+    expect(query.sql).toContain('FROM mvpredes m');
+    expect(query.sql).toContain('FROM dtpredes d');
+    expect(query.sql).toContain('WHERE NOT (\n          h.cerrado = 1');
+    expect(query.sql).toContain('h.fecfinal >= CURDATE()');
+    expect(query.sql).toContain('h.fecfinal < CURDATE() + INTERVAL 1 DAY');
     expect(query.sql).toContain('u.userUsername AS supervisor');
     expect(query.sql).toContain('u.userId = i.recouser');
-    expect(query.sql).not.toContain('d.recouser');
   });
 
   it('returns an empty item list for an existing header with no units', async () => {

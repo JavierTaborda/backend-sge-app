@@ -1,7 +1,7 @@
 import {
-  INestApplication,
-  NotFoundException,
-  ValidationPipe,
+    INestApplication,
+    NotFoundException,
+    ValidationPipe,
 } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Test } from '@nestjs/testing';
@@ -10,8 +10,8 @@ import request from 'supertest';
 import { DispatchController } from './dispatch.controller';
 import { DispatchService } from './dispatch.service';
 import type {
-  DispatchItemDto,
-  DispatchOrderDto,
+    DispatchItemDto,
+    DispatchOrderDto,
 } from './dtos/dispatch-order.dto';
 
 describe('DispatchController HTTP', () => {
@@ -91,6 +91,20 @@ describe('DispatchController HTTP', () => {
 
   afterAll(async () => {
     await app.close();
+  });
+
+  it('returns five hardcoded barcodes that do not require serials', async () => {
+    const barcodes = [
+      '7590000000009',
+      '7590000000016',
+      '7590000000023',
+      '7590000000030',
+      '7590000000047',
+    ];
+
+    await request(app.getHttpServer())
+      .get('/api/dispatch/barcodes/no-serial')
+      .expect(200, barcodes);
   });
 
   it('returns a header list with the exact casing and no nested items', async () => {

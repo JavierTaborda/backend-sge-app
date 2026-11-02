@@ -35,6 +35,16 @@ type DispatchItemRow = Omit<
 export class DispatchService {
   constructor(private readonly mysql: MySQLPrismaService) {}
 
+  getBarcodesWithoutSerial(): string[] {
+    return [
+      '7590000000009',
+      '7590000000016',
+      '7590000000023',
+      '7590000000030',
+      '7590000000047',
+    ];
+  }
+
   getOrders(): Promise<DispatchOrderDto[]> {
     return this.findOrders();
   }
@@ -110,25 +120,27 @@ export class DispatchService {
       FROM (
         SELECT
           m.prednum, m.itemnum, m.pednum, m.rennum, m.codalma,
-          m.codart, m.compuesto, m.manjser,
-          COALESCE(NULLIF(TRIM(m.refbarra), ''), d.refbarra) AS refbarra,
-          COALESCE(NULLIF(TRIM(m.codbarra), ''), d.codbarra) AS codbarra,
-          COALESCE(NULLIF(TRIM(d.serial1), ''), m.serial1) AS serial1,
-          COALESCE(d.recouser, m.recouser) AS recouser,
-          COALESCE(d.horacapture, m.horacapture) AS horacapture
+          m.codart, m.compuesto, m.manjser, m.refbarra, m.codbarra,
+          m.serial1, m.recouser, m.horacapture
         FROM mvpredes m
-        LEFT JOIN dtpredes d
-          ON d.prednum = m.prednum AND d.pednum = m.pednum AND d.itemnum = m.itemnum
+        INNER JOIN cbpredes h
+          ON h.prednum = m.prednum AND h.pednum = m.pednum
+        WHERE NOT (
+          h.cerrado = 1
+          AND h.fecfinal >= CURDATE()
+          AND h.fecfinal < CURDATE() + INTERVAL 1 DAY
+        )
         UNION ALL
         SELECT
           d.prednum, d.itemnum, d.pednum, d.rennum, d.codalma,
-          d.codart, d.compuesto, d.manjser,
-          d.refbarra, d.codbarra, d.serial1, d.recouser, d.horacapture
+          d.codart, d.compuesto, d.manjser, d.refbarra, d.codbarra,
+          d.serial1, d.recouser, d.horacapture
         FROM dtpredes d
-        WHERE NOT EXISTS (
-          SELECT 1 FROM mvpredes m
-          WHERE m.prednum = d.prednum AND m.pednum = d.pednum AND m.itemnum = d.itemnum
-        )
+        INNER JOIN cbpredes h
+          ON h.prednum = d.prednum AND h.pednum = d.pednum
+        WHERE h.cerrado = 1
+          AND h.fecfinal >= CURDATE()
+          AND h.fecfinal < CURDATE() + INTERVAL 1 DAY
       ) i
       LEFT JOIN mtarticulos a ON a.codart = i.codart
       LEFT JOIN sge.users u ON u.userId = i.recouser

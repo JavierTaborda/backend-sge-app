@@ -52,6 +52,7 @@ export class OrdersService {
     const conditions: string[] = [
       `p.status = 0`,
       `p.anulada = 0`,
+      `p.aux02 <> 'Si'`,
       ...((role === '5' || role === '4') && codven ? [`p.co_ven LIKE '%${codven}%'`] : []),
       ...(role === '2' ? [`p.co_ven NOT LIKE '%00001%'`] : []),
     ];
