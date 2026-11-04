@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Param,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -16,6 +17,8 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { DispatchService } from './dispatch.service';
 import { DispatchOrderParamsDto } from './dtos/dispatch-order-params.dto';
 import {
@@ -23,9 +26,10 @@ import {
   DispatchOrderDto,
   DispatchOrderWithItemsDto,
 } from './dtos/dispatch-order.dto';
+import { ReceivePredispatchDto } from './dtos/receive-predispatch.dto';
 
 @Controller('dispatch')
-// @UseGuards(JwtAuthGuard)
+ @UseGuards(JwtAuthGuard)
 @ApiTags('Dispatch')
 @ApiBearerAuth()
 export class DispatchController {
@@ -36,42 +40,34 @@ export class DispatchController {
   @ApiOperation({
     summary: 'Recibe del frontend un predespacho ya escaneado',
     description:
-      'Acepta un despacho con la cabecera y el arreglo items, con la misma estructura de las rutas de detalle. Por ahora no lo persiste.',
+      'Actualiza las horas de la cabecera y los items escaneados del predespacho.',
   })
   @ApiBody({
     description: 'Cabecera del despacho con sus items escaneados.',
-    type: DispatchOrderWithItemsDto,
+    type: ReceivePredispatchDto,
   })
   @ApiResponse({ status: 202, description: 'Predespacho recibido' })
   @ApiResponse({
     status: 400,
     description: 'Se requieren prednum, pednum y un arreglo items',
   })
-  receivePredispatch(
-    @Body() payload: Record<string, unknown>,
-  ): { received: true } {
-    if (
-      payload === null ||
-      typeof payload !== 'object' ||
-      Array.isArray(payload) ||
-      !Number.isInteger(payload.prednum) ||
-      !Number.isInteger(payload.pednum) ||
-      !Array.isArray(payload.items) ||
-      !payload.items.every(
-        (item) => item !== null && typeof item === 'object' && !Array.isArray(item),
-      )
-    ) {
-      throw new BadRequestException(
-        'El body debe incluir prednum, pednum y un arreglo items de objetos',
-      );
+  async receivePredispatch(
+    @Body() body: ReceivePredispatchDto,
+    @CurrentUser('userid_sge') userid_sge: string,
+  ): Promise<{ received: true }> {
+    const recouser = Number(userid_sge);
+    if (!Number.isInteger(recouser)) {
+      throw new BadRequestException('El usuario autenticado no tiene un userid_sge valido');
     }
+    console.log(body);
+    await this.dispatchService.savePredispatch(body, recouser);
 
     return { received: true };
   }
 
   @Get('list')
   @ApiOperation({
-    summary: 'Lista códigos de barras de prueba que no requieren serial',
+    summary: 'Lista barcodes que no requieren serial',
   })
   @ApiResponse({ status: 200, type: String, isArray: true })
   getBarcodesWithoutSerial(): string[] {
@@ -119,7 +115,7 @@ export class DispatchController {
   @ApiOperation({
     summary: 'Lista el contenido completo de un predespacho y pedido',
     description:
-      'Consulta en dtpredes los items de despachos finalizados hoy y en mvpredes los demas. No aplica el limite de 50 de la consulta general.',
+      'Consulta en dtpredes los items de despachos finalizados hoy y en mvpredes los demas, sin limitar la cantidad de items.',
   })
   @ApiParam({ name: 'prednum', type: Number, example: 6242 })
   @ApiParam({ name: 'pednum', type: Number, example: 19665 })

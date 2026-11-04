@@ -1,7 +1,7 @@
 import {
-    INestApplication,
-    NotFoundException,
-    ValidationPipe,
+  INestApplication,
+  NotFoundException,
+  ValidationPipe,
 } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Test } from '@nestjs/testing';
@@ -10,8 +10,8 @@ import request from 'supertest';
 import { DispatchController } from './dispatch.controller';
 import { DispatchService } from './dispatch.service';
 import type {
-    DispatchItemDto,
-    DispatchOrderDto,
+  DispatchItemDto,
+  DispatchOrderDto,
 } from './dtos/dispatch-order.dto';
 
 describe('DispatchController HTTP', () => {
@@ -59,6 +59,7 @@ describe('DispatchController HTTP', () => {
     objectstate2: 'Warning',
   };
   const service = {
+    getBarcodesWithoutSerial: jest.fn().mockReturnValue([]),
     getOrders: jest.fn().mockResolvedValue([]),
     getOrdersWithItems: jest.fn().mockResolvedValue([]),
     getOrder: jest.fn().mockResolvedValue(order),
@@ -83,6 +84,9 @@ describe('DispatchController HTTP', () => {
   });
 
   beforeEach(() => {
+    service.getBarcodesWithoutSerial
+      .mockReset()
+      .mockReturnValue([]);
     service.getOrders.mockReset().mockResolvedValue([]);
     service.getOrdersWithItems.mockReset().mockResolvedValue([]);
     service.getOrder.mockReset().mockResolvedValue(order);
@@ -93,18 +97,15 @@ describe('DispatchController HTTP', () => {
     await app.close();
   });
 
-  it('returns five hardcoded barcodes that do not require serials', async () => {
-    const barcodes = [
-      '7590000000009',
-      '7590000000016',
-      '7590000000023',
-      '7590000000030',
-      '7590000000047',
-    ];
+  it('returns articles whose barcodes do not require serials', async () => {
+    const barcodes = ['7590020010965', '7590020010972'];
+    service.getBarcodesWithoutSerial.mockReturnValueOnce(barcodes);
 
     await request(app.getHttpServer())
-      .get('/api/dispatch/barcodes/no-serial')
+      .get('/api/dispatch/list')
       .expect(200, barcodes);
+
+    expect(service.getBarcodesWithoutSerial).toHaveBeenCalledWith();
   });
 
   it('returns a header list with the exact casing and no nested items', async () => {

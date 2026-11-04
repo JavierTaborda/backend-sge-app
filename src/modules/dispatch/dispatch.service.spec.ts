@@ -114,7 +114,7 @@ describe('DispatchService', () => {
     expect(mysql.$queryRaw).toHaveBeenCalledTimes(1);
   });
 
-  it('limits only the general header query to 50 and never filters it by number', async () => {
+  it('returns all matching headers without filtering by number or limiting rows', async () => {
     mysql.$queryRaw.mockResolvedValue([]);
 
     await expect(service.getOrders()).resolves.toEqual([]);
@@ -122,8 +122,9 @@ describe('DispatchService', () => {
     const [query] = mysql.$queryRaw.mock.calls[0];
     expect(query.values).toEqual([]);
     expect(query.sql).toMatch(
-      /WHERE h\.anulado = 0 AND \(h\.estatus IN \(0, 1\) OR \(h\.cerrado = 1 AND h\.fecfinal >= CURDATE\(\) AND h\.fecfinal < CURDATE\(\) \+ INTERVAL 1 DAY\)\)\s+ORDER BY h\.prednum DESC, h\.pednum ASC\s+LIMIT 100/,
+      /WHERE h\.anulado = 0 AND \(h\.estatus IN \(0, 1\) OR \(h\.cerrado = 1 AND h\.fecfinal >= CURDATE\(\) AND h\.fecfinal < CURDATE\(\) \+ INTERVAL 1 DAY\)\)\s+ORDER BY h\.prednum DESC, h\.pednum ASC\s*\)/,
     );
+    expect(query.sql).not.toMatch(/\bLIMIT\b/);
     expect(query.sql).not.toMatch(/h\.(prednum|pednum)\s*=\s*\?/);
     expect(query.sql).not.toMatch(/\b(mvpredes|dtpredes)\b/);
     expect(query.sql).toContain('LEFT JOIN clzonas z ON z.codzon = h.codzon');

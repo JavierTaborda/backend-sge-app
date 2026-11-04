@@ -1,12 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { MySQLPrismaService } from '../../database/mysql.service';
 import { Prisma } from '../../prisma-clients/mysql/client';
+import { getVzlaDateForDB } from '../../utils/date.venezuela.db';
 import type { DispatchOrderParamsDto } from './dtos/dispatch-order-params.dto';
 import {
   DispatchItemDto,
   DispatchOrderDto,
   DispatchOrderWithItemsDto,
 } from './dtos/dispatch-order.dto';
+import type { ReceivePredispatchDto } from './dtos/receive-predispatch.dto';
 
 type DatabaseFlag = boolean | number | bigint;
 
@@ -31,18 +33,127 @@ type DispatchItemRow = Omit<
   manjser: DatabaseFlag;
 };
 
+const DB = Prisma.raw('`DBPROSGE`');
+
 @Injectable()
 export class DispatchService {
   constructor(private readonly mysql: MySQLPrismaService) {}
 
   getBarcodesWithoutSerial(): string[] {
     return [
-      '7590000000009',
-      '7590000000016',
-      '7590000000023',
-      '7590000000030',
-      '7590000000047',
+      '7590020010965',
+      '7590020010972',
+      '7590020010989',
+      '7590020011016',
+      '7590020011030',
+      '7590020010996',
+      '7590020011009',
+      '7590020011023',
+      '7590020011047',
+      '7590020011054',
+      '7590020011207',
+      '7590020007170',
+      '7590020011160',
+      '7590020007842',
+      '7590020005107',
+      '7590020011061',
+      '7590020011153',
+      '7590020011344',
+      '7590020011337',
+      '7590020011108',
+      '7590020011115',
+      '7590020011221',
+      '7590020011276',
+      '7590020011917',
+      '7590020011283',
+      '7590020009549',
+      '7590020011269',
+      '7590020011252',
+      '7590020011078',
+      '7590020011085',
+      '7590020011214',
+      '7590020011122',
+      '7590020011238',
+      '7590020011245',
+      '7590020010781',
+      '7590020010750',
+      '7590020010736',
+      '7590020010743',
+      '7590020012167',
+      '7590020010774',
     ];
+  }
+
+  async savePredispatch(
+    payload: ReceivePredispatchDto,
+    recouser: number,
+  ): Promise<void> {
+    if (
+      payload.items.some(
+        (item) => item.prednum !== payload.prednum || item.pednum !== payload.pednum,
+      )
+    ) {
+      throw new BadRequestException(
+        'Todos los items deben pertenecer al mismo predespacho',
+      );
+    }
+
+    const orderedItems = [...payload.items].sort(
+      (left, right) => left.itemnum - right.itemnum,
+    );
+    const firstCaptureValue = orderedItems[0].horacapture;
+    const lastCaptureValue = orderedItems[orderedItems.length - 1].horacapture;
+
+    if (firstCaptureValue === null || lastCaptureValue === null) {
+      throw new BadRequestException(
+        'El primer y ultimo item deben tener una hora de captura',
+      );
+    }
+
+    const fecdesp = getVzlaDateForDB(new Date(firstCaptureValue));
+    const fecfinal = getVzlaDateForDB(new Date(lastCaptureValue));
+    const horainicio = fecdesp.toISOString().slice(11, 19);
+    const horafinal = fecfinal.toISOString().slice(11, 19);
+
+    if (
+      Number.isNaN(fecdesp.getTime()) ||
+      Number.isNaN(fecfinal.getTime()) ||
+      fecfinal < fecdesp
+    ) {
+      throw new BadRequestException(
+        'Las horas del primer y ultimo item no son validas',
+      );
+    }
+
+    await this.mysql.$transaction(async (transaction) => {
+      await transaction.$executeRaw(Prisma.sql`
+        UPDATE ${DB}.cbpredes
+        SET fecdesp = ${fecdesp},
+            fecfinal = ${fecfinal},
+            horainicio = ${horainicio},
+            horafinal = ${horafinal}
+        WHERE prednum = ${payload.prednum} AND pednum = ${payload.pednum}
+      `);
+
+      for (const item of payload.items) {
+        await transaction.$executeRaw(Prisma.sql`
+          UPDATE ${DB}.mvpredes
+          SET rennum = ${item.rennum},
+              codalma = ${item.codalma},
+              codart = ${item.codart},
+              compuesto = ${item.compuesto === true || item.compuesto === 1},
+              manjser = ${item.manjser === true || item.manjser === 1},
+              codbarra = ${item.codbarra},
+              serial1 = ${item.serial1},
+              refbarra = ${item.refbarra},
+              horacapture = ${item.horacapture === null ? null : getVzlaDateForDB(new Date(item.horacapture)).toISOString().slice(11, 19)},
+              recouser = ${recouser}
+          WHERE prednum = ${payload.prednum}
+            AND pednum = ${payload.pednum}
+            AND itemnum = ${item.itemnum}
+        `);
+      }
+    });
   }
 
   getOrders(): Promise<DispatchOrderDto[]> {
@@ -122,8 +233,8 @@ export class DispatchService {
           m.prednum, m.itemnum, m.pednum, m.rennum, m.codalma,
           m.codart, m.compuesto, m.manjser, m.refbarra, m.codbarra,
           m.serial1, m.recouser, m.horacapture
-        FROM mvpredes m
-        INNER JOIN cbpredes h
+        FROM ${DB}.mvpredes m
+        INNER JOIN ${DB}.cbpredes h
           ON h.prednum = m.prednum AND h.pednum = m.pednum
         WHERE NOT (
           h.cerrado = 1
@@ -135,8 +246,8 @@ export class DispatchService {
           d.prednum, d.itemnum, d.pednum, d.rennum, d.codalma,
           d.codart, d.compuesto, d.manjser, d.refbarra, d.codbarra,
           d.serial1, d.recouser, d.horacapture
-        FROM dtpredes d
-        INNER JOIN cbpredes h
+        FROM ${DB}.dtpredes d
+        INNER JOIN ${DB}.cbpredes h
           ON h.prednum = d.prednum AND h.pednum = d.pednum
         WHERE h.cerrado = 1
           AND h.fecfinal >= CURDATE()
@@ -200,10 +311,9 @@ export class DispatchService {
       FROM (
         SELECT h.prednum, h.pednum, h.codcli, h.codzon, h.codven,
           h.cerrado, h.fecdesp, h.fecfinal, h.cantdesp, h.owneruser
-        FROM cbpredes h
+        FROM ${DB}.cbpredes h
         WHERE ${Prisma.join(conditions, ' AND ')}
         ORDER BY h.prednum DESC, h.pednum ASC
-        ${params ? Prisma.empty : Prisma.sql`LIMIT 100`}
       ) h
       LEFT JOIN mtclientes c ON c.codcli = h.codcli
       LEFT JOIN clzonas z ON z.codzon = h.codzon
