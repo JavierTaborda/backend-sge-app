@@ -103,8 +103,9 @@ describe('DispatchService', () => {
 
     expect(mysql.$queryRaw).toHaveBeenCalledTimes(2);
     const [itemQuery] = mysql.$queryRaw.mock.calls[1];
-    expect(itemQuery.sql).toContain('(a.prednum, a.pednum) IN ((?, ?))');
-    expect(itemQuery.values).toEqual([6242, 19665]);
+    expect(itemQuery.sql).toContain('(m.prednum, m.pednum) IN ((?, ?))');
+    expect(itemQuery.sql).toContain('(d.prednum, d.pednum) IN ((?, ?))');
+    expect(itemQuery.values).toEqual([6242, 19665, 6242, 19665]);
   });
 
   it('does not query items when no active dispatch headers exist', async () => {
@@ -301,9 +302,11 @@ describe('DispatchService', () => {
     expect(items).toHaveLength(52);
     expect(new Set(items.map((item) => item.itemnum)).size).toBe(52);
     expect(query.sql).not.toMatch(/\bLIMIT\b/);
-    expect(query.values).toEqual([6242, 19665]);
-    expect(query.sql).toContain('FROM mvpredes m');
-    expect(query.sql).toContain('FROM dtpredes d');
+    expect(query.values).toEqual([6242, 19665, 6242, 19665]);
+    expect(query.sql).toContain('m.prednum = ? AND m.pednum = ?');
+    expect(query.sql).toContain('d.prednum = ? AND d.pednum = ?');
+    expect(query.sql).toContain('mvpredes m');
+    expect(query.sql).toContain('dtpredes d');
     expect(query.sql).toContain('WHERE NOT (\n          h.cerrado = 1');
     expect(query.sql).toContain('h.fecfinal >= CURDATE()');
     expect(query.sql).toContain('h.fecfinal < CURDATE() + INTERVAL 1 DAY');

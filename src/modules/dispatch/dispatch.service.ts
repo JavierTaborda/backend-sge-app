@@ -173,7 +173,8 @@ export class DispatchService {
       ),
     );
     const rows = await this.findOrderItemRows(
-      Prisma.sql`(i.prednum, i.pednum) IN (${orderKeys})`,
+      Prisma.sql`(m.prednum, m.pednum) IN (${orderKeys})`,
+      Prisma.sql`(d.prednum, d.pednum) IN (${orderKeys})`,
     );
     const itemsByOrder = new Map<string, DispatchItemDto[]>();
 
@@ -209,13 +210,17 @@ export class DispatchService {
     await this.getOrder(prednum, pednum);
 
     const rows = await this.findOrderItemRows(
-      Prisma.sql`i.prednum = ${prednum} AND i.pednum = ${pednum}`,
+      Prisma.sql`m.prednum = ${prednum} AND m.pednum = ${pednum}`,
+      Prisma.sql`d.prednum = ${prednum} AND d.pednum = ${pednum}`,
     );
 
     return this.mapOrderItems(rows);
   }
 
-  private async findOrderItemRows(where: Prisma.Sql): Promise<DispatchItemRow[]> {
+  private async findOrderItemRows(
+    mvWhere: Prisma.Sql,
+    dtWhere: Prisma.Sql,
+  ): Promise<DispatchItemRow[]> {
     const rows = await this.mysql.$queryRaw<DispatchItemRow[]>(Prisma.sql`
       SELECT
         i.prednum, i.itemnum, i.pednum, i.rennum,
@@ -241,6 +246,7 @@ export class DispatchService {
           AND h.fecfinal >= CURDATE()
           AND h.fecfinal < CURDATE() + INTERVAL 1 DAY
         )
+          AND ${mvWhere}
         UNION ALL
         SELECT
           d.prednum, d.itemnum, d.pednum, d.rennum, d.codalma,
@@ -252,10 +258,10 @@ export class DispatchService {
         WHERE h.cerrado = 1
           AND h.fecfinal >= CURDATE()
           AND h.fecfinal < CURDATE() + INTERVAL 1 DAY
+          AND ${dtWhere}
       ) i
       LEFT JOIN mtarticulos a ON a.codart = i.codart
       LEFT JOIN sge.users u ON u.userId = i.recouser
-      WHERE ${where}
       ORDER BY i.itemnum ASC, i.serial1 ASC
     `);
   
