@@ -33,7 +33,7 @@ type DispatchItemRow = Omit<
   manjser: DatabaseFlag;
 };
 
-const DB = Prisma.raw('`DBPROSGE`');
+const DB = Prisma.raw('`DBTESTSGE`');
 
 @Injectable()
 export class DispatchService {
