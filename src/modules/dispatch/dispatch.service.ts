@@ -8,11 +8,18 @@ import {
   DispatchOrderDto,
   DispatchOrderWithItemsDto,
 } from './dtos/dispatch-order.dto';
-import type { ReceivePredispatchDto } from './dtos/receive-predispatch.dto';
+import {
+  CAPTURE_TIME_PATTERN,
+  type ReceivePredispatchDto,
+} from './dtos/receive-predispatch.dto';
 
 type DatabaseFlag = boolean | number | bigint;
 
-type DispatchHeaderRow = Omit<DispatchOrderDto, 'fecfinal' | 'duracion'> & {
+type DispatchHeaderRow = Omit<
+  DispatchOrderDto,
+  'estatus' | 'fecfinal' | 'duracion'
+> & {
+  estatus: DatabaseFlag;
   fecfinal: Date | null;
   durationSeconds: number | bigint | null;
 };
@@ -103,6 +110,7 @@ export class DispatchService {
     );
     const firstCaptureValue = orderedItems[0].horacapture;
     const lastCaptureValue = orderedItems[orderedItems.length - 1].horacapture;
+    console.log(firstCaptureValue, lastCaptureValue);
 
     if (firstCaptureValue === null || lastCaptureValue === null) {
       throw new BadRequestException(
@@ -110,28 +118,38 @@ export class DispatchService {
       );
     }
 
-    const fecdesp = getVzlaDateForDB(new Date(firstCaptureValue));
-    const fecfinal = getVzlaDateForDB(new Date(lastCaptureValue));
-    const horainicio = fecdesp.toISOString().slice(11, 19);
-    const horafinal = fecfinal.toISOString().slice(11, 19);
+    const parseCaptureDate = (value: string): Date => {
+      if (!CAPTURE_TIME_PATTERN.test(value)) {
+        return new Date(value);
+      }
 
-    if (
-      Number.isNaN(fecdesp.getTime()) ||
-      Number.isNaN(fecfinal.getTime()) ||
-      fecfinal < fecdesp
-    ) {
-      throw new BadRequestException(
-        'Las horas del primer y ultimo item no son validas',
+      const [year, month, day] = payload.fecdesp
+        .slice(0, 10)
+        .split('-')
+        .map(Number);
+      const [hours, minutes, seconds] = value.split(':').map(Number);
+      return new Date(
+        Date.UTC(year, month - 1, day, hours + 4, minutes, seconds),
       );
-    }
+    };
+
+    const fecdesp = getVzlaDateForDB(parseCaptureDate(firstCaptureValue));
+    const fecfinal = getVzlaDateForDB(parseCaptureDate(lastCaptureValue));
+
+    // if (
+    //   Number.isNaN(fecdesp.getTime()) ||
+    //   Number.isNaN(fecfinal.getTime()) ||
+    //   fecfinal < fecdesp
+    // ) {
+    //   throw new BadRequestException(
+    //     'Las horas del primer y ultimo item no son validas',
+    //   );
 
     await this.mysql.$transaction(async (transaction) => {
       await transaction.$executeRaw(Prisma.sql`
         UPDATE ${DB}.cbpredes
         SET fecdesp = ${fecdesp},
-            fecfinal = ${fecfinal},
-            horainicio = ${horainicio},
-            horafinal = ${horafinal}
+            fecfinal = ${fecfinal}
         WHERE prednum = ${payload.prednum} AND pednum = ${payload.pednum}
       `);
 
@@ -146,13 +164,50 @@ export class DispatchService {
               codbarra = ${item.codbarra},
               serial1 = ${item.serial1},
               refbarra = ${item.refbarra},
-              horacapture = ${item.horacapture === null ? null : getVzlaDateForDB(new Date(item.horacapture)).toISOString().slice(11, 19)},
+              horacapture = ${item.horacapture === null ? null : getVzlaDateForDB(parseCaptureDate(item.horacapture)).toISOString().slice(11, 19)},
               recouser = ${recouser}
           WHERE prednum = ${payload.prednum}
             AND pednum = ${payload.pednum}
             AND itemnum = ${item.itemnum}
         `);
       }
+
+      await transaction.$executeRaw(Prisma.sql`
+        UPDATE ${DB}.cbpredes AS a
+        SET horainicio = (
+              SELECT MIN(horacapture)
+              FROM ${DB}.mvpredes
+              WHERE prednum = ${payload.prednum} AND pednum = ${payload.pednum}
+            ),
+            horafinal = (
+              SELECT MAX(horacapture)
+              FROM ${DB}.mvpredes
+              WHERE prednum = ${payload.prednum} AND pednum = ${payload.pednum}
+            ),
+            cantcarga = (
+              SELECT COUNT(codbarra)
+              FROM ${DB}.mvpredes
+              WHERE prednum = a.prednum
+                AND pednum = a.pednum
+                AND codbarra IS NOT NULL
+                AND recouser = ${recouser}
+            ),
+            cantdesp = (
+              SELECT COUNT(codart)
+              FROM ${DB}.mvpredes
+              WHERE prednum = a.prednum
+                AND pednum = a.pednum
+                AND recouser IN (0, ${recouser})
+            ) - (
+              SELECT COUNT(codbarra)
+              FROM ${DB}.mvpredes
+              WHERE prednum = a.prednum
+                AND pednum = a.pednum
+                AND codbarra IS NOT NULL
+                AND recouser = ${recouser}
+            )
+        WHERE a.prednum = ${payload.prednum} AND a.pednum = ${payload.pednum}
+      `);
     });
   }
 
@@ -300,7 +355,7 @@ export class DispatchService {
 
     const rows = await this.mysql.$queryRaw<DispatchHeaderRow[]>(Prisma.sql`
       SELECT
-        h.prednum, h.pednum,
+        h.prednum, h.pednum, h.estatus,
         CASE WHEN h.cerrado = 1 THEN 'Finalizado' ELSE 'En despacho' END AS conformado,
         DATE_FORMAT(h.fecdesp, '%Y-%m-%d %H:%i:%s') AS fecdesp,
         DATE_FORMAT(h.fecfinal, '%Y-%m-%d %H:%i:%s') AS fecfinalStr,
@@ -316,7 +371,7 @@ export class DispatchService {
         u.userUsername AS supervisor
       FROM (
         SELECT h.prednum, h.pednum, h.codcli, h.codzon, h.codven,
-          h.cerrado, h.fecdesp, h.fecfinal, h.cantdesp, h.owneruser
+          h.estatus, h.cerrado, h.fecdesp, h.fecfinal, h.cantdesp, h.owneruser
         FROM ${DB}.cbpredes h
         WHERE ${Prisma.join(conditions, ' AND ')}
         ORDER BY h.prednum DESC, h.pednum ASC
@@ -328,8 +383,9 @@ export class DispatchService {
       ORDER BY h.prednum DESC, h.pednum ASC
     `);
 
-    return rows.map(({ fecfinal, durationSeconds, ...header }) => ({
+    return rows.map(({ estatus, fecfinal, durationSeconds, ...header }) => ({
       ...header,
+      estatus: Number(estatus) === 1,
       fecfinal: fecfinal?.toISOString() ?? null,
       duracion:
         durationSeconds === null

@@ -1,17 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
-    Allow,
-    ArrayMinSize,
-    IsArray,
-    IsDateString,
-    IsIn,
-    IsInt,
-    IsString,
-    Matches,
-    ValidateIf,
-    ValidateNested,
+  Allow,
+  ArrayMinSize,
+  IsArray,
+  IsIn,
+  IsInt,
+  isISO8601,
+  IsString,
+  Matches,
+  ValidateBy,
+  ValidateIf,
+  ValidateNested,
 } from 'class-validator';
+
+export const CAPTURE_TIME_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/;
 
 export class ReceivePredispatchItemDto {
   @ApiProperty({ example: 6119 })
@@ -61,9 +64,23 @@ export class ReceivePredispatchItemDto {
   @IsString()
   refbarra!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, format: 'date-time' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '10:26:49',
+    description: 'Hora de Venezuela (HH:mm:ss) o fecha ISO 8601.',
+  })
   @ValidateIf((_object, value) => value !== null)
-  @IsDateString()
+  @ValidateBy({
+    name: 'isCaptureDateOrTime',
+    validator: {
+      validate: (value: unknown) =>
+        typeof value === 'string' &&
+        (CAPTURE_TIME_PATTERN.test(value) || isISO8601(value)),
+      defaultMessage: () =>
+        '$property debe ser una hora valida en formato HH:mm:ss o una fecha ISO 8601',
+    },
+  })
   horacapture!: string | null;
 
   @Allow()

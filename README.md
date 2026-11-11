@@ -190,6 +190,15 @@ Compila el proyecto a JavaScript en dist/ y lo ejecuta en modo producción.
 
 ## Consulta de despachos
 
+### Envio de un predespacho escaneado
+
+`POST /api/dispatch/orders/predispatch` recibe la cabecera y un arreglo `items`.
+Cada `items[].horacapture` acepta una hora de Venezuela en formato `HH:mm:ss`
+(por ejemplo, `"10:26:49"`) o una fecha ISO 8601
+(por ejemplo, `"2026-11-11T14:26:49.000Z"`). Las horas sin fecha usan el dia de
+`fecdesp`. Se permite `null` en items intermedios; el primer y ultimo item,
+ordenados por `itemnum`, deben tener hora de captura.
+
 | Consulta        | Endpoint                                          | Respuesta                                              |
 | --------------- | ------------------------------------------------- | ------------------------------------------------------ |
 | Listado general | `GET /api/dispatch/orders`                        | Arreglo de hasta 50 cabeceras, sin artículos anidados. |

@@ -59,7 +59,7 @@ export class DispatchController {
     if (!Number.isInteger(recouser)) {
       throw new BadRequestException('El usuario autenticado no tiene un userid_sge valido');
     }
-    console.log(body);
+   
     await this.dispatchService.savePredispatch(body, recouser);
 
     return { received: true };
