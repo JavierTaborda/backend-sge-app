@@ -341,20 +341,23 @@ export class DispatchService {
   private async findOrders(
     params?: DispatchOrderParamsDto,
   ): Promise<DispatchOrderDto[]> {
-    const conditions = [
-      Prisma.sql`h.anulado = 0`,
-      Prisma.sql`EXISTS (
-        SELECT 1
-        FROM ${DB}.mvpredes m
-        WHERE m.prednum = h.prednum AND m.pednum = h.pednum
-      )`,
-    ];
+    const conditions = [Prisma.sql`h.anulado = 0`];
 
-     if (params) {
+    if (params) {
       conditions.push(Prisma.sql`h.estatus <> 2`);
       conditions.push(Prisma.sql`h.prednum = ${params.prednum}`);
       conditions.push(Prisma.sql`h.pednum = ${params.pednum}`);
     } else {
+      conditions.push(
+        Prisma.sql`(
+          h.cerrado = 1
+          OR EXISTS (
+            SELECT 1
+            FROM ${DB}.mvpredes m
+            WHERE m.prednum = h.prednum AND m.pednum = h.pednum
+          )
+        )`,
+      );
       conditions.push(
         Prisma.sql`(h.estatus IN (0, 1) OR (h.cerrado = 1 AND h.fecfinal >= CURDATE() AND h.fecfinal < CURDATE() + INTERVAL 1 DAY))`,
       );
