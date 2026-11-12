@@ -123,11 +123,13 @@ describe('DispatchService', () => {
     const [query] = mysql.$queryRaw.mock.calls[0];
     expect(query.values).toEqual([]);
     expect(query.sql).toMatch(
-      /WHERE h\.anulado = 0 AND \(h\.estatus IN \(0, 1\) OR \(h\.cerrado = 1 AND h\.fecfinal >= CURDATE\(\) AND h\.fecfinal < CURDATE\(\) \+ INTERVAL 1 DAY\)\)\s+ORDER BY h\.prednum DESC, h\.pednum ASC\s*\)/,
+      /WHERE h\.anulado = 0 AND EXISTS \(\s+SELECT 1\s+FROM `DBPROSGE`\.mvpredes m\s+WHERE m\.prednum = h\.prednum AND m\.pednum = h\.pednum\s+\) AND \(h\.estatus IN \(0, 1\) OR \(h\.cerrado = 1 AND h\.fecfinal >= CURDATE\(\) AND h\.fecfinal < CURDATE\(\) \+ INTERVAL 1 DAY\)\)\s+ORDER BY h\.prednum DESC, h\.pednum ASC\s*\)/,
     );
     expect(query.sql).not.toMatch(/\bLIMIT\b/);
     expect(query.sql).not.toMatch(/h\.(prednum|pednum)\s*=\s*\?/);
-    expect(query.sql).not.toMatch(/\b(mvpredes|dtpredes)\b/);
+    expect(query.sql).toContain(
+      'FROM `DBPROSGE`.mvpredes m\n        WHERE m.prednum = h.prednum AND m.pednum = h.pednum',
+    );
     expect(query.sql).toContain('LEFT JOIN clzonas z ON z.codzon = h.codzon');
     expect(query.sql).toContain('u.userUsername AS supervisor');
     expect(query.sql).toContain('LEFT JOIN sge.users u ON u.userId = h.owneruser');

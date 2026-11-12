@@ -341,7 +341,14 @@ export class DispatchService {
   private async findOrders(
     params?: DispatchOrderParamsDto,
   ): Promise<DispatchOrderDto[]> {
-    const conditions = [Prisma.sql`h.anulado = 0`];
+    const conditions = [
+      Prisma.sql`h.anulado = 0`,
+      Prisma.sql`EXISTS (
+        SELECT 1
+        FROM ${DB}.mvpredes m
+        WHERE m.prednum = h.prednum AND m.pednum = h.pednum
+      )`,
+    ];
 
      if (params) {
       conditions.push(Prisma.sql`h.estatus <> 2`);
