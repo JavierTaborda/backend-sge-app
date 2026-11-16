@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { MySQLPrismaService } from '../../database/mysql.service';
 import { Prisma } from '../../prisma-clients/mysql/client';
 import { getVzlaDateForDB } from '../../utils/date.venezuela.db';
@@ -97,7 +101,8 @@ export class DispatchService {
   ): Promise<void> {
     if (
       payload.items.some(
-        (item) => item.prednum !== payload.prednum || item.pednum !== payload.pednum,
+        (item) =>
+          item.prednum !== payload.prednum || item.pednum !== payload.pednum,
       )
     ) {
       throw new BadRequestException(
@@ -223,9 +228,7 @@ export class DispatchService {
     }
 
     const orderKeys = Prisma.join(
-      orders.map(
-        ({ prednum, pednum }) => Prisma.sql`(${prednum}, ${pednum})`,
-      ),
+      orders.map(({ prednum, pednum }) => Prisma.sql`(${prednum}, ${pednum})`),
     );
     const rows = await this.findOrderItemRows(
       Prisma.sql`(m.prednum, m.pednum) IN (${orderKeys})`,
@@ -319,7 +322,7 @@ export class DispatchService {
       LEFT JOIN sge.users u ON u.userId = i.recouser
       ORDER BY i.itemnum ASC, i.serial1 ASC
     `);
-  
+
     return rows;
   }
 
@@ -348,16 +351,6 @@ export class DispatchService {
       conditions.push(Prisma.sql`h.prednum = ${params.prednum}`);
       conditions.push(Prisma.sql`h.pednum = ${params.pednum}`);
     } else {
-      conditions.push(
-        Prisma.sql`(
-          h.cerrado = 1
-          OR EXISTS (
-            SELECT 1
-            FROM ${DB}.mvpredes m
-            WHERE m.prednum = h.prednum AND m.pednum = h.pednum
-          )
-        )`,
-      );
       conditions.push(
         Prisma.sql`(h.estatus IN (0, 1) OR (h.cerrado = 1 AND h.fecfinal >= CURDATE() AND h.fecfinal < CURDATE() + INTERVAL 1 DAY))`,
       );
@@ -393,15 +386,50 @@ export class DispatchService {
       ORDER BY h.prednum DESC, h.pednum ASC
     `);
 
-    return rows.map(({ estatus, fecfinal, durationSeconds, ...header }) => ({
-      ...header,
-      estatus: Number(estatus) === 1,
-      fecfinal: fecfinal?.toISOString() ?? null,
-      duracion:
-        durationSeconds === null
-          ? null
-          : this.formatDuration(Number(durationSeconds)),
-    }));
+    const orders = rows.map(
+      ({ estatus, fecfinal, durationSeconds, ...header }) => ({
+        ...header,
+        estatus: Number(estatus) === 1,
+        fecfinal: fecfinal?.toISOString() ?? null,
+        duracion:
+          durationSeconds === null
+            ? null
+            : this.formatDuration(Number(durationSeconds)),
+      }),
+    );
+
+    if (params) {
+      return orders;
+    }
+
+    const inDispatchOrders = orders.filter(
+      (order) => order.conformado === 'En despacho',
+    );
+    if (inDispatchOrders.length === 0) {
+      return orders;
+    }
+
+    const orderKeys = Prisma.join(
+      inDispatchOrders.map(
+        ({ prednum, pednum }) => Prisma.sql`(${prednum}, ${pednum})`,
+      ),
+    );
+    const mvOrders = await this.mysql.$queryRaw<
+      Array<Pick<DispatchOrderDto, 'prednum' | 'pednum'>>
+    >(Prisma.sql`
+      SELECT DISTINCT m.prednum, m.pednum
+      FROM ${DB}.mvpredes m
+      WHERE (m.prednum, m.pednum) IN (${orderKeys})
+    `);
+    const mvOrderKeys = new Set(
+      mvOrders.map(({ prednum, pednum }) => `${prednum}:${pednum}`),
+    );
+
+    return orders.filter(
+      (order) =>
+        order.conformado !== 'En despacho' ||
+        mvOrderKeys.has(`${order.prednum}:${order.pednum}`),
+    );
   }
 
   private formatDuration(seconds: number): string {

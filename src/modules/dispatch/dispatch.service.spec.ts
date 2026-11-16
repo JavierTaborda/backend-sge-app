@@ -12,6 +12,7 @@ describe('DispatchService', () => {
   const header = {
     prednum: 6242,
     pednum: 19665,
+    estatus: false,
     conformado: 'En despacho',
     fecdesp: '2026-10-23 09:32:56',
     fecfinalStr: null,
@@ -57,12 +58,15 @@ describe('DispatchService', () => {
   });
 
   it('returns exactly the requested header fields without legacy names or items', async () => {
-    mysql.$queryRaw.mockResolvedValue([header]);
+    mysql.$queryRaw
+      .mockResolvedValueOnce([header])
+      .mockResolvedValueOnce([{ prednum: 6242, pednum: 19665 }]);
 
     await expect(service.getOrders()).resolves.toEqual([
       {
         prednum: 6242,
         pednum: 19665,
+        estatus: false,
         conformado: 'En despacho',
         fecdesp: '2026-10-23 09:32:56',
         fecfinalStr: null,
@@ -84,6 +88,7 @@ describe('DispatchService', () => {
   it('returns headers with nested items using a single batch item query', async () => {
     mysql.$queryRaw
       .mockResolvedValueOnce([header])
+      .mockResolvedValueOnce([{ prednum: 6242, pednum: 19665 }])
       .mockResolvedValueOnce([unit]);
 
     await expect(service.getOrdersWithItems()).resolves.toMatchObject([
@@ -101,8 +106,8 @@ describe('DispatchService', () => {
       },
     ]);
 
-    expect(mysql.$queryRaw).toHaveBeenCalledTimes(2);
-    const [itemQuery] = mysql.$queryRaw.mock.calls[1];
+    expect(mysql.$queryRaw).toHaveBeenCalledTimes(3);
+    const [itemQuery] = mysql.$queryRaw.mock.calls[2];
     expect(itemQuery.sql).toContain('(m.prednum, m.pednum) IN ((?, ?))');
     expect(itemQuery.sql).toContain('(d.prednum, d.pednum) IN ((?, ?))');
     expect(itemQuery.values).toEqual([6242, 19665, 6242, 19665]);
@@ -123,22 +128,48 @@ describe('DispatchService', () => {
     const [query] = mysql.$queryRaw.mock.calls[0];
     expect(query.values).toEqual([]);
     expect(query.sql).toMatch(
-      /WHERE h\.anulado = 0 AND \(\s+h\.cerrado = 1\s+OR EXISTS \(\s+SELECT 1\s+FROM `DBPROSGE`\.mvpredes m\s+WHERE m\.prednum = h\.prednum AND m\.pednum = h\.pednum\s+\)\s+\) AND \(h\.estatus IN \(0, 1\) OR \(h\.cerrado = 1 AND h\.fecfinal >= CURDATE\(\) AND h\.fecfinal < CURDATE\(\) \+ INTERVAL 1 DAY\)\)\s+ORDER BY h\.prednum DESC, h\.pednum ASC\s*\)/,
+      /WHERE h\.anulado = 0 AND \(h\.estatus IN \(0, 1\) OR \(h\.cerrado = 1 AND h\.fecfinal >= CURDATE\(\) AND h\.fecfinal < CURDATE\(\) \+ INTERVAL 1 DAY\)\)\s+ORDER BY h\.prednum DESC, h\.pednum ASC\s*\)/,
     );
     expect(query.sql).not.toMatch(/\bLIMIT\b/);
     expect(query.sql).not.toMatch(/h\.(prednum|pednum)\s*=\s*\?/);
-    expect(query.sql).toContain(
-      'FROM `DBPROSGE`.mvpredes m\n        WHERE m.prednum = h.prednum AND m.pednum = h.pednum',
-    );
+    expect(query.sql).not.toContain('mvpredes');
     expect(query.sql).toContain('LEFT JOIN clzonas z ON z.codzon = h.codzon');
     expect(query.sql).toContain('u.userUsername AS supervisor');
-    expect(query.sql).toContain('LEFT JOIN sge.users u ON u.userId = h.owneruser');
+    expect(query.sql).toContain(
+      'LEFT JOIN sge.users u ON u.userId = h.owneruser',
+    );
     expect(query.sql).toContain("NULLIF(TRIM(z.zondes), '') AS Zona");
     expect(query.sql).toContain("THEN 'Finalizado' ELSE 'En despacho'");
     expect(query.sql).toContain('h.estatus IN (0, 1)');
     expect(query.sql).toContain('h.cerrado = 1');
     expect(query.sql).toContain('h.fecfinal >= CURDATE()');
     expect(query.sql).toContain('h.fecfinal < CURDATE() + INTERVAL 1 DAY');
+  });
+
+  it('filters only in-dispatch headers missing from mvpredes and keeps finalized headers', async () => {
+    const missingMvHeader = { ...header, prednum: 6243, pednum: 19666 };
+    const finalizedHeader = {
+      ...header,
+      prednum: 6244,
+      pednum: 19667,
+      conformado: 'Finalizado',
+    };
+    mysql.$queryRaw
+      .mockResolvedValueOnce([header, missingMvHeader, finalizedHeader])
+      .mockResolvedValueOnce([{ prednum: 6242, pednum: 19665 }]);
+
+    const orders = await service.getOrders();
+
+    expect(orders).toHaveLength(2);
+    expect(orders).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ prednum: 6242, pednum: 19665 }),
+        expect.objectContaining({ prednum: 6244, pednum: 19667 }),
+      ]),
+    );
+    expect(orders).not.toContainEqual(
+      expect.objectContaining({ prednum: 6243, pednum: 19666 }),
+    );
   });
 
   it('returns one header using both numbers without a list limit', async () => {
@@ -241,16 +272,14 @@ describe('DispatchService', () => {
   it.each([false, 0, 0n])(
     'sets Sin serial for the flag %s',
     async (manjser) => {
-      mysql.$queryRaw
-        .mockResolvedValueOnce([header])
-        .mockResolvedValueOnce([
-          {
-            ...unit,
-            manjser,
-            compuesto: true,
-            artdes: null,
-          },
-        ]);
+      mysql.$queryRaw.mockResolvedValueOnce([header]).mockResolvedValueOnce([
+        {
+          ...unit,
+          manjser,
+          compuesto: true,
+          artdes: null,
+        },
+      ]);
 
       const [item] = await service.getOrderItems(6242, 19665);
 
