@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Get,
@@ -29,7 +28,7 @@ import {
 import { ReceivePredispatchDto } from './dtos/receive-predispatch.dto';
 
 @Controller('dispatch')
- @UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard)
 @ApiTags('Dispatch')
 @ApiBearerAuth()
 export class DispatchController {
@@ -55,12 +54,7 @@ export class DispatchController {
     @Body() body: ReceivePredispatchDto,
     @CurrentUser('userid_sge') userid_sge: string,
   ): Promise<{ received: true }> {
-    const recouser = Number(userid_sge);
-    if (!Number.isInteger(recouser)) {
-      throw new BadRequestException('El usuario autenticado no tiene un userid_sge valido');
-    }
-   
-    await this.dispatchService.savePredispatch(body, recouser);
+    await this.dispatchService.savePredispatch(body, userid_sge);
 
     return { received: true };
   }
@@ -82,8 +76,11 @@ export class DispatchController {
   })
   @ApiResponse({ status: 200, type: DispatchOrderDto, isArray: true })
   @ApiResponse({ status: 401, description: 'Autenticacion requerida' })
-  getOrders(): Promise<DispatchOrderDto[]> {
-    return this.dispatchService.getOrders();
+  getOrders(
+    @CurrentUser('userid_sge') userid_sge: string,
+    @CurrentUser('role') role: string,
+  ): Promise<DispatchOrderDto[]> {
+    return this.dispatchService.getOrders(userid_sge, role);
   }
 
   @Get('orders/with-items')
@@ -94,8 +91,11 @@ export class DispatchController {
   })
   @ApiResponse({ status: 200, type: DispatchOrderWithItemsDto, isArray: true })
   @ApiResponse({ status: 401, description: 'Autenticacion requerida' })
-  getOrdersWithItems(): Promise<DispatchOrderWithItemsDto[]> {
-    return this.dispatchService.getOrdersWithItems();
+  getOrdersWithItems(
+    @CurrentUser('userid_sge') userid_sge: string,
+    @CurrentUser('role') role: string,
+  ): Promise<DispatchOrderWithItemsDto[]> {
+    return this.dispatchService.getOrdersWithItems(userid_sge, role);
   }
 
   @Get('orders/:prednum/:pednum')
@@ -107,8 +107,17 @@ export class DispatchController {
   @ApiResponse({ status: 200, type: DispatchOrderDto })
   @ApiResponse({ status: 400, description: 'Numeros invalidos' })
   @ApiResponse({ status: 404, description: 'Despacho no encontrado o anulado' })
-  getOrder(@Param() params: DispatchOrderParamsDto): Promise<DispatchOrderDto> {
-    return this.dispatchService.getOrder(params.prednum, params.pednum);
+  getOrder(
+    @Param() params: DispatchOrderParamsDto,
+    @CurrentUser('userid_sge') userid_sge: string,
+    @CurrentUser('role') role: string,
+  ): Promise<DispatchOrderDto> {
+    return this.dispatchService.getOrder(
+      params.prednum,
+      params.pednum,
+      userid_sge,
+      role,
+    );
   }
 
   @Get('orders/:prednum/:pednum/items')
@@ -124,7 +133,14 @@ export class DispatchController {
   @ApiResponse({ status: 404, description: 'Despacho no encontrado o anulado' })
   getOrderItems(
     @Param() params: DispatchOrderParamsDto,
+    @CurrentUser('userid_sge') userid_sge: string,
+    @CurrentUser('role') role: string,
   ): Promise<DispatchItemDto[]> {
-    return this.dispatchService.getOrderItems(params.prednum, params.pednum);
+    return this.dispatchService.getOrderItems(
+      params.prednum,
+      params.pednum,
+      userid_sge,
+      role,
+    );
   }
 }

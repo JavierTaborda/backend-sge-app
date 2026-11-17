@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { MySQLPrismaService } from '../../database/mysql.service';
 import { Prisma } from '../../prisma-clients/mysql/client';
@@ -97,8 +98,15 @@ export class DispatchService {
 
   async savePredispatch(
     payload: ReceivePredispatchDto,
-    recouser: number,
+    userid_sge: string,
   ): Promise<void> {
+    const recouser = Number(userid_sge);
+    if (!Number.isInteger(recouser)) {
+      throw new BadRequestException(
+        'El usuario autenticado no tiene un userid_sge valido',
+      );
+    }
+
     if (
       payload.items.some(
         (item) =>
@@ -216,12 +224,15 @@ export class DispatchService {
     });
   }
 
-  getOrders(): Promise<DispatchOrderDto[]> {
-    return this.findOrders();
+  getOrders(userid_sge: string, role?: string): Promise<DispatchOrderDto[]> {
+    return this.findOrders(userid_sge, role);
   }
 
-  async getOrdersWithItems(): Promise<DispatchOrderWithItemsDto[]> {
-    const orders = await this.getOrders();
+  async getOrdersWithItems(
+    userid_sge: string,
+    role?: string,
+  ): Promise<DispatchOrderWithItemsDto[]> {
+    const orders = await this.getOrders(userid_sge, role);
 
     if (orders.length === 0) {
       return [];
@@ -249,8 +260,16 @@ export class DispatchService {
     }));
   }
 
-  async getOrder(prednum: number, pednum: number): Promise<DispatchOrderDto> {
-    const [order] = await this.findOrders({ prednum, pednum });
+  async getOrder(
+    prednum: number,
+    pednum: number,
+    userid_sge: string,
+    role?: string,
+  ): Promise<DispatchOrderDto> {
+    const [order] = await this.findOrders(userid_sge, role, {
+      prednum,
+      pednum,
+    });
 
     if (!order) {
       throw new NotFoundException(
@@ -264,8 +283,10 @@ export class DispatchService {
   async getOrderItems(
     prednum: number,
     pednum: number,
+    userid_sge: string,
+    role?: string,
   ): Promise<DispatchItemDto[]> {
-    await this.getOrder(prednum, pednum);
+    await this.getOrder(prednum, pednum, userid_sge, role);
 
     const rows = await this.findOrderItemRows(
       Prisma.sql`m.prednum = ${prednum} AND m.pednum = ${pednum}`,
@@ -342,8 +363,19 @@ export class DispatchService {
   }
 
   private async findOrders(
+    userid_sge: string,
+    role?: string,
     params?: DispatchOrderParamsDto,
   ): Promise<DispatchOrderDto[]> {
+    const userId = Number(userid_sge);
+    if (role !== '1' && (!Number.isInteger(userId) || userId <= 0)) {
+      throw new UnauthorizedException(
+        'El usuario autenticado no tiene un userid_sge valido',
+      );
+    }
+
+    const userFilter =
+      role === '1' ? Prisma.empty : Prisma.sql`WHERE u.userId = ${userid_sge}`;
     const conditions = [Prisma.sql`h.anulado = 0`];
 
     if (params) {
@@ -383,6 +415,7 @@ export class DispatchService {
       LEFT JOIN clzonas z ON z.codzon = h.codzon
       LEFT JOIN clvendedores v ON v.codven = h.codven
       LEFT JOIN sge.users u ON u.userId = h.owneruser
+      ${userFilter}
       ORDER BY h.prednum DESC, h.pednum ASC
     `);
 

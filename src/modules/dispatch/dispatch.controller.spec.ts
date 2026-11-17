@@ -1,4 +1,5 @@
 import {
+  type ExecutionContext,
   INestApplication,
   NotFoundException,
   ValidationPipe,
@@ -7,6 +8,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Test } from '@nestjs/testing';
 import type { Server } from 'node:http';
 import request from 'supertest';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { DispatchController } from './dispatch.controller';
 import { DispatchService } from './dispatch.service';
 import type {
@@ -16,6 +18,7 @@ import type {
 
 describe('DispatchController HTTP', () => {
   let app: INestApplication<Server>;
+  const currentUser = { userid_sge: '43', role: '2' };
   const order: DispatchOrderDto = {
     prednum: 6242,
     pednum: 19665,
@@ -59,6 +62,7 @@ describe('DispatchController HTTP', () => {
     objectstate2: 'Warning',
   };
   const service = {
+    savePredispatch: jest.fn().mockResolvedValue(undefined),
     getBarcodesWithoutSerial: jest.fn().mockReturnValue([]),
     getOrders: jest.fn().mockResolvedValue([]),
     getOrdersWithItems: jest.fn().mockResolvedValue([]),
@@ -70,7 +74,18 @@ describe('DispatchController HTTP', () => {
     const module = await Test.createTestingModule({
       controllers: [DispatchController],
       providers: [{ provide: DispatchService, useValue: service }],
-    }).compile();
+    })
+      .overrideGuard(JwtAuthGuard)
+      .useValue({
+        canActivate: (context: ExecutionContext) => {
+          const req = context
+            .switchToHttp()
+            .getRequest<{ user: typeof currentUser }>();
+          req.user = { ...currentUser };
+          return true;
+        },
+      })
+      .compile();
     app = module.createNestApplication<INestApplication<Server>>();
     app.setGlobalPrefix('api');
     app.useGlobalPipes(
@@ -84,9 +99,9 @@ describe('DispatchController HTTP', () => {
   });
 
   beforeEach(() => {
-    service.getBarcodesWithoutSerial
-      .mockReset()
-      .mockReturnValue([]);
+    currentUser.role = '2';
+    service.savePredispatch.mockReset().mockResolvedValue(undefined);
+    service.getBarcodesWithoutSerial.mockReset().mockReturnValue([]);
     service.getOrders.mockReset().mockResolvedValue([]);
     service.getOrdersWithItems.mockReset().mockResolvedValue([]);
     service.getOrder.mockReset().mockResolvedValue(order);
@@ -119,7 +134,7 @@ describe('DispatchController HTTP', () => {
       .get('/api/dispatch/orders')
       .expect(200, orders);
 
-    expect(service.getOrders).toHaveBeenCalledWith();
+    expect(service.getOrders).toHaveBeenCalledWith('43', '2');
     expect(service.getOrderItems).not.toHaveBeenCalled();
   });
 
@@ -133,6 +148,8 @@ describe('DispatchController HTTP', () => {
       .post('/api/dispatch/orders/predispatch')
       .send(payload)
       .expect(202, { received: true });
+
+    expect(service.savePredispatch).toHaveBeenCalledWith(payload, '43');
   });
 
   it('rejects a predispatch body without the header and items shape', async () => {
@@ -156,21 +173,40 @@ describe('DispatchController HTTP', () => {
       .get('/api/dispatch/orders/with-items')
       .expect(200, orders);
 
-    expect(service.getOrdersWithItems).toHaveBeenCalledWith();
+    expect(service.getOrdersWithItems).toHaveBeenCalledWith('43', '2');
   });
+
+  it.each([
+    ['orders', 'getOrders', []],
+    ['orders/with-items', 'getOrdersWithItems', []],
+    ['orders/6242/19665', 'getOrder', [6242, 19665]],
+    ['orders/6242/19665/items', 'getOrderItems', [6242, 19665]],
+  ] as const)(
+    'passes the administrator role from the authenticated user on %s',
+    async (path, method, params) => {
+      currentUser.role = '1';
+
+      await request(app.getHttpServer())
+        .get(`/api/dispatch/${path}`)
+        .expect(200);
+
+      expect(service[method]).toHaveBeenCalledWith(...params, '43', '1');
+    },
+  );
 
   it.each([
     'prednum=6242',
     'pednum=19665',
     'prednum=6242&pednum=19665',
     'prednum=abc&pednum=-1',
+    'role=1&userid_sge=99',
   ])('ignores query parameters on the general route: %s', async (query) => {
     service.getOrders.mockResolvedValueOnce([order]);
 
     await request(app.getHttpServer())
       .get(`/api/dispatch/orders?${query}`)
       .expect(200, [order]);
-    expect(service.getOrders).toHaveBeenCalledWith();
+    expect(service.getOrders).toHaveBeenCalledWith('43', '2');
   });
 
   it('returns a single header by both required numbers', async () => {
@@ -178,7 +214,7 @@ describe('DispatchController HTTP', () => {
       .get('/api/dispatch/orders/6242/19665')
       .expect(200, order);
 
-    expect(service.getOrder).toHaveBeenCalledWith(6242, 19665);
+    expect(service.getOrder).toHaveBeenCalledWith(6242, 19665, '43', '2');
     expect(service.getOrders).not.toHaveBeenCalled();
     expect(service.getOrderItems).not.toHaveBeenCalled();
   });
@@ -188,7 +224,7 @@ describe('DispatchController HTTP', () => {
       .get('/api/dispatch/orders/6242/19665/items')
       .expect(200, [item]);
 
-    expect(service.getOrderItems).toHaveBeenCalledWith(6242, 19665);
+    expect(service.getOrderItems).toHaveBeenCalledWith(6242, 19665, '43', '2');
     expect(service.getOrder).not.toHaveBeenCalled();
     expect(service.getOrders).not.toHaveBeenCalled();
   });
