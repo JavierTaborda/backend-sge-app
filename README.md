@@ -190,6 +190,13 @@ Compila el proyecto a JavaScript en dist/ y lo ejecuta en modo producción.
 
 ## Consulta de despachos
 
+Las consultas de pedidos usan `userid_sge` y `role` del usuario autenticado:
+solo el rol `1` puede ver los despachos de todos los usuarios. Los demas roles
+ven unicamente los suyos, filtrados por `u.userId = userid_sge` (el usuario unido
+a `cbpredes.owneruser`). Esta restriccion aplica al listado, al listado con
+items y a las consultas individuales de cabecera y contenido; un despacho de
+otro usuario devuelve 404. El rol y el usuario no se toman del query.
+
 ### Envio de un predespacho escaneado
 
 `POST /api/dispatch/orders/predispatch` recibe la cabecera y un arreglo `items`.
@@ -214,15 +221,15 @@ GET /api/dispatch/orders/6242/19665
 GET /api/dispatch/orders/6242/19665/items
 ```
 
-El guard de autenticación del controlador está actualmente comentado. Si se
-habilita `JwtAuthGuard`, las tres rutas requieren `Authorization: Bearer <token>`.
+Las rutas requieren `Authorization: Bearer <token>` mediante `JwtAuthGuard`.
 
 `GET /api/dispatch/orders` devuelve un arreglo de hasta 50 pedidos para el módulo de despacho, incluyendo abiertos y
 cerrados, pero excluyendo siempre `cbpredes.anulado = 1`. Sin coincidencias devuelve
 `[]`; los errores de base de datos se propagan como errores HTTP.
 
-La ruta general no recibe filtros por pedido ni predespacho. Los parámetros de
-query no se usan: enviar `?prednum=6242&pednum=19665` no restringe el listado.
+La ruta general no recibe filtros por pedido ni predespacho. Los parámetros
+`prednum` y `pednum` del query no se usan: enviar
+`?prednum=6242&pednum=19665` no restringe el listado.
 Para consultar uno específico se debe usar exclusivamente la ruta individual.
 
 ```http
