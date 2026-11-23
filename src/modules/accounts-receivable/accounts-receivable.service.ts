@@ -48,6 +48,7 @@ export class AccountsReceivableService {
         CASE
           WHEN d.tipo_doc LIKE 'AJP%' THEN 'AJUSTE POSITIVO'
           WHEN d.tipo_doc LIKE 'AJN%' THEN 'AJUSTE NEGATIVO'
+          WHEN d.tipo_doc LIKE 'ADEL%' THEN 'ADELANTO'
           WHEN d.tipo_doc LIKE 'N/CR%' THEN 'NOTA DE CREDITO'
           WHEN d.tipo_doc LIKE 'FACT%' THEN 'FACTURA'
           ELSE d.tipo_doc
