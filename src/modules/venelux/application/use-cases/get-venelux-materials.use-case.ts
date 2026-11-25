@@ -55,7 +55,10 @@ export class GetVeneluxMaterialsUseCase {
       this.repository.getMaterials(),
       this.repository.getMaterialsSGE(),
     ]);
+
     const materialsMap = new Map<string, SaArticuloMaterial>();
+
+   
 
     sgeMaterials.forEach((sge) => {
       const key = String(sge.codart).trim();

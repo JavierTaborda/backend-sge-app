@@ -40,6 +40,7 @@ export class VeneluxController {
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '50',
   ) {
+
     return this.getVeneluxMaterialsUseCase.execute(+page, +limit);
   }
 
@@ -47,6 +48,7 @@ export class VeneluxController {
   @ApiOperation({ summary: 'Lista todos los materiales Venelux sin paginacion' })
   @ApiResponse({ status: 200, description: 'Todos los materiales disponibles en Venelux sin paginacion.' })
   getAllMaterials() {
+    
     return this.getVeneluxMaterialsUseCase.executeAll();
   }
 
@@ -54,9 +56,11 @@ export class VeneluxController {
   @ApiOperation({ summary: 'Lista unidades Venelux' })
   @ApiResponse({ status: 200, description: 'Unidades disponibles en Venelux.' })
   getUnits() {
+    
     return this.getVeneluxUnitsUseCase.execute();
   }
-@Get('obras')
+
+  @Get('obras')
   @ApiOperation({ summary: 'Lista obras Venelux' })
   @ApiResponse({ status: 200, description: 'Obras disponibles en Venelux.' })
   getObras(  @CurrentUser('userid_sge') userid_sge: string,) {
@@ -67,6 +71,7 @@ export class VeneluxController {
   @ApiOperation({ summary: 'Consulta solicitudes Venelux con su lista de materiales' })
   @ApiResponse({ status: 200, description: 'Solicitudes Venelux con sus materiales.' })
   getSolicitudes() {
+
     const  result= this.getVeneluxSolicitudesWithMaterialsUseCase.execute();
    
     return result;
@@ -79,6 +84,7 @@ export class VeneluxController {
     @CurrentUser('role') role: string,
     @CurrentUser('userid_sge') userid_sge: string,
   ) {
+    
     return this.getVeneluxSolicitudesStatusUseCase.execute(role, userid_sge);
   }
 
@@ -90,6 +96,7 @@ export class VeneluxController {
     @Body() payload: CreateHeaderDto,
     @CurrentUser('userid_sge') userid_sge: string,
   ) {
+    
     return this.createVeneluxHeaderUseCase.execute(payload, userid_sge);
   }
 
