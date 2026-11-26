@@ -334,7 +334,7 @@ export class DispatchService {
         FROM ${DB}.dtpredes d
         INNER JOIN ${DB}.cbpredes h
           ON h.prednum = d.prednum AND h.pednum = d.pednum
-        WHERE h.cerrado = 1
+        WHERE 
           AND h.fecfinal >= CURDATE()
           AND h.fecfinal < CURDATE() + INTERVAL 1 DAY
           AND ${dtWhere}
